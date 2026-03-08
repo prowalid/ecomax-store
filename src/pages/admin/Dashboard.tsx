@@ -1,87 +1,127 @@
-import { ShoppingCart, DollarSign, TrendingUp, Users } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
+import { Badge } from "@/components/ui/badge";
+import { ArrowUpLeft, Eye, MoreHorizontal } from "lucide-react";
 
 const recentOrders = [
-  { id: "#1234", customer: "أحمد بن علي", wilaya: "الجزائر", total: "4,500 د.ج", status: "جديد", statusColor: "bg-primary" },
-  { id: "#1233", customer: "فاطمة زهراء", wilaya: "وهران", total: "3,200 د.ج", status: "مؤكد", statusColor: "bg-warning" },
-  { id: "#1232", customer: "محمد كريم", wilaya: "قسنطينة", total: "7,800 د.ج", status: "مشحون", statusColor: "bg-info" },
-  { id: "#1231", customer: "سارة بوعلام", wilaya: "سطيف", total: "2,100 د.ج", status: "مسلم", statusColor: "bg-success" },
-  { id: "#1230", customer: "يوسف حداد", wilaya: "باتنة", total: "5,600 د.ج", status: "مرتجع", statusColor: "bg-destructive" },
+  { id: "#1234", customer: "أحمد بن علي", date: "اليوم، 14:30", total: "4,500 د.ج", items: 2, status: "new" as const, payment: "COD" },
+  { id: "#1233", customer: "فاطمة زهراء", date: "اليوم، 13:15", total: "3,200 د.ج", items: 1, status: "confirmed" as const, payment: "COD" },
+  { id: "#1232", customer: "محمد كريم", date: "أمس، 18:00", total: "7,800 د.ج", items: 3, status: "shipped" as const, payment: "COD" },
+  { id: "#1231", customer: "سارة بوعلام", date: "أمس، 10:20", total: "2,100 د.ج", items: 1, status: "delivered" as const, payment: "COD" },
+  { id: "#1230", customer: "يوسف حداد", date: "منذ يومين", total: "5,600 د.ج", items: 2, status: "returned" as const, payment: "COD" },
+];
+
+const statusMap = {
+  new: { label: "جديد", variant: "info" as const },
+  confirmed: { label: "مؤكد", variant: "warning" as const },
+  shipped: { label: "مشحون", variant: "default" as const },
+  delivered: { label: "مسلّم", variant: "success" as const },
+  returned: { label: "مرتجع", variant: "destructive" as const },
+};
+
+const topProducts = [
+  { name: "حذاء رياضي Nike Air", sold: 34, revenue: "153,000 د.ج" },
+  { name: "ساعة ذكية GT3 Pro", sold: 28, revenue: "218,400 د.ج" },
+  { name: "تيشرت قطن ممتاز", sold: 22, revenue: "35,200 د.ج" },
 ];
 
 const Dashboard = () => {
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6">
+      {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">لوحة القيادة</h1>
-        <p className="text-muted-foreground text-sm mt-1">مرحباً بك! إليك ملخص أداء متجرك اليوم</p>
+        <h1 className="text-xl font-semibold text-foreground">الرئيسية</h1>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="إجمالي المبيعات"
           value="127,500 د.ج"
-          change="↑ 12.5% مقارنة بالأمس"
+          change="↑ 12.5%"
           changeType="positive"
-          icon={<DollarSign className="w-5 h-5" />}
+          subtitle="مقارنة بالأمس"
         />
         <StatCard
-          title="الطلبات الجديدة"
+          title="الطلبات"
           value="34"
-          change="↑ 8 طلبات عن الأمس"
+          change="↑ 8"
           changeType="positive"
-          icon={<ShoppingCart className="w-5 h-5" />}
+          subtitle="طلب جديد"
         />
         <StatCard
           title="نسبة التأكيد"
           value="67%"
-          change="↓ 3% عن الأسبوع الماضي"
+          change="↓ 3%"
           changeType="negative"
-          icon={<TrendingUp className="w-5 h-5" />}
+          subtitle="هذا الأسبوع"
         />
         <StatCard
-          title="الزوار اليوم"
-          value="1,240"
-          change="مستقر"
+          title="متوسط قيمة الطلب"
+          value="3,750 د.ج"
+          change="—"
           changeType="neutral"
-          icon={<Users className="w-5 h-5" />}
+          subtitle="ثابت"
         />
       </div>
 
-      {/* Recent Orders */}
-      <div className="bg-card rounded-lg shadow-card border border-border animate-fade-in">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">آخر الطلبات</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-right text-xs font-medium text-muted-foreground p-4">رقم الطلب</th>
-                <th className="text-right text-xs font-medium text-muted-foreground p-4">الزبون</th>
-                <th className="text-right text-xs font-medium text-muted-foreground p-4">الولاية</th>
-                <th className="text-right text-xs font-medium text-muted-foreground p-4">المبلغ</th>
-                <th className="text-right text-xs font-medium text-muted-foreground p-4">الحالة</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentOrders.map((order) => (
-                <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
-                  <td className="p-4 text-sm font-medium text-foreground">{order.id}</td>
-                  <td className="p-4 text-sm text-foreground">{order.customer}</td>
-                  <td className="p-4 text-sm text-muted-foreground">{order.wilaya}</td>
-                  <td className="p-4 text-sm font-semibold text-foreground">{order.total}</td>
-                  <td className="p-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium text-primary-foreground ${order.statusColor}`}>
-                      {order.status}
-                    </span>
-                  </td>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent orders - takes 2 cols */}
+        <div className="lg:col-span-2 bg-card rounded-lg shadow-card border border-border animate-slide-in">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-foreground">آخر الطلبات</h2>
+            <a href="/admin/orders" className="text-xs text-primary hover:underline font-medium">
+              عرض الكل
+            </a>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الطلب</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">التاريخ</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الزبون</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">المبلغ</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الحالة</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentOrders.map((order) => {
+                  const s = statusMap[order.status];
+                  return (
+                    <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors cursor-pointer">
+                      <td className="px-5 py-3">
+                        <span className="text-sm font-medium text-primary">{order.id}</span>
+                      </td>
+                      <td className="px-5 py-3 text-sm text-muted-foreground">{order.date}</td>
+                      <td className="px-5 py-3 text-sm text-foreground">{order.customer}</td>
+                      <td className="px-5 py-3 text-sm font-medium text-foreground">{order.total}</td>
+                      <td className="px-5 py-3">
+                        <Badge variant={s.variant}>{s.label}</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Top products */}
+        <div className="bg-card rounded-lg shadow-card border border-border animate-slide-in">
+          <div className="px-5 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-foreground">أفضل المنتجات</h2>
+          </div>
+          <div className="divide-y divide-border">
+            {topProducts.map((product, i) => (
+              <div key={i} className="px-5 py-3.5 flex items-center justify-between hover:bg-muted/40 transition-colors">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{product.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{product.sold} مبيعة</p>
+                </div>
+                <span className="text-sm font-semibold text-foreground">{product.revenue}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

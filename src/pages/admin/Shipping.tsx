@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save } from "lucide-react";
+import { Save, Search } from "lucide-react";
 
 interface WilayaShipping {
   id: number;
@@ -19,14 +19,25 @@ const initialWilayas: WilayaShipping[] = [
   { id: 8, name: "بشار", homePrice: 850, deskPrice: 550 },
   { id: 9, name: "البليدة", homePrice: 400, deskPrice: 300 },
   { id: 10, name: "البويرة", homePrice: 500, deskPrice: 350 },
+  { id: 11, name: "تمنراست", homePrice: 900, deskPrice: 600 },
+  { id: 12, name: "تبسة", homePrice: 650, deskPrice: 400 },
+  { id: 13, name: "تلمسان", homePrice: 600, deskPrice: 400 },
+  { id: 14, name: "تيارت", homePrice: 600, deskPrice: 400 },
+  { id: 15, name: "تيزي وزو", homePrice: 500, deskPrice: 350 },
   { id: 16, name: "الجزائر", homePrice: 400, deskPrice: 250 },
-  { id: 31, name: "وهران", homePrice: 500, deskPrice: 350 },
-  { id: 25, name: "قسنطينة", homePrice: 550, deskPrice: 350 },
+  { id: 17, name: "الجلفة", homePrice: 650, deskPrice: 400 },
+  { id: 18, name: "جيجل", homePrice: 600, deskPrice: 400 },
   { id: 19, name: "سطيف", homePrice: 550, deskPrice: 350 },
+  { id: 20, name: "سعيدة", homePrice: 650, deskPrice: 400 },
+  { id: 25, name: "قسنطينة", homePrice: 550, deskPrice: 350 },
+  { id: 31, name: "وهران", homePrice: 500, deskPrice: 350 },
 ];
 
 const Shipping = () => {
   const [wilayas, setWilayas] = useState(initialWilayas);
+  const [search, setSearch] = useState("");
+
+  const filtered = wilayas.filter((w) => w.name.includes(search) || w.id.toString().includes(search));
 
   const updatePrice = (id: number, field: "homePrice" | "deskPrice", value: number) => {
     setWilayas((prev) =>
@@ -35,47 +46,58 @@ const Shipping = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">إعدادات الشحن</h1>
-          <p className="text-muted-foreground text-sm mt-1">أسعار التوصيل للمنزل والمكتب حسب الولاية</p>
+          <h1 className="text-xl font-semibold text-foreground">الشحن</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">أسعار التوصيل للمنزل والمكتب حسب الولاية</p>
         </div>
-        <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <button className="h-9 px-4 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity">
           <Save className="w-4 h-4" />
           حفظ التغييرات
         </button>
       </div>
 
-      <div className="bg-card rounded-lg shadow-card border border-border overflow-hidden animate-fade-in">
+      <div className="relative max-w-sm">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="بحث عن ولاية..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full h-9 pr-9 pl-3 rounded-lg border border-input bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+        />
+      </div>
+
+      <div className="bg-card rounded-lg shadow-card border border-border overflow-hidden animate-slide-in">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              <th className="text-right text-xs font-medium text-muted-foreground p-4">الرقم</th>
-              <th className="text-right text-xs font-medium text-muted-foreground p-4">الولاية</th>
-              <th className="text-right text-xs font-medium text-muted-foreground p-4">التوصيل للمنزل (د.ج)</th>
-              <th className="text-right text-xs font-medium text-muted-foreground p-4">التوصيل للمكتب (د.ج)</th>
+              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3 w-16">#</th>
+              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الولاية</th>
+              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">🏠 التوصيل للمنزل (د.ج)</th>
+              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">🏢 التوصيل للمكتب (د.ج)</th>
             </tr>
           </thead>
           <tbody>
-            {wilayas.map((w) => (
-              <tr key={w.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                <td className="p-4 text-sm text-muted-foreground">{w.id}</td>
-                <td className="p-4 text-sm font-medium text-foreground">{w.name}</td>
-                <td className="p-4">
+            {filtered.map((w) => (
+              <tr key={w.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
+                <td className="px-5 py-2.5 text-sm text-muted-foreground font-mono">{String(w.id).padStart(2, "0")}</td>
+                <td className="px-5 py-2.5 text-sm font-medium text-foreground">{w.name}</td>
+                <td className="px-5 py-2.5">
                   <input
                     type="number"
                     value={w.homePrice}
                     onChange={(e) => updatePrice(w.id, "homePrice", Number(e.target.value))}
-                    className="w-24 px-3 py-1.5 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-24 h-8 px-2.5 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors text-center"
                   />
                 </td>
-                <td className="p-4">
+                <td className="px-5 py-2.5">
                   <input
                     type="number"
                     value={w.deskPrice}
                     onChange={(e) => updatePrice(w.id, "deskPrice", Number(e.target.value))}
-                    className="w-24 px-3 py-1.5 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-24 h-8 px-2.5 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors text-center"
                   />
                 </td>
               </tr>

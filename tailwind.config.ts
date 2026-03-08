@@ -14,7 +14,16 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["'IBM Plex Sans Arabic'", "system-ui", "sans-serif"],
+        sans: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
+      },
+      fontSize: {
+        "2xs": ["0.6875rem", { lineHeight: "1rem" }],    // 11px
+        xs: ["0.75rem", { lineHeight: "1rem" }],          // 12px
+        sm: ["0.8125rem", { lineHeight: "1.25rem" }],     // 13px
+        base: ["0.875rem", { lineHeight: "1.375rem" }],   // 14px
+        lg: ["1rem", { lineHeight: "1.5rem" }],            // 16px
+        xl: ["1.25rem", { lineHeight: "1.75rem" }],        // 20px
+        "2xl": ["1.5rem", { lineHeight: "2rem" }],         // 24px
       },
       colors: {
         border: "hsl(var(--border))",
@@ -37,10 +46,22 @@ export default {
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+          subtle: "hsl(var(--success-subtle-bg))",
+          "subtle-text": "hsl(var(--success-subtle-text))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+        },
+        attention: {
+          DEFAULT: "hsl(var(--attention))",
+          bg: "hsl(var(--attention-bg))",
+          text: "hsl(var(--attention-text))",
+        },
+        critical: {
+          DEFAULT: "hsl(var(--critical))",
+          bg: "hsl(var(--critical-bg))",
+          text: "hsl(var(--critical-text))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -63,8 +84,11 @@ export default {
           foreground: "hsl(var(--sidebar-fg))",
           active: "hsl(var(--sidebar-active))",
           "active-foreground": "hsl(var(--sidebar-active-fg))",
+          "active-bg": "hsl(var(--sidebar-active-bg))",
           hover: "hsl(var(--sidebar-hover))",
           border: "hsl(var(--sidebar-border))",
+          heading: "hsl(var(--sidebar-heading))",
+          icon: "hsl(var(--sidebar-icon))",
         },
       },
       borderRadius: {
@@ -73,8 +97,12 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        card: "var(--shadow-card)",
-        elevated: "var(--shadow-elevated)",
+        "card": "0 1px 0 0 rgba(0,0,0,.05)",
+        "card-hover": "0 0 0 1px rgba(63,63,68,.05), 0 1px 3px 0 rgba(63,63,68,.15)",
+        "shopify": "0 0 5px rgba(23,24,24,.05), 0 1px 2px rgba(0,0,0,.07)",
+        "shopify-lg": "0 0 0 1px rgba(6,44,82,.1), 0 2px 16px rgba(33,43,54,.08)",
+        "button": "0 1px 0 rgba(0,0,0,.05)",
+        "inset": "inset 0 1px 1px 0 rgba(0,0,0,.05), inset 0 0 0 1px rgba(0,0,0,.08)",
       },
       keyframes: {
         "accordion-down": {
@@ -85,15 +113,20 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "fade-in": {
-          from: { opacity: "0", transform: "translateY(8px)" },
+        "slide-in": {
+          from: { opacity: "0", transform: "translateY(4px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "pulse-subtle": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.3s ease-out",
+        "slide-in": "slide-in 0.15s ease-out",
+        "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
       },
     },
   },
