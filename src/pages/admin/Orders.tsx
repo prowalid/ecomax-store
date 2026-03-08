@@ -75,7 +75,21 @@ const Orders = () => {
   });
 
   const handleStatusChange = (id: string, newStatus: OrderStatus) => {
+    const order = orders.find((o) => o.id === id);
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+
+    // Send WhatsApp notification in background
+    if (order) {
+      sendOrderStatusNotification(order.id, newStatus, {
+        customer_name: order.customer,
+        customer_phone: order.phone.replace(/\s/g, ""),
+        items: `${order.items} منتج`,
+        total: order.total.replace(" د.ج", ""),
+        address: order.commune,
+        state: order.wilaya,
+      });
+    }
+  };
   };
 
   const toggleSelect = (id: string) => {
