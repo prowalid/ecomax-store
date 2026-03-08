@@ -1,0 +1,4 @@
+project_id = "ihklnbgmnnnjgdybcmjj"
+
+[functions.facebook-capi]
+verify_jwt = false
