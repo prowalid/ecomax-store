@@ -323,10 +323,7 @@ const StorePage = () => {
       {selectedProduct && isModalOpen && (
         <QuickOrderModal
           open={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedProduct(null);
-          }}
+          onClose={handleCloseQuickOrder}
           product={selectedProduct}
         />
       )}
