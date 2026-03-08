@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Bell, Send, CheckCircle2, XCircle, TestTube, MessageCircle, Phone, Settings2, FileText } from "lucide-react";
+import { Bell, Send, CheckCircle2, XCircle, MessageCircle, Phone, Settings2, FileText, Loader2, Save, Wifi, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 
 const NOTIFICATION_TYPES = [
   { key: "order_confirmed", label: "تأكيد الطلب", desc: "إشعار للزبون عند تأكيد طلبه", icon: "✅", target: "customer" },
@@ -18,21 +19,69 @@ const TEMPLATE_PREVIEWS: Record<string, string> = {
 };
 
 const Notifications = () => {
-  const [enabledNotifs, setEnabledNotifs] = useState<Record<string, boolean>>({
-    order_confirmed: true,
-    order_shipped: true,
-    order_delivered: false,
-    new_order_admin: true,
-  });
-  const [adminPhone, setAdminPhone] = useState("");
+  const {
+    settings,
+    loading,
+    saving,
+    saveSettings,
+    toggleNotification,
+    setAdminPhone,
+    markApiConfigured,
+  } = useNotificationSettings();
+
+  const [instanceId, setInstanceId] = useState("");
+  const [apiToken, setApiToken] = useState("");
+  const [apiValidating, setApiValidating] = useState(false);
+  const [apiStatus, setApiStatus] = useState<{ connected: boolean; state?: string } | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
+
+  // Test send state
   const [testPhone, setTestPhone] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("order_confirmed");
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
 
-  const toggleNotif = (key: string) => {
-    setEnabledNotifs((prev) => ({ ...prev, [key]: !prev[key] }));
+  const handleValidateAndSaveApi = async () => {
+    if (!instanceId.trim() || !apiToken.trim()) {
+      toast.error("أدخل Instance ID و API Token");
+      return;
+    }
+
+    setApiValidating(true);
+    setApiStatus(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("update-green-api", {
+        body: { instance_id: instanceId, api_token: apiToken },
+      });
+
+      if (error) {
+        setApiStatus({ connected: false });
+        toast.error("فشل التحقق من بيانات API");
+        return;
+      }
+
+      if (data?.success) {
+        setApiStatus({ connected: true, state: data.state });
+        markApiConfigured(true);
+        toast.success("تم التحقق وحفظ بيانات Green API بنجاح");
+        // Clear sensitive fields
+        setInstanceId("");
+        setApiToken("");
+      } else {
+        setApiStatus({ connected: false });
+        toast.error(data?.error || "بيانات API غير صالحة");
+      }
+    } catch (err: any) {
+      setApiStatus({ connected: false });
+      toast.error("خطأ في الاتصال");
+    } finally {
+      setApiValidating(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    await saveSettings(settings);
   };
 
   const handleTestSend = async () => {
@@ -45,7 +94,7 @@ const Notifications = () => {
     setTestResult(null);
 
     try {
-      const testData: Record<string, any> = {
+      const testData = {
         order_id: "TEST-" + Math.floor(Math.random() * 9999),
         customer_name: "أحمد بن علي",
         customer_phone: "0555123456",
@@ -58,18 +107,14 @@ const Notifications = () => {
       };
 
       const { data, error } = await supabase.functions.invoke("whatsapp-notify", {
-        body: {
-          template: selectedTemplate,
-          phone: testPhone,
-          data: testData,
-        },
+        body: { template: selectedTemplate, phone: testPhone, data: testData },
       });
 
       if (error) {
         setTestResult({ success: false, message: `خطأ: ${error.message}` });
         toast.error("فشل إرسال الرسالة التجريبية");
       } else if (data?.success) {
-        setTestResult({ success: true, message: `✅ تم الإرسال — idMessage: ${data.idMessage}` });
+        setTestResult({ success: true, message: `✅ تم الإرسال بنجاح` });
         toast.success("تم إرسال الرسالة بنجاح!");
       } else {
         setTestResult({ success: false, message: `❌ ${data?.error || "خطأ غير معروف"}` });
@@ -86,43 +131,99 @@ const Notifications = () => {
   const inputClass =
     "w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors";
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">الإشعارات</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          إشعارات واتساب تلقائية للزبائن والإدارة عبر Green API
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">الإشعارات</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            إشعارات واتساب تلقائية عند تغيير حالة الطلبات
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {settings.api_configured ? (
+            <span className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+              <Wifi className="w-3.5 h-3.5" /> متصل
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+              <WifiOff className="w-3.5 h-3.5" /> غير متصل
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Green API Config */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card rounded-lg shadow-card border border-border p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-[hsl(142_70%_45%/0.1)] flex items-center justify-center">
-              <MessageCircle className="w-5 h-5 text-[hsl(142_70%_45%)]" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Green API — Instance ID</h3>
-              <p className="text-xs text-muted-foreground">معرّف الجلسة من لوحة Green API</p>
-            </div>
+      <div className="bg-card rounded-lg shadow-card border border-border p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-lg bg-[hsl(142_70%_45%/0.1)] flex items-center justify-center">
+            <MessageCircle className="w-5 h-5 text-[hsl(142_70%_45%)]" />
           </div>
-          <input type="text" placeholder="1101234567" className={inputClass} dir="ltr" />
-          <p className="text-xs text-muted-foreground mt-2">يُحفظ كـ Secret آمن في الخادم</p>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">إعداد Green API</h3>
+            <p className="text-xs text-muted-foreground">
+              {settings.api_configured
+                ? "API متصل — يمكنك تحديث البيانات بإدخال بيانات جديدة"
+                : "أدخل بيانات Green API لتفعيل إشعارات واتساب"}
+            </p>
+          </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-card border border-border p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-[hsl(142_70%_45%/0.1)] flex items-center justify-center">
-              <Settings2 className="w-5 h-5 text-[hsl(142_70%_45%)]" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">API Token</h3>
-              <p className="text-xs text-muted-foreground">رمز المصادقة من Green API</p>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1.5">Instance ID</label>
+            <input
+              type="text"
+              value={instanceId}
+              onChange={(e) => setInstanceId(e.target.value)}
+              placeholder={settings.api_configured ? "•••• (محفوظ)" : "1101234567"}
+              className={inputClass}
+              dir="ltr"
+            />
           </div>
-          <input type="password" placeholder="abc123def456..." className={inputClass} dir="ltr" />
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1.5">API Token</label>
+            <input
+              type="password"
+              value={apiToken}
+              onChange={(e) => setApiToken(e.target.value)}
+              placeholder={settings.api_configured ? "•••• (محفوظ)" : "abc123def456..."}
+              className={inputClass}
+              dir="ltr"
+            />
+          </div>
         </div>
+
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            onClick={handleValidateAndSaveApi}
+            disabled={apiValidating || (!instanceId.trim() && !apiToken.trim())}
+            className="h-9 px-4 flex items-center gap-2 rounded-lg bg-[hsl(142_70%_45%)] text-white text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
+          >
+            {apiValidating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Settings2 className="w-4 h-4" />
+            )}
+            تحقق وحفظ
+          </button>
+          {apiStatus && (
+            <span className={`text-xs ${apiStatus.connected ? "text-primary" : "text-destructive"}`}>
+              {apiStatus.connected ? `✅ متصل (${apiStatus.state})` : "❌ فشل الاتصال"}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          البيانات تُحفظ بشكل آمن كـ Secrets في الخادم ولا تظهر في الواجهة
+        </p>
       </div>
 
       {/* Admin Phone */}
@@ -138,7 +239,7 @@ const Notifications = () => {
         </div>
         <input
           type="tel"
-          value={adminPhone}
+          value={settings.admin_phone}
           onChange={(e) => setAdminPhone(e.target.value)}
           placeholder="0555123456"
           className={inputClass + " max-w-xs"}
@@ -152,7 +253,7 @@ const Notifications = () => {
           <Bell className="w-5 h-5 text-primary" />
           <div>
             <h3 className="text-sm font-semibold text-foreground">الإشعارات التلقائية</h3>
-            <p className="text-xs text-muted-foreground">اختر الإشعارات التي تُرسل تلقائياً عند تغيير حالة الطلب</p>
+            <p className="text-xs text-muted-foreground">تُرسل تلقائياً عند تغيير حالة الطلب من صفحة الطلبات</p>
           </div>
         </div>
 
@@ -185,8 +286,8 @@ const Notifications = () => {
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={enabledNotifs[notif.key] || false}
-                    onChange={() => toggleNotif(notif.key)}
+                    checked={settings.enabled_notifications[notif.key] || false}
+                    onChange={() => toggleNotification(notif.key)}
                     className="sr-only peer"
                   />
                   <div className="w-9 h-5 bg-muted rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:right-0.5 after:bg-card after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-[-16px]" />
@@ -214,79 +315,84 @@ const Notifications = () => {
         </div>
       )}
 
-      {/* Test Send */}
-      <div className="bg-card rounded-lg shadow-card border border-border p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <TestTube className="w-5 h-5 text-primary" />
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">اختبار الإرسال</h3>
-            <p className="text-xs text-muted-foreground">أرسل رسالة تجريبية للتأكد من عمل الإعداد</p>
+      {/* Test Send — only when API is configured */}
+      {settings.api_configured && (
+        <div className="bg-card rounded-lg shadow-card border border-border p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <Send className="w-5 h-5 text-primary" />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">اختبار الإرسال</h3>
+              <p className="text-xs text-muted-foreground">أرسل رسالة تجريبية للتأكد من عمل الإعداد</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-wrap gap-3 items-end">
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">القالب</label>
-            <select
-              value={selectedTemplate}
-              onChange={(e) => setSelectedTemplate(e.target.value)}
-              className={inputClass + " w-52"}
+          <div className="flex flex-wrap gap-3 items-end">
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1.5">القالب</label>
+              <select
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                className={inputClass + " w-52"}
+              >
+                {NOTIFICATION_TYPES.map((n) => (
+                  <option key={n.key} value={n.key}>
+                    {n.icon} {n.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1.5">رقم الهاتف</label>
+              <input
+                type="tel"
+                value={testPhone}
+                onChange={(e) => setTestPhone(e.target.value)}
+                placeholder="0555123456"
+                className={inputClass + " w-44"}
+                dir="ltr"
+              />
+            </div>
+
+            <button
+              onClick={handleTestSend}
+              disabled={testLoading}
+              className="h-9 px-4 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
             >
-              {NOTIFICATION_TYPES.map((n) => (
-                <option key={n.key} value={n.key}>
-                  {n.icon} {n.label}
-                </option>
-              ))}
-            </select>
+              {testLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              إرسال تجريبي
+            </button>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">رقم الهاتف</label>
-            <input
-              type="tel"
-              value={testPhone}
-              onChange={(e) => setTestPhone(e.target.value)}
-              placeholder="0555123456"
-              className={inputClass + " w-44"}
-              dir="ltr"
-            />
-          </div>
-
-          <button
-            onClick={handleTestSend}
-            disabled={testLoading}
-            className="h-9 px-4 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
-          >
-            {testLoading ? (
-              <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-            إرسال تجريبي
-          </button>
+          {testResult && (
+            <div
+              className={`mt-3 p-3 rounded-lg flex items-start gap-2 text-sm ${
+                testResult.success ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+              }`}
+            >
+              {testResult.success ? (
+                <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+              ) : (
+                <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              )}
+              <p className="text-xs leading-relaxed">{testResult.message}</p>
+            </div>
+          )}
         </div>
-
-        {testResult && (
-          <div
-            className={`mt-3 p-3 rounded-lg flex items-start gap-2 text-sm ${
-              testResult.success ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
-            }`}
-          >
-            {testResult.success ? (
-              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-            ) : (
-              <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            )}
-            <p className="text-xs leading-relaxed" dir="ltr">
-              {testResult.message}
-            </p>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Save */}
       <div className="flex justify-end">
-        <button className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity">
+        <button
+          onClick={handleSaveSettings}
+          disabled={saving}
+          className="h-9 px-6 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ الإعدادات
         </button>
       </div>
