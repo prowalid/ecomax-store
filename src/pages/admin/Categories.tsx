@@ -1,33 +1,64 @@
 import { useState } from "react";
-import { Plus, FolderOpen, GripVertical } from "lucide-react";
-
-interface Category {
-  id: string;
-  name: string;
-  productsCount: number;
-  order: number;
-}
-
-const initialCategories: Category[] = [
-  { id: "CAT1", name: "أحذية", productsCount: 12, order: 1 },
-  { id: "CAT2", name: "ساعات", productsCount: 8, order: 2 },
-  { id: "CAT3", name: "ملابس رجالية", productsCount: 15, order: 3 },
-  { id: "CAT4", name: "ملابس نسائية", productsCount: 20, order: 4 },
-  { id: "CAT5", name: "إكسسوارات", productsCount: 6, order: 5 },
-];
+import { Plus, FolderOpen, GripVertical, Loader2, Trash2 } from "lucide-react";
+import { useCategories, useCreateCategory, useDeleteCategory } from "@/hooks/useCategories";
 
 const Categories = () => {
-  const [categories] = useState(initialCategories);
+  const { data: categories = [], isLoading } = useCategories();
+  const createCategory = useCreateCategory();
+  const deleteCategory = useDeleteCategory();
+  const [newName, setNewName] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+
+  const handleAdd = () => {
+    if (!newName.trim()) return;
+    const slug = newName.trim().toLowerCase().replace(/\s+/g, "-");
+    createCategory.mutate(
+      { name: newName.trim(), slug, sort_order: categories.length + 1 },
+      { onSuccess: () => { setNewName(""); setShowAdd(false); } }
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">التصنيفات</h1>
-        <button className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity flex items-center gap-2">
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           إضافة تصنيف
         </button>
       </div>
+
+      {showAdd && (
+        <div className="bg-card rounded-lg shadow-card border border-border p-4 flex items-center gap-3 animate-slide-in">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="اسم التصنيف..."
+            className="flex-1 h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            autoFocus
+          />
+          <button
+            onClick={handleAdd}
+            disabled={createCategory.isPending}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
+          >
+            {createCategory.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "إضافة"}
+          </button>
+        </div>
+      )}
 
       <div className="bg-card rounded-lg shadow-card border border-border overflow-hidden">
         <div className="divide-y divide-border">
@@ -38,12 +69,19 @@ const Categories = () => {
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">{cat.name}</p>
               </div>
-              <span className="text-xs text-muted-foreground">{cat.productsCount} منتج</span>
-              <button className="text-xs px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                تعديل
+              <button
+                onClick={() => deleteCategory.mutate(cat.id)}
+                className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))}
+          {categories.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground text-sm">
+              لا توجد تصنيفات بعد
+            </div>
+          )}
         </div>
       </div>
     </div>
