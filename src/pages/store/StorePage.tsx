@@ -354,7 +354,7 @@ const StorePage = () => {
       {/* Floating Mobile Button */}
       <div className="fixed bottom-6 left-6 md:hidden z-40">
         <button
-          onClick={() => activeProducts[0] && openQuickOrder(activeProducts[0])}
+          onClick={openHeaderQuickOrder}
           className="bg-[#dc3545] text-white p-4 rounded-full shadow-[0_8px_20px_rgba(220,53,69,0.4)] flex items-center justify-center animate-bounce"
         >
           <ShoppingBag size={24} />
