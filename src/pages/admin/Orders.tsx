@@ -90,7 +90,6 @@ const Orders = () => {
       });
     }
   };
-  };
 
   const toggleSelect = (id: string) => {
     setSelectedOrders((prev) =>
