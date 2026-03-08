@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Phone, Truck, User, ShoppingBag, ChevronLeft, ChevronRight,
@@ -38,7 +38,7 @@ const StorePage = () => {
   const activeProducts = products.filter((p) => p.status === "active");
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
 
-  const openQuickOrder = (product: any) => {
+  const openQuickOrder = useCallback((product: any) => {
     setSelectedProduct({
       id: product.id,
       name: product.name,
@@ -48,7 +48,7 @@ const StorePage = () => {
     });
     setQty(1);
     setIsModalOpen(true);
-  };
+  }, []);
 
   const handleCloseQuickOrder = () => {
     setIsModalOpen(false);
@@ -76,7 +76,20 @@ const StorePage = () => {
       nextParams.delete("ts");
       setSearchParams(nextParams, { replace: true });
     }
-  }, [searchParams, activeProducts, isModalOpen]);
+  }, [searchParams, activeProducts, isModalOpen, openQuickOrder, setSearchParams]);
+
+  useEffect(() => {
+    const handleHeaderQuickOrder = () => {
+      if (activeProducts.length > 0) {
+        openQuickOrder(activeProducts[0]);
+      }
+    };
+
+    window.addEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
+    return () => {
+      window.removeEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
+    };
+  }, [activeProducts, openQuickOrder]);
 
   if (isLoading) {
     return (
