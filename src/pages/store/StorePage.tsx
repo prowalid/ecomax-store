@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Phone, Truck, User, ShoppingBag, ChevronLeft, ChevronRight,
   ShieldCheck, Headphones, RotateCcw, Globe, Star, X, Flame, Tag, ArrowLeft, Grid, Loader2
@@ -22,6 +22,7 @@ const defaultCatImages = [
 const StorePage = () => {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -48,6 +49,34 @@ const StorePage = () => {
     setQty(1);
     setIsModalOpen(true);
   };
+
+  const handleCloseQuickOrder = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+
+    if (searchParams.get("quickOrder") === "1") {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("quickOrder");
+      nextParams.delete("ts");
+      setSearchParams(nextParams, { replace: true });
+    }
+  };
+
+  useEffect(() => {
+    if (searchParams.get("quickOrder") !== "1") return;
+
+    if (activeProducts.length > 0 && !isModalOpen) {
+      openQuickOrder(activeProducts[0]);
+      return;
+    }
+
+    if (activeProducts.length === 0) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("quickOrder");
+      nextParams.delete("ts");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, activeProducts, isModalOpen]);
 
   if (isLoading) {
     return (
@@ -294,10 +323,7 @@ const StorePage = () => {
       {selectedProduct && isModalOpen && (
         <QuickOrderModal
           open={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedProduct(null);
-          }}
+          onClose={handleCloseQuickOrder}
           product={selectedProduct}
         />
       )}
