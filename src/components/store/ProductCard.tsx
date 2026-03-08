@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBag, Star } from "lucide-react";
 
 interface ProductCardProps {
   id: string;
@@ -11,69 +11,75 @@ interface ProductCardProps {
   onQuickOrder?: (id: string) => void;
 }
 
-const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " د.ج";
+const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
 const ProductCard = ({ id, name, price, compare_price, image_url, category_name, onQuickOrder }: ProductCardProps) => {
   const hasDiscount = compare_price && compare_price > price;
 
   return (
-    <div className="product-card-wrap bg-white rounded-none overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 relative">
       <Link to={`/product/${id}`} className="block">
-        {/* Image - 3:4 ratio */}
-        <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
+        {/* Image */}
+        <div className="relative overflow-hidden">
+          {hasDiscount && (
+            <span className="absolute top-3 right-3 bg-[#dc3545] text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow-md">
+              تخفيض!
+            </span>
+          )}
           {image_url ? (
             <img
               src={image_url}
               alt={name}
-              className="product-card-img w-full h-full object-cover"
+              className="w-full h-72 object-cover transform group-hover:scale-110 transition-transform duration-700 ease-in-out"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl bg-gray-100">📦</div>
+            <div className="w-full h-72 flex items-center justify-center text-6xl bg-gray-100">📦</div>
           )}
-          {hasDiscount && (
-            <span className="sale-badge absolute top-0 right-0 text-white text-[11px] font-bold px-2 py-1 rounded-none" style={{ background: 'rgba(167, 4, 4, 0.8)' }}>
-              تخفيض!
+
+          {/* Overlay hover button */}
+          <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <span className="bg-white text-[#dc3545] font-bold py-2 px-6 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg flex items-center">
+              <ShoppingBag size={18} className="ml-2" /> عرض سريع
             </span>
-          )}
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-3 text-center">
-          <h2 className="text-[14px] font-semibold text-[#000] leading-tight line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem] font-[Cairo]">
+        <div className="p-5 text-center">
+          <h3 className="text-gray-900 font-bold mb-3 line-clamp-2 h-12 hover:text-[#dc3545] transition-colors cursor-pointer font-[Cairo]">
             {name}
-          </h2>
+          </h3>
 
           {/* Star rating */}
-          <div className="flex items-center justify-center gap-0.5 mt-2">
+          <div className="flex items-center justify-center mb-3">
             {[1, 2, 3, 4, 5].map((star) => (
-              <svg key={star} className="star-icon w-[14px] h-[14px] text-primary" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
+              <Star key={star} size={16} className="text-[#dc3545] fill-current" />
             ))}
           </div>
 
           {/* Price */}
-          <div className="flex items-center justify-center gap-2 mt-2">
+          <div className="flex items-center justify-center mb-5 space-x-2 space-x-reverse">
             {hasDiscount && (
-              <del className="text-[13px] text-gray-400">{formatPrice(compare_price)}</del>
+              <span className="text-gray-400 line-through text-sm">{formatPrice(compare_price)}</span>
             )}
-            <ins className="text-[15px] font-bold text-primary no-underline">{formatPrice(price)}</ins>
+            <span className="text-[#dc3545] font-black text-xl">{formatPrice(price)}</span>
           </div>
         </div>
       </Link>
 
       {/* Add to cart button */}
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          onQuickOrder?.(id);
-        }}
-        className="add-to-cart-btn w-full h-[42px] bg-primary text-primary-foreground text-[13px] font-semibold flex items-center justify-center gap-2 rounded-none"
-      >
-        <ShoppingCart className="w-4 h-4" />
-        إضافة إلى السلة
-      </button>
+      <div className="px-5 pb-5">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            onQuickOrder?.(id);
+          }}
+          className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200"
+        >
+          <ShoppingBag size={20} className="ml-2" /> أضف إلى السلة
+        </button>
+      </div>
     </div>
   );
 };
