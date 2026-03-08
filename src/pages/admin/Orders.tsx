@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, MoreHorizontal, Phone, MapPin, ChevronDown, Eye } from "lucide-react";
+import { Search, Phone, MapPin, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type OrderStatus = "new" | "confirmed" | "shipped" | "delivered" | "returned";
+type OrderStatus = "new" | "attempt" | "no_answer" | "confirmed" | "cancelled" | "ready" | "shipped" | "delivered" | "returned";
 
 interface Order {
   id: string;
@@ -16,27 +16,48 @@ interface Order {
   status: OrderStatus;
   date: string;
   delivery: "home" | "desk";
+  attempts?: number;
+  note?: string;
 }
 
-const statusConfig: Record<OrderStatus, { label: string; variant: "info" | "warning" | "default" | "success" | "destructive" }> = {
+const statusConfig: Record<OrderStatus, { label: string; variant: "info" | "warning" | "default" | "success" | "destructive" | "muted" | "purple" | "pink" | "secondary" }> = {
   new: { label: "جديد", variant: "info" },
+  attempt: { label: "محاولة اتصال", variant: "purple" },
+  no_answer: { label: "لا يجيب", variant: "pink" },
   confirmed: { label: "مؤكد", variant: "warning" },
+  cancelled: { label: "ملغي", variant: "muted" },
+  ready: { label: "جاهز للشحن", variant: "secondary" },
   shipped: { label: "مشحون", variant: "default" },
   delivered: { label: "مسلّم", variant: "success" },
   returned: { label: "مرتجع", variant: "destructive" },
 };
 
-const allStatuses: OrderStatus[] = ["new", "confirmed", "shipped", "delivered", "returned"];
+const allStatuses: OrderStatus[] = ["new", "attempt", "no_answer", "confirmed", "cancelled", "ready", "shipped", "delivered", "returned"];
+
+// Status flow: what statuses can transition to
+const statusFlow: Record<OrderStatus, OrderStatus[]> = {
+  new: ["attempt", "confirmed", "cancelled"],
+  attempt: ["no_answer", "confirmed", "cancelled"],
+  no_answer: ["attempt", "confirmed", "cancelled"],
+  confirmed: ["ready", "cancelled"],
+  cancelled: [],
+  ready: ["shipped"],
+  shipped: ["delivered", "returned"],
+  delivered: [],
+  returned: [],
+};
 
 const initialOrders: Order[] = [
   { id: "#1234", customer: "أحمد بن علي", phone: "0555 12 34 56", wilaya: "الجزائر", commune: "بئر مراد رايس", total: "4,500 د.ج", items: 2, status: "new", date: "اليوم، 14:30", delivery: "home" },
   { id: "#1233", customer: "فاطمة زهراء", phone: "0661 23 45 67", wilaya: "وهران", commune: "وهران المدينة", total: "3,200 د.ج", items: 1, status: "new", date: "اليوم، 13:15", delivery: "desk" },
-  { id: "#1232", customer: "محمد كريم", phone: "0770 12 34 56", wilaya: "قسنطينة", commune: "قسنطينة", total: "7,800 د.ج", items: 3, status: "confirmed", date: "أمس، 18:00", delivery: "home" },
-  { id: "#1231", customer: "سارة بوعلام", phone: "0550 98 76 54", wilaya: "سطيف", commune: "سطيف المدينة", total: "2,100 د.ج", items: 1, status: "confirmed", date: "أمس، 10:20", delivery: "desk" },
-  { id: "#1230", customer: "يوسف حداد", phone: "0660 11 22 33", wilaya: "باتنة", commune: "باتنة", total: "5,600 د.ج", items: 2, status: "shipped", date: "منذ يومين", delivery: "home" },
-  { id: "#1229", customer: "نور الهدى", phone: "0771 22 33 44", wilaya: "بجاية", commune: "بجاية", total: "1,800 د.ج", items: 1, status: "delivered", date: "منذ 3 أيام", delivery: "home" },
-  { id: "#1228", customer: "كمال بوزيد", phone: "0550 33 44 55", wilaya: "تيزي وزو", commune: "تيزي وزو", total: "9,200 د.ج", items: 4, status: "delivered", date: "منذ 3 أيام", delivery: "desk" },
-  { id: "#1227", customer: "أمينة سعيدي", phone: "0661 44 55 66", wilaya: "عنابة", commune: "عنابة", total: "3,400 د.ج", items: 1, status: "returned", date: "منذ 4 أيام", delivery: "home" },
+  { id: "#1232", customer: "محمد كريم", phone: "0770 12 34 56", wilaya: "قسنطينة", commune: "قسنطينة", total: "7,800 د.ج", items: 3, status: "attempt", date: "أمس، 18:00", delivery: "home", attempts: 1 },
+  { id: "#1231", customer: "سارة بوعلام", phone: "0550 98 76 54", wilaya: "سطيف", commune: "سطيف المدينة", total: "2,100 د.ج", items: 1, status: "no_answer", date: "أمس، 10:20", delivery: "desk", attempts: 3 },
+  { id: "#1230", customer: "يوسف حداد", phone: "0660 11 22 33", wilaya: "باتنة", commune: "باتنة", total: "5,600 د.ج", items: 2, status: "confirmed", date: "منذ يومين", delivery: "home" },
+  { id: "#1229", customer: "نور الهدى", phone: "0771 22 33 44", wilaya: "بجاية", commune: "بجاية", total: "1,800 د.ج", items: 1, status: "ready", date: "منذ يومين", delivery: "home" },
+  { id: "#1228", customer: "كمال بوزيد", phone: "0550 33 44 55", wilaya: "تيزي وزو", commune: "تيزي وزو", total: "9,200 د.ج", items: 4, status: "shipped", date: "منذ 3 أيام", delivery: "desk" },
+  { id: "#1227", customer: "أمينة سعيدي", phone: "0661 44 55 66", wilaya: "عنابة", commune: "عنابة", total: "3,400 د.ج", items: 1, status: "delivered", date: "منذ 3 أيام", delivery: "home" },
+  { id: "#1226", customer: "رضا بلقاسم", phone: "0770 55 66 77", wilaya: "بليدة", commune: "بليدة", total: "6,100 د.ج", items: 2, status: "returned", date: "منذ 4 أيام", delivery: "home" },
+  { id: "#1225", customer: "مريم خالدي", phone: "0555 66 77 88", wilaya: "الجزائر", commune: "الدار البيضاء", total: "2,800 د.ج", items: 1, status: "cancelled", date: "منذ 4 أيام", delivery: "desk", note: "الزبون ألغى" },
 ];
 
 const Orders = () => {
@@ -82,12 +103,12 @@ const Orders = () => {
         </button>
       </div>
 
-      {/* Status tabs */}
-      <div className="flex items-center gap-1 border-b border-border">
+      {/* Status tabs - scrollable */}
+      <div className="flex items-center gap-1 border-b border-border overflow-x-auto scrollbar-thin pb-px">
         <button
           onClick={() => setActiveFilter("all")}
           className={cn(
-            "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+            "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
             activeFilter === "all"
               ? "border-primary text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -103,7 +124,7 @@ const Orders = () => {
               key={status}
               onClick={() => setActiveFilter(status)}
               className={cn(
-                "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
                 activeFilter === status
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -115,7 +136,7 @@ const Orders = () => {
         })}
       </div>
 
-      {/* Search + filters bar */}
+      {/* Search bar */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -135,8 +156,8 @@ const Orders = () => {
           <span className="text-sm text-foreground font-medium">
             {selectedOrders.length} طلب محدد
           </span>
-          <div className="flex items-center gap-2 mr-auto">
-            {allStatuses.map((status) => (
+          <div className="flex items-center gap-2 mr-auto flex-wrap">
+            {allStatuses.filter(s => s !== "cancelled").map((status) => (
               <button
                 key={status}
                 onClick={() => {
@@ -180,84 +201,21 @@ const Orders = () => {
               const s = statusConfig[order.status];
               const isExpanded = expandedOrder === order.id;
               const isSelected = selectedOrders.includes(order.id);
-              const currentIdx = allStatuses.indexOf(order.status);
-              const nextStatus = allStatuses[currentIdx + 1];
+              const nextStatuses = statusFlow[order.status];
 
               return (
-                <>
-                  <tr
-                    key={order.id}
-                    className={cn(
-                      "border-b border-border transition-colors cursor-pointer",
-                      isSelected ? "bg-primary/5" : "hover:bg-muted/40"
-                    )}
-                    onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                  >
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelect(order.id)}
-                        className="w-4 h-4 rounded border-input accent-primary"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-primary">{order.id}</span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{order.date}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{order.customer}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{order.wilaya}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-muted-foreground">
-                        {order.delivery === "home" ? "🏠 منزل" : "🏢 مكتب"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-foreground">{order.total}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={s.variant}>{s.label}</Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`${order.id}-detail`} className="bg-muted/20 animate-slide-in">
-                      <td colSpan={9} className="px-6 py-4">
-                        <div className="flex items-start gap-8">
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium text-muted-foreground">معلومات الاتصال</p>
-                            <div className="flex items-center gap-2 text-sm text-foreground">
-                              <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                              <span dir="ltr">{order.phone}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-foreground">
-                              <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                              <span>{order.commune}، {order.wilaya}</span>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium text-muted-foreground">المنتجات</p>
-                            <p className="text-sm text-foreground">{order.items} منتج</p>
-                          </div>
-                          {nextStatus && (
-                            <div className="mr-auto">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStatusChange(order.id, nextStatus);
-                                  setExpandedOrder(null);
-                                }}
-                                className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity"
-                              >
-                                تحويل إلى: {statusConfig[nextStatus].label}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
+                <OrderRow
+                  key={order.id}
+                  order={order}
+                  statusLabel={s.label}
+                  statusVariant={s.variant}
+                  isExpanded={isExpanded}
+                  isSelected={isSelected}
+                  nextStatuses={nextStatuses}
+                  onToggleExpand={() => setExpandedOrder(isExpanded ? null : order.id)}
+                  onToggleSelect={() => toggleSelect(order.id)}
+                  onStatusChange={handleStatusChange}
+                />
               );
             })}
           </tbody>
@@ -269,6 +227,110 @@ const Orders = () => {
         )}
       </div>
     </div>
+  );
+};
+
+interface OrderRowProps {
+  order: Order;
+  statusLabel: string;
+  statusVariant: string;
+  isExpanded: boolean;
+  isSelected: boolean;
+  nextStatuses: OrderStatus[];
+  onToggleExpand: () => void;
+  onToggleSelect: () => void;
+  onStatusChange: (id: string, status: OrderStatus) => void;
+}
+
+const OrderRow = ({ order, statusLabel, statusVariant, isExpanded, isSelected, nextStatuses, onToggleExpand, onToggleSelect, onStatusChange }: OrderRowProps) => {
+  return (
+    <>
+      <tr
+        className={cn(
+          "border-b border-border transition-colors cursor-pointer",
+          isSelected ? "bg-primary/5" : "hover:bg-muted/40"
+        )}
+        onClick={onToggleExpand}
+      >
+        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggleSelect}
+            className="w-4 h-4 rounded border-input accent-primary"
+          />
+        </td>
+        <td className="px-4 py-3">
+          <span className="text-sm font-medium text-primary">{order.id}</span>
+        </td>
+        <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{order.date}</td>
+        <td className="px-4 py-3 text-sm text-foreground">{order.customer}</td>
+        <td className="px-4 py-3 text-sm text-muted-foreground">{order.wilaya}</td>
+        <td className="px-4 py-3">
+          <span className="text-xs text-muted-foreground">
+            {order.delivery === "home" ? "🏠 منزل" : "🏢 مكتب"}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-sm font-medium text-foreground">{order.total}</td>
+        <td className="px-4 py-3">
+          <Badge variant={statusVariant as any}>{statusLabel}</Badge>
+        </td>
+        <td className="px-4 py-3">
+          <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className="bg-muted/20 animate-slide-in">
+          <td colSpan={9} className="px-6 py-4">
+            <div className="flex items-start gap-8 flex-wrap">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">معلومات الاتصال</p>
+                <div className="flex items-center gap-2 text-sm text-foreground">
+                  <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span dir="ltr">{order.phone}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-foreground">
+                  <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>{order.commune}، {order.wilaya}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">المنتجات</p>
+                <p className="text-sm text-foreground">{order.items} منتج</p>
+              </div>
+              {order.attempts !== undefined && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">محاولات الاتصال</p>
+                  <p className="text-sm text-foreground">{order.attempts} محاولة</p>
+                </div>
+              )}
+              {order.note && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">ملاحظة</p>
+                  <p className="text-sm text-foreground">{order.note}</p>
+                </div>
+              )}
+              {nextStatuses.length > 0 && (
+                <div className="mr-auto flex items-center gap-2 flex-wrap">
+                  {nextStatuses.map((ns) => (
+                    <button
+                      key={ns}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStatusChange(order.id, ns);
+                      }}
+                      className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-95 transition-opacity"
+                    >
+                      {statusConfig[ns].label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 
