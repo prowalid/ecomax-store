@@ -22,6 +22,7 @@ const defaultCatImages = [
 const StorePage = () => {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
