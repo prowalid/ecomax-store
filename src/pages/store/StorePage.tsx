@@ -50,6 +50,34 @@ const StorePage = () => {
     setIsModalOpen(true);
   };
 
+  const handleCloseQuickOrder = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+
+    if (searchParams.get("quickOrder") === "1") {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("quickOrder");
+      nextParams.delete("ts");
+      setSearchParams(nextParams, { replace: true });
+    }
+  };
+
+  useEffect(() => {
+    if (searchParams.get("quickOrder") !== "1") return;
+
+    if (activeProducts.length > 0 && !isModalOpen) {
+      openQuickOrder(activeProducts[0]);
+      return;
+    }
+
+    if (activeProducts.length === 0) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("quickOrder");
+      nextParams.delete("ts");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, activeProducts, isModalOpen]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32">
