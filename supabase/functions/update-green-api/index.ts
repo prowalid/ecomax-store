@@ -41,27 +41,26 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Update store_settings
+    // Read current notification settings and update api_configured flag
+    const { data: existing } = await supabase
+      .from("store_settings")
+      .select("value")
+      .eq("key", "whatsapp_notifications")
+      .single();
+
+    const currentValue = (existing?.value as Record<string, any>) || {};
+    const updatedValue = { ...currentValue, api_configured: true };
+
     const { error: dbError } = await supabase
       .from("store_settings")
       .update({
-        value: {
-          api_configured: true,
-          instance_id_hint: instance_id.substring(0, 4) + "****",
-        },
+        value: updatedValue,
         updated_at: new Date().toISOString(),
       })
-      .eq("key", "whatsapp_api_credentials");
+      .eq("key", "whatsapp_notifications");
 
-    // If the row doesn't exist, insert it
     if (dbError) {
-      await supabase.from("store_settings").upsert({
-        key: "whatsapp_api_credentials",
-        value: {
-          api_configured: true,
-          instance_id_hint: instance_id.substring(0, 4) + "****",
-        },
-        updated_at: new Date().toISOString(),
-      });
+      console.error("[update-green-api] DB update error:", dbError);
     }
 
     return new Response(
