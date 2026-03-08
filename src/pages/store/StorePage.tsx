@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Phone, Truck, User, ShoppingBag, ChevronLeft, ChevronRight,
