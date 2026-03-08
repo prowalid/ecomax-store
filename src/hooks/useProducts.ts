@@ -42,8 +42,8 @@ export function useProducts() {
 export function useCreateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (product: Partial<Product>) => {
-      const { data, error } = await supabase.from("products").insert(product).select().single();
+    mutationFn: async (product: { name: string; price?: number; stock?: number; status?: ProductStatus; category_id?: string; description?: string; compare_price?: number; cost_price?: number; sku?: string; image_url?: string }) => {
+      const { data, error } = await supabase.from("products").insert([product]).select().single();
       if (error) throw error;
       return data;
     },

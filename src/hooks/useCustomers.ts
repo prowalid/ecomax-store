@@ -34,8 +34,8 @@ export function useCustomers() {
 export function useCreateCustomer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (customer: Partial<Customer>) => {
-      const { data, error } = await supabase.from("customers").insert(customer).select().single();
+    mutationFn: async (customer: { name: string; phone: string; wilaya?: string; commune?: string; address?: string; notes?: string }) => {
+      const { data, error } = await supabase.from("customers").insert([customer]).select().single();
       if (error) throw error;
       return data;
     },
