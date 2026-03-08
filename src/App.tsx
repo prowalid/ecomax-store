@@ -7,9 +7,15 @@ import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Orders from "./pages/admin/Orders";
 import Products from "./pages/admin/Products";
+import Categories from "./pages/admin/Categories";
+import Customers from "./pages/admin/Customers";
+import Discounts from "./pages/admin/Discounts";
 import Shipping from "./pages/admin/Shipping";
 import Marketing from "./pages/admin/Marketing";
 import Analytics from "./pages/admin/Analytics";
+import Notifications from "./pages/admin/Notifications";
+import Pages from "./pages/admin/Pages";
+import Appearance from "./pages/admin/Appearance";
 import Settings from "./pages/admin/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -27,9 +33,15 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Orders />} />
             <Route path="products" element={<Products />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="discounts" element={<Discounts />} />
             <Route path="shipping" element={<Shipping />} />
             <Route path="marketing" element={<Marketing />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="pages" element={<Pages />} />
+            <Route path="appearance" element={<Appearance />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />

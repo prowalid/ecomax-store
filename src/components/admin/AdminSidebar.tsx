@@ -9,6 +9,12 @@ import {
   Megaphone,
   ChevronLeft,
   Store,
+  Users,
+  Tag,
+  FolderOpen,
+  FileText,
+  Palette,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +29,9 @@ const navSections = [
     items: [
       { to: "/admin/orders", icon: ShoppingCart, label: "الطلبات" },
       { to: "/admin/products", icon: Package, label: "المنتجات" },
+      { to: "/admin/categories", icon: FolderOpen, label: "التصنيفات" },
+      { to: "/admin/customers", icon: Users, label: "الزبائن" },
+      { to: "/admin/discounts", icon: Tag, label: "الخصومات" },
     ],
   },
   {
@@ -31,11 +40,14 @@ const navSections = [
       { to: "/admin/shipping", icon: Truck, label: "الشحن" },
       { to: "/admin/marketing", icon: Megaphone, label: "التسويق" },
       { to: "/admin/analytics", icon: BarChart3, label: "التحليلات" },
+      { to: "/admin/notifications", icon: Bell, label: "الإشعارات" },
     ],
   },
   {
     title: "الإعدادات",
     items: [
+      { to: "/admin/pages", icon: FileText, label: "الصفحات" },
+      { to: "/admin/appearance", icon: Palette, label: "المظهر" },
       { to: "/admin/settings", icon: Settings, label: "الإعدادات" },
     ],
   },
