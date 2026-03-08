@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Phone, Mail, Truck, Clock, User, ShoppingBag, Menu, X } from "lucide-react";
+import { Phone, Mail, Truck, Clock, User, ShoppingBag, Menu, X, ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { useCategories } from "@/hooks/useCategories";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
@@ -17,113 +17,92 @@ const StoreLayout = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div dir="rtl" className="min-h-screen bg-white font-[Cairo]">
-      {/* Announcement Bar - Desktop only */}
-      <div className="hidden md:block bg-[#f8f9fa] border-b border-gray-200 text-xs py-2.5">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-5">
+    <div dir="rtl" className="min-h-screen bg-[#f8f9fa] font-[Cairo] text-gray-800 overflow-x-hidden">
+      {/* Announcement Bar - Red */}
+      <div className="bg-[#dc3545] text-white py-2 text-sm hidden md:block transition-colors">
+        <div className="container mx-auto px-4 flex justify-between items-center">
+          <div className="flex space-x-6 space-x-reverse">
             {settings.phone && (
-              <a href={`tel:${settings.phone}`} className="flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Phone className="w-3.5 h-3.5 text-primary" />
-                </div>
-                <span dir="ltr" className="font-medium">{settings.phone}</span>
+              <a href={`tel:${settings.phone}`} className="flex items-center hover:text-gray-200 transition-colors">
+                <Phone size={14} className="ml-1" /> <span dir="ltr">{settings.phone}</span>
               </a>
             )}
             {settings.email && (
-              <a href={`mailto:${settings.email}`} className="flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Mail className="w-3.5 h-3.5 text-primary" />
-                </div>
-                <span className="font-medium">{settings.email}</span>
+              <a href={`mailto:${settings.email}`} className="flex items-center hover:text-gray-200 transition-colors">
+                <Mail size={14} className="ml-1" /> {settings.email}
               </a>
             )}
           </div>
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5 text-gray-600">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                <Truck className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="font-medium">التوصيل مجاني</span>
-            </span>
-            <span className="flex items-center gap-1.5 text-gray-600">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                <Clock className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="font-medium">توصيل في أقل من 48 ساعة</span>
-            </span>
-            <span className="flex items-center gap-1.5 text-gray-600">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="font-medium">دعم فني</span>
-            </span>
+          <div className="flex space-x-6 space-x-reverse font-medium">
+            <span className="flex items-center"><Truck size={14} className="ml-1" /> التوصيل مجاني</span>
+            <span className="flex items-center"><Clock size={14} className="ml-1" /> توصيل في أقل من 48 ساعة</span>
+            <span className="flex items-center"><User size={14} className="ml-1" /> دعم فني</span>
           </div>
         </div>
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white" style={{ boxShadow: '0px 10px 10px -10px rgb(0 0 0 / 15%)' }}>
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between relative">
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+      <header className="bg-white shadow-[0px_10px_10px_-10px_rgba(0,0,0,0.15)] sticky top-0 z-40 transition-all duration-300">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          {/* Mobile menu toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden text-gray-800 hover:text-[#dc3545] border border-gray-200 rounded p-1 transition-colors"
+          >
+            {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
 
-            {/* Logo - Centered */}
-            <Link to="/" className="flex-1 flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-primary">{settings.store_name}</h1>
+          {/* Logo */}
+          <div className="flex-1 text-center md:text-right">
+            <Link to="/" className="text-3xl font-black text-gray-900 tracking-tight flex items-center justify-center md:justify-start">
+              {settings.store_name}
             </Link>
-
-            {/* Cart button */}
-            <button
-              className="w-[45px] h-[45px] rounded-lg border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center relative"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              <span className="absolute -top-2 -left-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold border-2 border-white">0</span>
-            </button>
           </div>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center justify-center gap-8 py-2 border-t border-gray-100 mt-2">
+          <nav className="hidden md:flex flex-1 justify-center space-x-8 space-x-reverse font-bold text-gray-700">
             <Link
               to="/"
-              className={`text-sm font-semibold transition-colors py-1 ${isActive("/") ? "text-primary" : "text-gray-700 hover:text-primary"}`}
+              className={`transition-colors ${isActive("/") ? "text-[#dc3545]" : "hover:text-[#dc3545]"}`}
             >
               الرئيسية
             </Link>
             <Link
               to="/shop"
-              className={`text-sm font-semibold transition-colors py-1 ${isActive("/shop") || location.pathname.startsWith("/product") ? "text-primary" : "text-gray-700 hover:text-primary"}`}
+              className={`transition-colors ${isActive("/shop") || location.pathname.startsWith("/product") ? "text-[#dc3545]" : "hover:text-[#dc3545]"}`}
             >
               المتجر
             </Link>
           </nav>
 
-          {/* Mobile Nav */}
-          {mobileMenuOpen && (
-            <nav className="md:hidden mt-2 border-t border-gray-100 pt-2 pb-1">
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 text-sm font-semibold border-b border-gray-50 ${isActive("/") ? "text-primary bg-primary/5" : "text-gray-700 hover:bg-primary/5 hover:pr-6"} transition-all`}
-              >
-                الرئيسية
-              </Link>
-              <Link
-                to="/shop"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 text-sm font-semibold ${isActive("/shop") ? "text-primary bg-primary/5" : "text-gray-700 hover:bg-primary/5 hover:pr-6"} transition-all`}
-              >
-                المتجر
-              </Link>
-            </nav>
-          )}
+          {/* Cart button */}
+          <div className="flex-1 flex justify-end">
+            <button className="relative p-2 border-2 border-[#dc3545] text-[#dc3545] rounded-lg hover:bg-[#dc3545] hover:text-white transition-all duration-300 transform hover:scale-105">
+              <ShoppingBag size={22} />
+              <span className="absolute -top-2 -left-2 bg-[#dc3545] text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Nav */}
+        {mobileMenuOpen && (
+          <nav className="md:hidden border-t border-gray-100 pt-2 pb-1 px-4">
+            <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-4 py-3 text-sm font-semibold border-b border-gray-50 ${isActive("/") ? "text-[#dc3545] bg-red-50/50" : "text-gray-700 hover:bg-red-50/30 hover:pr-6"} transition-all`}
+            >
+              الرئيسية
+            </Link>
+            <Link
+              to="/shop"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-4 py-3 text-sm font-semibold ${isActive("/shop") ? "text-[#dc3545] bg-red-50/50" : "text-gray-700 hover:bg-red-50/30 hover:pr-6"} transition-all`}
+            >
+              المتجر
+            </Link>
+          </nav>
+        )}
       </header>
 
       {/* Main Content */}
@@ -132,65 +111,68 @@ const StoreLayout = () => {
       </main>
 
       {/* Footer */}
-      <footer className="mt-12">
-        <div className="bg-foreground text-background py-12">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              {/* Store info */}
-              <div className="md:col-span-1">
-                <h3 className="text-xl font-extrabold mb-3">{settings.store_name}</h3>
-                <p className="text-background/60 text-sm leading-relaxed">
-                  أفضل متجر للدفع عند الاستلام
-                </p>
-              </div>
+      <footer className="bg-gray-900 text-white pt-16 pb-8 border-t-4 border-[#dc3545]">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+            {/* Store info */}
+            <div className="md:col-span-2">
+              <h3 className="text-3xl font-black mb-6">{settings.store_name}</h3>
+              <p className="text-gray-400 leading-relaxed max-w-md">
+                أفضل متجر للدفع عند الاستلام. نوفر لك جودة استثنائية، سرعة في التوصيل، وتجربة تسوق آمنة تماماً.
+              </p>
+            </div>
 
-              {/* Categories */}
-              <div>
-                <h4 className="font-bold text-sm mb-4 text-primary-foreground uppercase tracking-wider">التصنيفات</h4>
-                <ul className="space-y-2.5">
-                  {categories.slice(0, 6).map((cat) => (
-                    <li key={cat.id}>
-                      <Link to={`/shop?category=${cat.id}`} className="text-sm text-background/60 hover:text-background transition-colors inline-block">
-                        {cat.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-lg font-bold mb-6 text-white border-b border-gray-800 pb-2 inline-block">روابط سريعة</h4>
+              <ul className="space-y-3 text-gray-400 font-medium">
+                <li>
+                  <Link to="/" className="hover:text-[#dc3545] transition-colors flex items-center">
+                    <ChevronLeft size={16} className="ml-1" /> الرئيسية
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/shop" className="hover:text-[#dc3545] transition-colors flex items-center">
+                    <ChevronLeft size={16} className="ml-1" /> المتجر
+                  </Link>
+                </li>
+                {categories.slice(0, 4).map((cat) => (
+                  <li key={cat.id}>
+                    <Link to={`/shop?category=${cat.id}`} className="hover:text-[#dc3545] transition-colors flex items-center">
+                      <ChevronLeft size={16} className="ml-1" /> {cat.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-              {/* Links */}
-              <div>
-                <h4 className="font-bold text-sm mb-4 text-primary-foreground uppercase tracking-wider">روابط مهمة</h4>
-                <ul className="space-y-2.5">
-                  <li><Link to="/" className="text-sm text-background/60 hover:text-background transition-colors inline-block">الرئيسية</Link></li>
-                  <li><Link to="/shop" className="text-sm text-background/60 hover:text-background transition-colors inline-block">المتجر</Link></li>
-                </ul>
-              </div>
-
-              {/* Contact */}
-              <div>
-                <h4 className="font-bold text-sm mb-4 text-primary-foreground uppercase tracking-wider">تواصل معنا</h4>
+            {/* Contact */}
+            <div>
+              <h4 className="text-lg font-bold mb-6 text-white border-b border-gray-800 pb-2 inline-block">تواصل معنا</h4>
+              <ul className="space-y-4 text-gray-400 font-medium">
                 {settings.phone && (
-                  <p className="text-sm text-background/60 mb-3 flex items-center gap-2">
-                    <Phone className="w-4 h-4" /> <span dir="ltr">{settings.phone}</span>
-                  </p>
+                  <li className="flex items-start">
+                    <div className="bg-gray-800 p-2 rounded-lg ml-3 text-[#dc3545]"><Phone size={18} /></div>
+                    <span className="pt-1" dir="ltr">{settings.phone}</span>
+                  </li>
                 )}
                 {settings.email && (
-                  <p className="text-sm text-background/60 flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> {settings.email}
-                  </p>
+                  <li className="flex items-start">
+                    <div className="bg-gray-800 p-2 rounded-lg ml-3 text-[#dc3545]"><Mail size={18} /></div>
+                    <span className="pt-1">{settings.email}</span>
+                  </li>
                 )}
-              </div>
+              </ul>
             </div>
           </div>
-        </div>
 
-        {/* Copyright */}
-        <div className="bg-foreground/95 py-4 border-t border-background/10">
-          <div className="container mx-auto px-4 flex items-center justify-center">
-            <p className="text-xs text-background/40">
-              &copy; {settings.store_name} {new Date().getFullYear()} — جميع الحقوق محفوظة
-            </p>
+          {/* Copyright */}
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+            <p className="mb-4 md:mb-0 font-medium">&copy; {new Date().getFullYear()} {settings.store_name} — جميع الحقوق محفوظة</p>
+            <div className="flex space-x-4 space-x-reverse">
+              <span className="bg-gray-800 px-3 py-1 rounded text-gray-400">الدفع عند الاستلام</span>
+              <span className="bg-gray-800 px-3 py-1 rounded text-gray-400">توصيل سريع</span>
+            </div>
           </div>
         </div>
       </footer>
