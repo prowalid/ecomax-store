@@ -4,18 +4,22 @@ import { ArrowUpLeft, Eye, MoreHorizontal } from "lucide-react";
 
 const recentOrders = [
   { id: "#1234", customer: "أحمد بن علي", date: "اليوم، 14:30", total: "4,500 د.ج", items: 2, status: "new" as const, payment: "COD" },
-  { id: "#1233", customer: "فاطمة زهراء", date: "اليوم، 13:15", total: "3,200 د.ج", items: 1, status: "confirmed" as const, payment: "COD" },
-  { id: "#1232", customer: "محمد كريم", date: "أمس، 18:00", total: "7,800 د.ج", items: 3, status: "shipped" as const, payment: "COD" },
-  { id: "#1231", customer: "سارة بوعلام", date: "أمس، 10:20", total: "2,100 د.ج", items: 1, status: "delivered" as const, payment: "COD" },
-  { id: "#1230", customer: "يوسف حداد", date: "منذ يومين", total: "5,600 د.ج", items: 2, status: "returned" as const, payment: "COD" },
+  { id: "#1233", customer: "فاطمة زهراء", date: "اليوم، 13:15", total: "3,200 د.ج", items: 1, status: "attempt" as const, payment: "COD" },
+  { id: "#1232", customer: "محمد كريم", date: "أمس، 18:00", total: "7,800 د.ج", items: 3, status: "confirmed" as const, payment: "COD" },
+  { id: "#1231", customer: "سارة بوعلام", date: "أمس، 10:20", total: "2,100 د.ج", items: 1, status: "shipped" as const, payment: "COD" },
+  { id: "#1230", customer: "يوسف حداد", date: "منذ يومين", total: "5,600 د.ج", items: 2, status: "delivered" as const, payment: "COD" },
 ];
 
-const statusMap = {
-  new: { label: "جديد", variant: "info" as const },
-  confirmed: { label: "مؤكد", variant: "warning" as const },
-  shipped: { label: "مشحون", variant: "default" as const },
-  delivered: { label: "مسلّم", variant: "success" as const },
-  returned: { label: "مرتجع", variant: "destructive" as const },
+const statusMap: Record<string, { label: string; variant: "info" | "warning" | "default" | "success" | "destructive" | "purple" | "muted" }> = {
+  new: { label: "جديد", variant: "info" },
+  attempt: { label: "محاولة اتصال", variant: "purple" },
+  no_answer: { label: "لا يجيب", variant: "muted" },
+  confirmed: { label: "مؤكد", variant: "warning" },
+  cancelled: { label: "ملغي", variant: "muted" },
+  ready: { label: "جاهز للشحن", variant: "default" },
+  shipped: { label: "مشحون", variant: "default" },
+  delivered: { label: "مسلّم", variant: "success" },
+  returned: { label: "مرتجع", variant: "destructive" },
 };
 
 const topProducts = [
