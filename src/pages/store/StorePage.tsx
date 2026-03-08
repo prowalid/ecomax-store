@@ -38,7 +38,7 @@ const StorePage = () => {
   const activeProducts = products.filter((p) => p.status === "active");
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
 
-  const openQuickOrder = (product: any) => {
+  const openQuickOrder = useCallback((product: any) => {
     setSelectedProduct({
       id: product.id,
       name: product.name,
@@ -48,7 +48,7 @@ const StorePage = () => {
     });
     setQty(1);
     setIsModalOpen(true);
-  };
+  }, []);
 
   const handleCloseQuickOrder = () => {
     setIsModalOpen(false);
