@@ -19,44 +19,44 @@ const StoreLayout = () => {
   return (
     <div dir="rtl" className="min-h-screen bg-white font-[Cairo]">
       {/* Announcement Bar - Desktop only */}
-      <div className="hidden md:block bg-primary text-primary-foreground text-xs py-2">
+      <div className="hidden md:block bg-[#f8f9fa] border-b border-gray-200 text-xs py-2.5">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-5">
             {settings.phone && (
-              <a href={`tel:${settings.phone}`} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                  <Phone className="w-3 h-3" />
+              <a href={`tel:${settings.phone}`} className="flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors">
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Phone className="w-3.5 h-3.5 text-primary" />
                 </div>
-                <span dir="ltr">{settings.phone}</span>
+                <span dir="ltr" className="font-medium">{settings.phone}</span>
               </a>
             )}
             {settings.email && (
-              <a href={`mailto:${settings.email}`} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                  <Mail className="w-3 h-3" />
+              <a href={`mailto:${settings.email}`} className="flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors">
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Mail className="w-3.5 h-3.5 text-primary" />
                 </div>
-                <span>{settings.email}</span>
+                <span className="font-medium">{settings.email}</span>
               </a>
             )}
           </div>
           <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                <Truck className="w-3 h-3" />
+            <span className="flex items-center gap-1.5 text-gray-600">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                <Truck className="w-3.5 h-3.5 text-primary" />
               </div>
-              التوصيل مجاني
+              <span className="font-medium">التوصيل مجاني</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                <Clock className="w-3 h-3" />
+            <span className="flex items-center gap-1.5 text-gray-600">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                <Clock className="w-3.5 h-3.5 text-primary" />
               </div>
-              توصيل في أقل من 48 ساعة
+              <span className="font-medium">توصيل في أقل من 48 ساعة</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                <User className="w-3 h-3" />
+            <span className="flex items-center gap-1.5 text-gray-600">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-primary" />
               </div>
-              دعم فني
+              <span className="font-medium">دعم فني</span>
             </span>
           </div>
         </div>
