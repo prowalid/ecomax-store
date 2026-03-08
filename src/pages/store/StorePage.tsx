@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Phone, Truck, User, ShoppingBag, ChevronLeft, ChevronRight,
   ShieldCheck, Headphones, RotateCcw, Globe, Star, X, Flame, Tag, ArrowLeft, Grid, Loader2
