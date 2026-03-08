@@ -14,6 +14,247 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug?: string | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string | null
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          address: string | null
+          commune: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          updated_at: string
+          wilaya: string | null
+        }
+        Insert: {
+          address?: string | null
+          commune?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          updated_at?: string
+          wilaya?: string | null
+        }
+        Update: {
+          address?: string | null
+          commune?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          updated_at?: string
+          wilaya?: string | null
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: string | null
+          call_attempts: number
+          commune: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_type: Database["public"]["Enums"]["delivery_type"]
+          id: string
+          note: string | null
+          order_number: number
+          shipping_company: string | null
+          shipping_cost: number
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total: number
+          tracking_number: string | null
+          updated_at: string
+          wilaya: string | null
+        }
+        Insert: {
+          address?: string | null
+          call_attempts?: number
+          commune?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          id?: string
+          note?: string | null
+          order_number?: number
+          shipping_company?: string | null
+          shipping_cost?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total?: number
+          tracking_number?: string | null
+          updated_at?: string
+          wilaya?: string | null
+        }
+        Update: {
+          address?: string | null
+          call_attempts?: number
+          commune?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string
+          delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          id?: string
+          note?: string | null
+          order_number?: number
+          shipping_company?: string | null
+          shipping_cost?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total?: number
+          tracking_number?: string | null
+          updated_at?: string
+          wilaya?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          compare_price: number | null
+          cost_price: number | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          sku: string | null
+          status: Database["public"]["Enums"]["product_status"]
+          stock: number
+          updated_at: string
+          variants_count: number
+        }
+        Insert: {
+          category_id?: string | null
+          compare_price?: number | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          price?: number
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock?: number
+          updated_at?: string
+          variants_count?: number
+        }
+        Update: {
+          category_id?: string | null
+          compare_price?: number | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock?: number
+          updated_at?: string
+          variants_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_settings: {
         Row: {
           id: string
@@ -43,7 +284,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      delivery_type: "home" | "desk"
+      order_status:
+        | "new"
+        | "attempt"
+        | "no_answer"
+        | "confirmed"
+        | "cancelled"
+        | "ready"
+        | "shipped"
+        | "delivered"
+        | "returned"
+      product_status: "active" | "draft" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -170,6 +422,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      delivery_type: ["home", "desk"],
+      order_status: [
+        "new",
+        "attempt",
+        "no_answer",
+        "confirmed",
+        "cancelled",
+        "ready",
+        "shipped",
+        "delivered",
+        "returned",
+      ],
+      product_status: ["active", "draft", "archived"],
+    },
   },
 } as const
