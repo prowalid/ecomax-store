@@ -1,10 +1,11 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, X } from "lucide-react";
 import { useState } from "react";
 
 const StoreLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -48,7 +49,10 @@ const StoreLayout = () => {
           </nav>
 
           <div className="flex-1 flex justify-end">
-            <button className="relative p-2 border-2 border-[#dc3545] text-[#dc3545] rounded-lg hover:bg-[#dc3545] hover:text-white transition-all duration-300 transform hover:scale-105">
+            <button
+              onClick={() => navigate("/shop")}
+              className="relative p-2 border-2 border-[#dc3545] text-[#dc3545] rounded-lg hover:bg-[#dc3545] hover:text-white transition-all duration-300 transform hover:scale-105"
+            >
               <ShoppingBag size={22} />
               <span className="absolute -top-2 -left-2 bg-[#dc3545] text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
             </button>
