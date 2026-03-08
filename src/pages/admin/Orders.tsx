@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Search, Phone, MapPin, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sendOrderStatusNotification } from "@/lib/whatsapp";
 
 type OrderStatus = "new" | "attempt" | "no_answer" | "confirmed" | "cancelled" | "ready" | "shipped" | "delivered" | "returned";
 
