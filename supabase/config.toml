@@ -2,3 +2,9 @@ project_id = "ihklnbgmnnnjgdybcmjj"
 
 [functions.facebook-capi]
 verify_jwt = false
+
+[functions.whatsapp-notify]
+verify_jwt = false
+
+[functions.update-green-api]
+verify_jwt = false
