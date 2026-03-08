@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Phone, Mail, Truck, Clock, Headphones, ShoppingBag, Menu, X } from "lucide-react";
+import { Phone, Mail, Truck, Clock, User, ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useCategories } from "@/hooks/useCategories";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
@@ -19,7 +19,7 @@ const StoreLayout = () => {
   return (
     <div dir="rtl" className="min-h-screen bg-white font-[Cairo]">
       {/* Announcement Bar - Desktop only */}
-      <div className="hidden md:block bg-[hsl(var(--primary))] text-white text-xs py-2">
+      <div className="hidden md:block bg-primary text-primary-foreground text-xs py-2">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-5">
             {settings.phone && (
@@ -54,7 +54,7 @@ const StoreLayout = () => {
             </span>
             <span className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                <Headphones className="w-3 h-3" />
+                <User className="w-3 h-3" />
               </div>
               دعم فني
             </span>
@@ -69,22 +69,22 @@ const StoreLayout = () => {
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md border border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] hover:text-white transition-all"
+              className="md:hidden p-2 rounded-md border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
             {/* Logo - Centered */}
             <Link to="/" className="flex-1 flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[hsl(var(--primary))]">{settings.store_name}</h1>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-primary">{settings.store_name}</h1>
             </Link>
 
             {/* Cart button */}
             <button
-              className="w-[45px] h-[45px] rounded-lg border-2 border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] hover:text-white transition-all flex items-center justify-center relative"
+              className="w-[45px] h-[45px] rounded-lg border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center relative"
             >
               <ShoppingBag className="w-5 h-5" />
-              <span className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold border-2 border-white">0</span>
+              <span className="absolute -top-2 -left-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold border-2 border-white">0</span>
             </button>
           </div>
 
@@ -92,13 +92,13 @@ const StoreLayout = () => {
           <nav className="hidden md:flex items-center justify-center gap-8 py-2 border-t border-gray-100 mt-2">
             <Link
               to="/"
-              className={`text-sm font-semibold transition-colors py-1 ${isActive("/") ? "text-[hsl(var(--primary))]" : "text-gray-700 hover:text-[hsl(var(--primary))]"}`}
+              className={`text-sm font-semibold transition-colors py-1 ${isActive("/") ? "text-primary" : "text-gray-700 hover:text-primary"}`}
             >
               الرئيسية
             </Link>
             <Link
               to="/shop"
-              className={`text-sm font-semibold transition-colors py-1 ${isActive("/shop") || location.pathname.startsWith("/product") ? "text-[hsl(var(--primary))]" : "text-gray-700 hover:text-[hsl(var(--primary))]"}`}
+              className={`text-sm font-semibold transition-colors py-1 ${isActive("/shop") || location.pathname.startsWith("/product") ? "text-primary" : "text-gray-700 hover:text-primary"}`}
             >
               المتجر
             </Link>
@@ -110,14 +110,14 @@ const StoreLayout = () => {
               <Link
                 to="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 text-sm font-semibold border-b border-gray-50 ${isActive("/") ? "text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]" : "text-gray-700 hover:bg-[hsl(var(--primary)/0.05)] hover:pr-6"} transition-all`}
+                className={`block px-4 py-3 text-sm font-semibold border-b border-gray-50 ${isActive("/") ? "text-primary bg-primary/5" : "text-gray-700 hover:bg-primary/5 hover:pr-6"} transition-all`}
               >
                 الرئيسية
               </Link>
               <Link
                 to="/shop"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 text-sm font-semibold ${isActive("/shop") ? "text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]" : "text-gray-700 hover:bg-[hsl(var(--primary)/0.05)] hover:pr-6"} transition-all`}
+                className={`block px-4 py-3 text-sm font-semibold ${isActive("/shop") ? "text-primary bg-primary/5" : "text-gray-700 hover:bg-primary/5 hover:pr-6"} transition-all`}
               >
                 المتجر
               </Link>
@@ -133,7 +133,7 @@ const StoreLayout = () => {
 
       {/* Footer */}
       <footer className="mt-12">
-        <div className="bg-[hsl(var(--primary))] text-white py-10">
+        <div className="bg-primary text-primary-foreground py-10">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               {/* Store info */}
