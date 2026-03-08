@@ -51,6 +51,10 @@ const StorePage = () => {
     setIsModalOpen(true);
   }, []);
 
+  const showNoProductsQuickOrderToast = useCallback(() => {
+    toast.error("لا توجد منتجات متاحة حالياً للطلب السريع");
+  }, []);
+
   const handleCloseQuickOrder = () => {
     setIsModalOpen(false);
     setSelectedProduct(null);
@@ -63,34 +67,39 @@ const StorePage = () => {
     }
   };
 
-  useEffect(() => {
-    if (searchParams.get("quickOrder") !== "1") return;
-
-    if (activeProducts.length > 0 && !isModalOpen) {
-      openQuickOrder(activeProducts[0]);
-      return;
+  const openHeaderQuickOrder = useCallback(() => {
+    if (activeProducts.length === 0) {
+      showNoProductsQuickOrderToast();
+      return false;
     }
 
-    if (activeProducts.length === 0) {
+    openQuickOrder(activeProducts[0]);
+    return true;
+  }, [activeProducts, openQuickOrder, showNoProductsQuickOrderToast]);
+
+  useEffect(() => {
+    if (searchParams.get("quickOrder") !== "1" || isModalOpen) return;
+
+    const opened = openHeaderQuickOrder();
+
+    if (!opened) {
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete("quickOrder");
       nextParams.delete("ts");
       setSearchParams(nextParams, { replace: true });
     }
-  }, [searchParams, activeProducts, isModalOpen, openQuickOrder, setSearchParams]);
+  }, [searchParams, isModalOpen, openHeaderQuickOrder, setSearchParams]);
 
   useEffect(() => {
     const handleHeaderQuickOrder = () => {
-      if (activeProducts.length > 0) {
-        openQuickOrder(activeProducts[0]);
-      }
+      openHeaderQuickOrder();
     };
 
     window.addEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
     return () => {
       window.removeEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
     };
-  }, [activeProducts, openQuickOrder]);
+  }, [openHeaderQuickOrder]);
 
   if (isLoading) {
     return (
