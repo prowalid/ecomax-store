@@ -4,6 +4,7 @@ import {
   Phone, Truck, User, ShoppingBag, ChevronLeft, ChevronRight,
   ShieldCheck, Headphones, RotateCcw, Globe, Star, X, Flame, Tag, ArrowLeft, Grid, Loader2
 } from "lucide-react";
+import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import QuickOrderModal from "@/components/store/QuickOrderModal";
