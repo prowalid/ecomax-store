@@ -16,9 +16,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 11% 15%;
 
-    --primary: 300 68% 30%;
+    --primary: 354 72% 56%;
     --primary-foreground: 0 0% 100%;
-    --store-primary: #7f187f;
+    --store-primary: #e84360;
     --store-badge-bg: #f99898;
     --store-card-bg: #f4f6f8;
     --store-sale-badge: #dc3545;
@@ -35,7 +35,7 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 300 68% 30%;
+    --success: 152 69% 40%;
     --success-foreground: 0 0% 100%;
 
     --warning: 36 77% 49%;
@@ -57,7 +57,7 @@
 
     --border: 210 14% 89%;
     --input: 210 14% 89%;
-    --ring: 300 68% 30%;
+    --ring: 354 72% 56%;
 
     --radius: 0.5rem;
 
