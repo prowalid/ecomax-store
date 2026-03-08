@@ -76,7 +76,20 @@ const StorePage = () => {
       nextParams.delete("ts");
       setSearchParams(nextParams, { replace: true });
     }
-  }, [searchParams, activeProducts, isModalOpen]);
+  }, [searchParams, activeProducts, isModalOpen, openQuickOrder, setSearchParams]);
+
+  useEffect(() => {
+    const handleHeaderQuickOrder = () => {
+      if (activeProducts.length > 0) {
+        openQuickOrder(activeProducts[0]);
+      }
+    };
+
+    window.addEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
+    return () => {
+      window.removeEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
+    };
+  }, [activeProducts, openQuickOrder]);
 
   if (isLoading) {
     return (

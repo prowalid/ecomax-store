@@ -50,7 +50,13 @@ const StoreLayout = () => {
 
           <div className="flex-1 flex justify-end">
             <button
-              onClick={() => navigate(`/shop?quickOrder=1&ts=${Date.now()}`)}
+              onClick={() => {
+                if (location.pathname === "/shop") {
+                  window.dispatchEvent(new CustomEvent("store:open-quick-order"));
+                  return;
+                }
+                navigate(`/shop?quickOrder=1&ts=${Date.now()}`);
+              }}
               className="relative p-2 border-2 border-[#dc3545] text-[#dc3545] rounded-lg hover:bg-[#dc3545] hover:text-white transition-all duration-300 transform hover:scale-105"
             >
               <ShoppingBag size={22} />
