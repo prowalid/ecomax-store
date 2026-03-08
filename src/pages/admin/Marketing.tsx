@@ -1,8 +1,9 @@
-import { Save, TestTube, CheckCircle2, XCircle, Info, Send, Shield, Eye, ShoppingCart, CreditCard } from "lucide-react";
+import { Save, CheckCircle2, XCircle, Info, Send, Shield, Eye, ShoppingCart, CreditCard, Loader2, Wifi, WifiOff } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateEventId, getFbp, getFbc } from "@/lib/facebook-pixel";
 import { toast } from "sonner";
+import { useMarketingSettings } from "@/hooks/useMarketingSettings";
 
 const STANDARD_EVENTS = [
   { name: "PageView", icon: <Eye className="w-4 h-4" />, desc: "عرض صفحة" },
@@ -27,13 +28,18 @@ const REQUIRED_PARAMS = [
 ];
 
 const Marketing = () => {
+  const { settings, setSettings, loading, saving, saveSettings } = useMarketingSettings();
   const [pixelId, setPixelId] = useState("");
   const [accessToken, setAccessToken] = useState("");
-  const [testEventCode, setTestEventCode] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [selectedTestEvent, setSelectedTestEvent] = useState("PageView");
+
+  // Sync webhook from settings on load
+  useState(() => {
+    if (settings.webhook_url) setWebhookUrl(settings.webhook_url);
+  });
 
   const handleTestEvent = async () => {
     setTestLoading(true);
@@ -78,11 +84,14 @@ const Marketing = () => {
           message: `✅ تم الإرسال — events_received: ${data.events_received} | event_id: ${eventId}`,
         });
         toast.success("تم إرسال الحدث بنجاح!");
+        // Mark pixel as configured
+        if (!settings.pixel_configured) {
+          const updated = { ...settings, pixel_configured: true };
+          setSettings(updated);
+          saveSettings(updated);
+        }
       } else {
-        setTestResult({
-          success: false,
-          message: `❌ ${data?.error || "خطأ غير معروف"}`,
-        });
+        setTestResult({ success: false, message: `❌ ${data?.error || "خطأ غير معروف"}` });
         toast.error(data?.error || "فشل الإرسال");
       }
     } catch (err: any) {
@@ -93,43 +102,76 @@ const Marketing = () => {
     }
   };
 
+  const handleSaveAll = async () => {
+    await saveSettings({
+      ...settings,
+      webhook_url: webhookUrl,
+    });
+  };
+
+  const toggleEvent = (name: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      enabled_events: { ...prev.enabled_events, [name]: !prev.enabled_events[name] },
+    }));
+  };
+
   const inputClass =
     "w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors";
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">التسويق</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Facebook Pixel + Conversions API — تتبع متقدم مع مطابقة بيانات المستخدم
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">التسويق</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Facebook Pixel + Conversions API — تتبع متقدم مع مطابقة بيانات المستخدم
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {settings.pixel_configured ? (
+            <span className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+              <Wifi className="w-3.5 h-3.5" /> Pixel متصل
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+              <WifiOff className="w-3.5 h-3.5" /> غير مفعّل
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Config Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Pixel ID */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card rounded-lg shadow-card border border-border p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-lg">📊</div>
             <div>
               <h3 className="text-sm font-semibold text-foreground">Pixel ID</h3>
-              <p className="text-xs text-muted-foreground">تتبع أحداث المتصفح</p>
+              <p className="text-xs text-muted-foreground">
+                {settings.pixel_configured ? "محفوظ كـ Secret — يمكنك تحديثه" : "تتبع أحداث المتصفح"}
+              </p>
             </div>
           </div>
           <input
             type="text"
             value={pixelId}
             onChange={(e) => setPixelId(e.target.value)}
-            placeholder="123456789012345"
+            placeholder={settings.pixel_configured ? "•••• (محفوظ)" : "123456789012345"}
             className={inputClass}
             dir="ltr"
           />
-          <p className="text-xs text-muted-foreground mt-2">
-            يُحفظ كـ Secret في الخادم — لا يظهر في الكود
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">يُحفظ كـ Secret آمن في الخادم</p>
         </div>
 
-        {/* Access Token */}
         <div className="bg-card rounded-lg shadow-card border border-border p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-lg">🔑</div>
@@ -142,47 +184,44 @@ const Marketing = () => {
             type="password"
             value={accessToken}
             onChange={(e) => setAccessToken(e.target.value)}
-            placeholder="EAAxxxxxxx..."
+            placeholder={settings.pixel_configured ? "•••• (محفوظ)" : "EAAxxxxxxx..."}
             className={inputClass}
             dir="ltr"
           />
-        </div>
-
-        {/* Test Event Code */}
-        <div className="bg-card rounded-lg shadow-card border border-border p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-lg">🧪</div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Test Event Code</h3>
-              <p className="text-xs text-muted-foreground">اختياري — للاختبار فقط</p>
-            </div>
-          </div>
-          <input
-            type="text"
-            value={testEventCode}
-            onChange={(e) => setTestEventCode(e.target.value)}
-            placeholder="TEST12345"
-            className={inputClass}
-            dir="ltr"
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            من Events Manager → Test Events
-          </p>
         </div>
       </div>
 
-      {/* Data Matching Table */}
+      {/* Standard Events with Toggles */}
+      <div className="bg-card rounded-lg shadow-card border border-border p-5">
+        <h3 className="text-sm font-semibold text-foreground mb-3">الأحداث القياسية</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {STANDARD_EVENTS.map((ev) => (
+            <button
+              key={ev.name}
+              onClick={() => toggleEvent(ev.name)}
+              className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-colors ${
+                settings.enabled_events[ev.name]
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-border bg-muted/30 text-muted-foreground"
+              }`}
+            >
+              <div>{ev.icon}</div>
+              <span className="text-xs font-medium">{ev.name}</span>
+              <span className="text-[10px]">{ev.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Data Matching */}
       <div className="bg-card rounded-lg shadow-card border border-border p-5">
         <div className="flex items-center gap-3 mb-4">
           <Shield className="w-5 h-5 text-primary" />
           <div>
-            <h3 className="text-sm font-semibold text-foreground">مطابقة بيانات المستخدم — User Data Parameters</h3>
-            <p className="text-xs text-muted-foreground">
-              البيانات التي تُرسل مع كل حدث حسب متطلبات Facebook
-            </p>
+            <h3 className="text-sm font-semibold text-foreground">مطابقة بيانات المستخدم</h3>
+            <p className="text-xs text-muted-foreground">البيانات المُرسلة مع كل حدث حسب متطلبات Facebook</p>
           </div>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -204,9 +243,7 @@ const Marketing = () => {
                   </td>
                   <td className="py-2.5 px-3">
                     {param.hashed ? (
-                      <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                        🔒 SHA-256
-                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">🔒 SHA-256</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">بدون تجزئة</span>
                     )}
@@ -220,96 +257,50 @@ const Marketing = () => {
             </tbody>
           </table>
         </div>
-
         <div className="mt-3 p-3 bg-muted/50 rounded-lg flex items-start gap-2">
           <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            جميع البيانات الشخصية (الهاتف، الاسم، المدينة، الولاية) تُجزّأ بـ SHA-256 قبل الإرسال.
-            عنوان IP و User Agent يُجمعان تلقائياً من الخادم.
-            <code className="mx-1">_fbp</code> و <code className="mx-1">_fbc</code> يُقرأان من الكوكيز تلقائياً.
-            يتم مطابقة الأحداث بين المتصفح والخادم عبر <code className="mx-1">event_id</code> مشترك لمنع التكرار.
+            جميع البيانات الشخصية تُجزّأ بـ SHA-256 قبل الإرسال. يتم مطابقة الأحداث بين المتصفح والخادم عبر <code className="mx-1">event_id</code> مشترك.
           </p>
         </div>
       </div>
 
-      {/* Standard Events */}
-      <div className="bg-card rounded-lg shadow-card border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-3">الأحداث القياسية المدعومة</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          {STANDARD_EVENTS.map((ev) => (
-            <div
-              key={ev.name}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border bg-muted/30 text-center"
-            >
-              <div className="text-primary">{ev.icon}</div>
-              <span className="text-xs font-medium text-foreground">{ev.name}</span>
-              <span className="text-[10px] text-muted-foreground">{ev.desc}</span>
+      {/* Test Event */}
+      {settings.pixel_configured && (
+        <div className="bg-card rounded-lg shadow-card border border-border p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <Send className="w-5 h-5 text-primary" />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">اختبار الإرسال</h3>
+              <p className="text-xs text-muted-foreground">أرسل حدث تجريبي إلى Facebook</p>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Test Event Section */}
-      <div className="bg-card rounded-lg shadow-card border border-border p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <TestTube className="w-5 h-5 text-primary" />
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">اختبار الإرسال</h3>
-            <p className="text-xs text-muted-foreground">
-              أرسل حدث تجريبي إلى Facebook لاختبار الإعداد
-            </p>
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-3 items-end">
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">نوع الحدث</label>
-            <select
-              value={selectedTestEvent}
-              onChange={(e) => setSelectedTestEvent(e.target.value)}
-              className={inputClass + " w-48"}
+          <div className="flex flex-wrap gap-3 items-end">
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1.5">نوع الحدث</label>
+              <select value={selectedTestEvent} onChange={(e) => setSelectedTestEvent(e.target.value)} className={inputClass + " w-48"}>
+                {STANDARD_EVENTS.map((ev) => (
+                  <option key={ev.name} value={ev.name}>{ev.name} — {ev.desc}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handleTestEvent}
+              disabled={testLoading}
+              className="h-9 px-4 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
             >
-              {STANDARD_EVENTS.map((ev) => (
-                <option key={ev.name} value={ev.name}>
-                  {ev.name} — {ev.desc}
-                </option>
-              ))}
-            </select>
+              {testLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              إرسال حدث تجريبي
+            </button>
           </div>
-
-          <button
-            onClick={handleTestEvent}
-            disabled={testLoading}
-            className="h-9 px-4 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
-          >
-            {testLoading ? (
-              <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-            إرسال حدث تجريبي
-          </button>
+          {testResult && (
+            <div className={`mt-3 p-3 rounded-lg flex items-start gap-2 text-sm ${testResult.success ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+              {testResult.success ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+              <p className="text-xs leading-relaxed" dir="ltr">{testResult.message}</p>
+            </div>
+          )}
         </div>
-
-        {testResult && (
-          <div
-            className={`mt-3 p-3 rounded-lg flex items-start gap-2 text-sm ${
-              testResult.success
-                ? "bg-primary/10 text-primary"
-                : "bg-destructive/10 text-destructive"
-            }`}
-          >
-            {testResult.success ? (
-              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-            ) : (
-              <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            )}
-            <p className="text-xs leading-relaxed" dir="ltr">
-              {testResult.message}
-            </p>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Webhook */}
       <div className="bg-card rounded-lg shadow-card border border-border p-5">
@@ -317,33 +308,27 @@ const Marketing = () => {
           <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-lg">⚡</div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">Webhook</h3>
-            <p className="text-xs text-muted-foreground">
-              إرسال بيانات الطلبات تلقائياً إلى n8n أو Zapier
-            </p>
+            <p className="text-xs text-muted-foreground">إرسال بيانات الطلبات تلقائياً إلى n8n أو Zapier</p>
           </div>
         </div>
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-foreground mb-1.5">رابط Webhook</label>
-            <input
-              type="url"
-              value={webhookUrl}
-              onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="https://your-webhook-url.com/endpoint"
-              className={inputClass}
-              dir="ltr"
-            />
-          </div>
-          <button className="h-9 px-4 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity shrink-0">
-            <Save className="w-4 h-4" />
-            حفظ
-          </button>
-        </div>
+        <input
+          type="url"
+          value={webhookUrl}
+          onChange={(e) => setWebhookUrl(e.target.value)}
+          placeholder="https://your-webhook-url.com/endpoint"
+          className={inputClass}
+          dir="ltr"
+        />
       </div>
 
-      {/* Save All */}
+      {/* Save */}
       <div className="flex justify-end">
-        <button className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity">
+        <button
+          onClick={handleSaveAll}
+          disabled={saving}
+          className="h-9 px-6 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ جميع الإعدادات
         </button>
       </div>
