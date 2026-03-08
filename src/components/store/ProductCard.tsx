@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
   id: string;
@@ -8,56 +8,75 @@ interface ProductCardProps {
   compare_price?: number | null;
   image_url?: string | null;
   category_name?: string;
+  onQuickOrder?: (id: string) => void;
 }
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " د.ج";
 
-const ProductCard = ({ id, name, price, compare_price, image_url, category_name }: ProductCardProps) => {
+const ProductCard = ({ id, name, price, compare_price, image_url, category_name, onQuickOrder }: ProductCardProps) => {
   const hasDiscount = compare_price && compare_price > price;
-  const discountPct = hasDiscount ? Math.round(((compare_price - price) / compare_price) * 100) : 0;
 
   return (
-    <Link
-      to={`/product/${id}`}
-      className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 block"
-    >
-      <div className="relative aspect-square bg-gray-50 overflow-hidden">
-        {image_url ? (
-          <img
-            src={image_url}
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
-        )}
-        {hasDiscount && (
-          <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
-            -{discountPct}%
-          </span>
-        )}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-      </div>
-      <div className="p-4">
-        {category_name && (
-          <span className="text-[11px] text-gray-400 font-medium">{category_name}</span>
-        )}
-        <h3 className="text-sm font-semibold text-gray-900 mt-1 line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors">
-          {name}
-        </h3>
-        <div className="flex items-center gap-2 mt-2.5">
-          <span className="text-base font-bold text-[hsl(var(--primary))]">{formatPrice(price)}</span>
+    <div className="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
+      <Link to={`/product/${id}`} className="block">
+        {/* Image - 3:4 ratio like WooCommerce */}
+        <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
+          {image_url ? (
+            <img
+              src={image_url}
+              alt={name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-6xl bg-gray-100">📦</div>
+          )}
           {hasDiscount && (
-            <span className="text-xs text-gray-400 line-through">{formatPrice(compare_price)}</span>
+            <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-sm shadow-lg">
+              تخفيض!
+            </span>
           )}
         </div>
-        <div className="mt-3 flex items-center gap-2 text-[hsl(var(--primary))] text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-          <ShoppingBag className="w-3.5 h-3.5" />
-          <span>اطلب الآن</span>
+
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors min-h-[2.5rem]">
+            {name}
+          </h3>
+
+          {/* Star rating placeholder */}
+          <div className="flex items-center gap-0.5 mt-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <svg key={star} className="w-3.5 h-3.5 text-[hsl(var(--primary))]" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            ))}
+          </div>
+
+          {/* Price */}
+          <div className="flex items-center gap-2 mt-2">
+            {hasDiscount && (
+              <span className="text-sm text-gray-400 line-through">{formatPrice(compare_price)}</span>
+            )}
+            <span className="text-base font-extrabold text-[hsl(var(--primary))]">{formatPrice(price)}</span>
+          </div>
         </div>
+      </Link>
+
+      {/* Add to cart button */}
+      <div className="px-4 pb-4">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            onQuickOrder?.(id);
+          }}
+          className="w-full h-10 rounded-md bg-[hsl(var(--primary))] text-white text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          اطلب الآن
+        </button>
       </div>
-    </Link>
+    </div>
   );
 };
 
