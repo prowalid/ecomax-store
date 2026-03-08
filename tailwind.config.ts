@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Inter',
+  				'Poppins',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -28,7 +28,7 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Lora',
+  				'Merriweather',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
@@ -37,7 +37,7 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'Space Mono',
+  				'JetBrains Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
@@ -164,12 +164,12 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		boxShadow: {
-  			'card': '0 1px 0 0 rgba(0,0,0,.05)',
+  			card: '0 1px 0 0 rgba(0,0,0,.05)',
   			'card-hover': '0 0 0 1px rgba(63,63,68,.05), 0 1px 3px 0 rgba(63,63,68,.15)',
-  			'shopify': '0 0 5px rgba(23,24,24,.05), 0 1px 2px rgba(0,0,0,.07)',
+  			shopify: '0 0 5px rgba(23,24,24,.05), 0 1px 2px rgba(0,0,0,.07)',
   			'shopify-lg': '0 0 0 1px rgba(6,44,82,.1), 0 2px 16px rgba(33,43,54,.08)',
-  			'button': '0 1px 0 rgba(0,0,0,.05)',
-  			'inset': 'inset 0 1px 1px 0 rgba(0,0,0,.05), inset 0 0 0 1px rgba(0,0,0,.08)',
+  			button: '0 1px 0 rgba(0,0,0,.05)',
+  			inset: 'inset 0 1px 1px 0 rgba(0,0,0,.05), inset 0 0 0 1px rgba(0,0,0,.08)',
   			'2xs': 'var(--shadow-2xs)',
   			xs: 'var(--shadow-xs)',
   			sm: 'var(--shadow-sm)',
