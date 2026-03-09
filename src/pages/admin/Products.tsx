@@ -325,9 +325,23 @@ const Products = () => {
                 {/* Existing images grid */}
                 {editingId && (
                   <div className="grid grid-cols-4 gap-3">
-                    {editImages.map((img) => (
-                      <div key={img.id} className="relative group rounded-lg overflow-hidden border border-border aspect-square">
+                    {editImages.map((img, idx) => (
+                      <div
+                        key={img.id}
+                        draggable
+                        onDragStart={() => handleDragStart(idx)}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(idx)}
+                        className={cn(
+                          "relative group rounded-lg overflow-hidden border-2 aspect-square cursor-grab active:cursor-grabbing transition-all",
+                          dragIdx === idx ? "border-primary opacity-50 scale-95" : "border-border hover:border-primary/50",
+                          idx === 0 && "ring-2 ring-primary/30"
+                        )}
+                      >
                         <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                        {idx === 0 && (
+                          <span className="absolute bottom-1 right-1 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded">رئيسية</span>
+                        )}
                         <button
                           onClick={() => deleteImage.mutate({ id: img.id, productId: editingId, imageUrl: img.image_url })}
                           className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
