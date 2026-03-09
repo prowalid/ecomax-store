@@ -240,7 +240,7 @@ const StorePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               {categories.slice(0, 3).map((cat, idx) => (
-                <Link key={cat.id} to={`/shop?category=${cat.id}`} className="relative rounded-2xl overflow-hidden h-64 group cursor-pointer shadow-sm block">
+                <button key={cat.id} onClick={() => { setSelectedCategory(cat.id); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); }} className="relative rounded-2xl overflow-hidden h-64 group cursor-pointer shadow-sm block w-full text-right">
                   <img src={defaultCatImages[idx] || defaultCatImages[0]} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-[#7f187f]/90 transition-colors duration-500"></div>
                   <div className="absolute bottom-6 right-6 left-6 flex justify-between items-end">
@@ -249,7 +249,7 @@ const StorePage = () => {
                       <ArrowLeft size={20} />
                     </div>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
 
