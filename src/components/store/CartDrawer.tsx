@@ -48,7 +48,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
             <p className="text-gray-500 mb-6">لم تضف أي منتجات بعد</p>
             <SheetClose asChild>
               <Link
-                to="/shop"
+                to="/"
                 className="bg-[#dc3545] text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
               >
                 تصفح المنتجات
