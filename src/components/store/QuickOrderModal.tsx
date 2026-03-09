@@ -332,6 +332,33 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               />
             </div>
 
+            {/* Shipping Cost Display */}
+            {selectedWilaya ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Truck className="w-4 h-4 text-blue-600" />
+                  <h3 className="font-bold text-blue-900 text-xs">أسعار التوصيل - {selectedWilaya.name}</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">🏠 للمنزل:</span>
+                    <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.homePrice)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">🏢 للمكتب:</span>
+                    <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.deskPrice)}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                <div className="flex items-center justify-center gap-2 text-gray-500">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-xs">اختر الولاية لعرض أسعار التوصيل</span>
+                </div>
+              </div>
+            )}
+
             {/* Delivery Type */}
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-1">
               <p className="font-bold text-gray-700 mb-3">طريقة التوصيل:</p>
