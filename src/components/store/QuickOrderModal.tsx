@@ -65,6 +65,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
+  const { track } = useTracking();
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
 
