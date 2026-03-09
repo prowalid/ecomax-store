@@ -13,6 +13,10 @@ export interface Discount {
   expires_at: string | null;
   created_at: string;
   updated_at: string;
+  apply_to: "all" | "specific";
+  product_ids: string[];
+  quantity_behavior: "all" | "single" | "min_quantity";
+  min_quantity: number;
 }
 
 export function useDiscounts() {
@@ -32,11 +36,37 @@ export function useDiscounts() {
 export function useCreateDiscount() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { code: string; type: string; value: number; usage_limit?: number | null; active?: boolean; expires_at?: string | null }) => {
-      const discount: { code: string; type: string; value: number; usage_limit?: number; active?: boolean; expires_at?: string } = {
+    mutationFn: async (input: {
+      code: string;
+      type: string;
+      value: number;
+      usage_limit?: number | null;
+      active?: boolean;
+      expires_at?: string | null;
+      apply_to?: "all" | "specific";
+      product_ids?: string[];
+      quantity_behavior?: "all" | "single" | "min_quantity";
+      min_quantity?: number;
+    }) => {
+      const discount: {
+        code: string;
+        type: string;
+        value: number;
+        usage_limit?: number;
+        active?: boolean;
+        expires_at?: string;
+        apply_to?: string;
+        product_ids?: string[];
+        quantity_behavior?: string;
+        min_quantity?: number;
+      } = {
         code: input.code,
         type: input.type,
         value: input.value,
+        apply_to: input.apply_to ?? "all",
+        product_ids: input.product_ids ?? [],
+        quantity_behavior: input.quantity_behavior ?? "all",
+        min_quantity: input.min_quantity ?? 1,
       };
       if (input.usage_limit !== undefined && input.usage_limit !== null) {
         discount.usage_limit = input.usage_limit;

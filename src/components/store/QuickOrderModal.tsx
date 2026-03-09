@@ -106,8 +106,12 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   }, [selectedWilaya, deliveryType]);
 
   const subtotal = product.price * quantity;
-  const discountAmount = calculateDiscount(subtotal);
+  const discountAmount = calculateDiscount(subtotal, product.price, quantity);
   const total = subtotal - discountAmount + shippingCost;
+
+  const handleApplyCoupon = async () => {
+    await validateCode(couponCode, { productId: product.id, quantity });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -419,7 +423,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                   />
                   <button
                     type="button"
-                    onClick={() => validateCode(couponCode)}
+                    onClick={handleApplyCoupon}
                     disabled={isValidating || !couponCode.trim()}
                     className="h-10 px-4 rounded-xl bg-[#dc3545] text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
