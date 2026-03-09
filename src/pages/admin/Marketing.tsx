@@ -29,17 +29,10 @@ const REQUIRED_PARAMS = [
 
 const Marketing = () => {
   const { settings, setSettings, loading, saving, saveSettings } = useMarketingSettings();
-  const [pixelId, setPixelId] = useState("");
   const [accessToken, setAccessToken] = useState("");
-  const [webhookUrl, setWebhookUrl] = useState("");
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [selectedTestEvent, setSelectedTestEvent] = useState("PageView");
-
-  // Sync webhook from settings on load
-  useState(() => {
-    if (settings.webhook_url) setWebhookUrl(settings.webhook_url);
-  });
 
   const handleTestEvent = async () => {
     setTestLoading(true);
@@ -103,10 +96,11 @@ const Marketing = () => {
   };
 
   const handleSaveAll = async () => {
-    await saveSettings({
+    const updated = {
       ...settings,
-      webhook_url: webhookUrl,
-    });
+      pixel_configured: !!settings.pixel_id,
+    };
+    await saveSettings(updated);
   };
 
   const toggleEvent = (name: string) => {
@@ -163,13 +157,13 @@ const Marketing = () => {
           </div>
           <input
             type="text"
-            value={pixelId}
-            onChange={(e) => setPixelId(e.target.value)}
-            placeholder={settings.pixel_configured ? "•••• (محفوظ)" : "123456789012345"}
+            value={settings.pixel_id}
+            onChange={(e) => setSettings((prev) => ({ ...prev, pixel_id: e.target.value.trim() }))}
+            placeholder={settings.pixel_configured ? settings.pixel_id || "123456789012345" : "123456789012345"}
             className={inputClass}
             dir="ltr"
           />
-          <p className="text-xs text-muted-foreground mt-2">يُحفظ كـ Secret آمن في الخادم</p>
+          <p className="text-xs text-muted-foreground mt-2">يُحفظ في إعدادات المتجر ويُفعّل تلقائياً في الموقع</p>
         </div>
 
         <div className="bg-card rounded-lg shadow-card border border-border p-5">
@@ -313,8 +307,8 @@ const Marketing = () => {
         </div>
         <input
           type="url"
-          value={webhookUrl}
-          onChange={(e) => setWebhookUrl(e.target.value)}
+          value={settings.webhook_url}
+          onChange={(e) => setSettings((prev) => ({ ...prev, webhook_url: e.target.value }))}
           placeholder="https://your-webhook-url.com/endpoint"
           className={inputClass}
           dir="ltr"

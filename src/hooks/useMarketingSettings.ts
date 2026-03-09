@@ -3,12 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface MarketingSettings {
+  pixel_id: string;
   pixel_configured: boolean;
   webhook_url: string;
   enabled_events: Record<string, boolean>;
 }
 
 const DEFAULT: MarketingSettings = {
+  pixel_id: "",
   pixel_configured: false,
   webhook_url: "",
   enabled_events: {
@@ -36,6 +38,7 @@ export function useMarketingSettings() {
       if (data && !error) {
         const val = data.value as any;
         setSettings({
+          pixel_id: val.pixel_id ?? "",
           pixel_configured: val.pixel_configured ?? false,
           webhook_url: val.webhook_url ?? "",
           enabled_events: val.enabled_events ?? DEFAULT.enabled_events,

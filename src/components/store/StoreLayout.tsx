@@ -1,8 +1,10 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
+import { useMarketingSettings } from "@/hooks/useMarketingSettings";
+import { initPixel } from "@/lib/facebook-pixel";
 import CartDrawer from "./CartDrawer";
 
 const StoreLayout = () => {
@@ -11,6 +13,14 @@ const StoreLayout = () => {
   const location = useLocation();
   const { totalCount } = useCart();
   const { settings: t, loading } = useAppearanceSettings();
+  const { settings: marketing } = useMarketingSettings();
+
+  // Initialize Facebook Pixel when pixel_id is available
+  useEffect(() => {
+    if (marketing.pixel_id) {
+      initPixel(marketing.pixel_id);
+    }
+  }, [marketing.pixel_id]);
 
   // Use defaults while loading
   const theme = loading ? defaultAppearance : t;
