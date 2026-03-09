@@ -244,7 +244,7 @@ const StorePage = () => {
 
             {/* Featured Banner */}
             <div className="relative rounded-2xl overflow-hidden h-80 group cursor-pointer shadow-md mt-6">
-              <img src={catImages[0] || defaultAppearance.category_images[0]} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
+              <img src={categories[3]?.image_url || defaultCatImages[0]} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
               <div className="absolute inset-0 transition-colors duration-500" style={{ background: `linear-gradient(to top right, ${theme.accent_color}e6, ${theme.accent_color}66)` }}></div>
               <div className="absolute inset-0 flex flex-col justify-center items-start p-10">
                 <div className="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold mb-4 inline-flex items-center border border-white/30">
