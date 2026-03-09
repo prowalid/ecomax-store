@@ -56,6 +56,20 @@ const Products = () => {
   const { data: editImages = [], isLoading: imagesLoading } = useProductImages(editingId);
   const uploadImage = useUploadProductImage();
   const deleteImage = useDeleteProductImage();
+  const reorderImages = useReorderProductImages();
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  const handleDragStart = (idx: number) => setDragIdx(idx);
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx === null || dragIdx === dropIdx || !editingId) return;
+    const reordered = [...editImages];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.splice(dropIdx, 0, moved);
+    const updated = reordered.map((img, i) => ({ id: img.id, sort_order: i, image_url: img.image_url }));
+    reorderImages.mutate({ productId: editingId, images: updated });
+    setDragIdx(null);
+  };
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.includes(search) || (p.category_name || "").includes(search);
