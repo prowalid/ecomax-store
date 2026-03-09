@@ -125,6 +125,8 @@ export default function CheckoutPage() {
         total,
         note: values.note || null,
         customer_id: customerId,
+        discount_code: discount?.code || undefined,
+        discount_amount: discountAmount > 0 ? discountAmount : undefined,
         items: items.map((item) => ({
           product_id: item.product_id,
           product_name: item.product_name,

@@ -104,7 +104,7 @@ export function useUpdateOrderStatus() {
 export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (order: { customer_name: string; customer_phone: string; total?: number; wilaya?: string; commune?: string; address?: string; delivery_type?: DeliveryType; subtotal?: number; shipping_cost?: number; note?: string | null; customer_id?: string; items?: { product_name: string; quantity: number; unit_price: number; total: number; product_id?: string }[] }) => {
+    mutationFn: async (order: { customer_name: string; customer_phone: string; total?: number; wilaya?: string; commune?: string; address?: string; delivery_type?: DeliveryType; subtotal?: number; shipping_cost?: number; note?: string | null; customer_id?: string; discount_code?: string; discount_amount?: number; items?: { product_name: string; quantity: number; unit_price: number; total: number; product_id?: string }[] }) => {
       const { items, ...orderData } = order;
       const { data, error } = await supabase.from("orders").insert([orderData]).select().single();
       if (error) throw error;

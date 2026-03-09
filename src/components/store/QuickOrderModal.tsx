@@ -111,6 +111,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         shipping_cost: shippingCost,
         total,
         customer_id: customerId,
+        discount_code: discount?.code || undefined,
+        discount_amount: discountAmount > 0 ? discountAmount : undefined,
         items: [
           {
             product_id: product.id,
