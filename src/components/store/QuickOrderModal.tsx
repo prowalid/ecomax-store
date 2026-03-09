@@ -423,9 +423,10 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                   />
                   <button
                     type="button"
-                    onClick={() => validateCode(couponCode)}
+                    onClick={handleApplyCoupon}
                     disabled={isValidating || !couponCode.trim()}
                     className="h-10 px-4 rounded-xl bg-[#dc3545] text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
                   >
                     {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
                   </button>
