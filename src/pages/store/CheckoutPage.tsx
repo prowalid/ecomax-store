@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Phone, User, MapPin, Truck, Loader2, ShoppingBag, Home, Building2, Tag, X } from "lucide-react";
+import { Phone, User, MapPin, Truck, Loader2, ShoppingBag, Home, Building2, Tag, X, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart } from "@/hooks/useCart";
@@ -12,6 +12,7 @@ import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 import { useTracking } from "@/hooks/useTracking";
+import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 
 interface WilayaShipping {
   id: number;
@@ -32,8 +33,9 @@ const checkoutSchema = z.object({
     .string()
     .trim()
     .regex(/^0[5-7][0-9]{8}$/, { message: "رقم الهاتف غير صالح" }),
-  wilaya: z.string().trim().optional(),
-  address: z.string().trim().min(5, "العنوان مفصل أكثر"),
+  wilaya: z.string().min(1, "الرجاء اختيار الولاية"),
+  commune: z.string().min(1, "الرجاء اختيار البلدية"),
+  address: z.string().trim().optional(),
   delivery_type: z.enum(["home", "desk"]),
   note: z.string().trim().max(500).optional(),
 });
@@ -41,6 +43,9 @@ const checkoutSchema = z.object({
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 const formatPrice = (n: number) => `${n.toLocaleString("ar-DZ")} دج`;
+
+const selectClass =
+  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
 
 const inputClass =
   "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold";
@@ -68,12 +73,24 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
+  // Merge shipping settings prices with ALGERIA_WILAYAS defaults
+  const wilayasWithPrices = useMemo(() => {
+    const settingsMap = new Map(shippingSettings.wilayas?.map((w) => [w.name, w]) ?? []);
+    return ALGERIA_WILAYAS.map((w) => {
+      const override = settingsMap.get(w.name);
+      return {
+        ...w,
+        homePrice: override?.homePrice ?? w.priceHome,
+        deskPrice: override?.deskPrice ?? w.priceDesk,
+      };
+    });
+  }, [shippingSettings]);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -81,19 +98,31 @@ export default function CheckoutPage() {
       customer_name: "",
       customer_phone: "",
       wilaya: "",
+      commune: "",
       address: "",
       delivery_type: "home",
       note: "",
     },
   });
 
-  const wilayaValue = watch("wilaya") || "";
+  const wilayaValue = watch("wilaya");
+  const communeValue = watch("commune");
   const deliveryTypeValue = watch("delivery_type") as DeliveryType;
 
   const selectedWilaya = useMemo(
-    () => wilayas.find((w) => w.name === wilayaValue),
-    [wilayas, wilayaValue]
+    () => wilayasWithPrices.find((w) => w.name === wilayaValue),
+    [wilayasWithPrices, wilayaValue]
   );
+
+  const availableCommunes = useMemo(
+    () => selectedWilaya?.communes ?? [],
+    [selectedWilaya]
+  );
+
+  // Reset commune when wilaya changes
+  useEffect(() => {
+    setValue("commune", "");
+  }, [wilayaValue, setValue]);
 
   const shippingCost = useMemo(() => {
     if (!selectedWilaya) return 0;
@@ -120,8 +149,9 @@ export default function CheckoutPage() {
         const customer = await createCustomer.mutateAsync({
           name: values.customer_name,
           phone: values.customer_phone,
-          wilaya: values.wilaya || undefined,
-          address: values.address,
+          wilaya: values.wilaya,
+          commune: values.commune,
+          address: values.address || undefined,
         });
         customerId = customer.id;
       } catch {
@@ -131,8 +161,9 @@ export default function CheckoutPage() {
       const order = await createOrder.mutateAsync({
         customer_name: values.customer_name,
         customer_phone: values.customer_phone,
-        wilaya: values.wilaya || undefined,
-        address: values.address,
+        wilaya: values.wilaya,
+        commune: values.commune,
+        address: values.address || undefined,
         delivery_type: values.delivery_type as DeliveryType,
         subtotal,
         shipping_cost: shippingCost,
@@ -161,7 +192,7 @@ export default function CheckoutPage() {
       track("Purchase", {
         phone: values.customer_phone,
         firstName: values.customer_name,
-        city: values.wilaya || undefined,
+        city: values.wilaya,
       }, {
         value: total,
         currency: "DZD",
@@ -248,41 +279,63 @@ export default function CheckoutPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Wilaya */}
+            {/* Wilaya Select */}
             <div>
               <div className="relative">
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                   <MapPin size={18} />
                 </div>
-                <input
-                  type="text"
-                  list="checkout-wilayas"
-                  placeholder="الولاية"
-                  {...register("wilaya")}
-                  className={inputClass}
-                />
-                <datalist id="checkout-wilayas">
-                  {wilayas.map((w) => (
-                    <option key={w.id} value={w.name} />
+                <select {...register("wilaya")} className={selectClass}>
+                  <option value="">اختر الولاية</option>
+                  {ALGERIA_WILAYAS.map((w) => (
+                    <option key={w.id} value={w.name}>
+                      {String(w.id).padStart(2, "0")} - {w.name}
+                    </option>
                   ))}
-                </datalist>
+                </select>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <ChevronDown size={16} />
+                </div>
               </div>
+              {errors.wilaya && <p className="text-xs text-red-500 mt-1">{errors.wilaya.message}</p>}
             </div>
 
-            {/* Address */}
+            {/* Commune Select */}
             <div>
               <div className="relative">
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                   <Truck size={18} />
                 </div>
-                <input
-                  type="text"
-                  placeholder="البلدية / العنوان"
-                  {...register("address")}
-                  className={inputClass}
-                />
+                <select
+                  {...register("commune")}
+                  disabled={!wilayaValue}
+                  className={selectClass + (!wilayaValue ? " opacity-50 cursor-not-allowed" : "")}
+                >
+                  <option value="">اختر البلدية</option>
+                  {availableCommunes.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <ChevronDown size={16} />
+                </div>
               </div>
-              {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address.message}</p>}
+              {errors.commune && <p className="text-xs text-red-500 mt-1">{errors.commune.message}</p>}
+            </div>
+          </div>
+
+          {/* Address (optional) */}
+          <div>
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                <Truck size={18} />
+              </div>
+              <input
+                type="text"
+                placeholder="العنوان التفصيلي (اختياري)"
+                {...register("address")}
+                className={inputClass}
+              />
             </div>
           </div>
 
@@ -300,6 +353,9 @@ export default function CheckoutPage() {
                 <input type="radio" value="home" {...register("delivery_type")} className="hidden" />
                 <Home size={18} />
                 توصيل للمنزل
+                {selectedWilaya && (
+                  <span className="text-xs font-medium opacity-70">({formatPrice(selectedWilaya.homePrice)})</span>
+                )}
               </label>
 
               <label
@@ -312,6 +368,9 @@ export default function CheckoutPage() {
                 <input type="radio" value="desk" {...register("delivery_type")} className="hidden" />
                 <Building2 size={18} />
                 نقطة تسليم / مكتب
+                {selectedWilaya && (
+                  <span className="text-xs font-medium opacity-70">({formatPrice(selectedWilaya.deskPrice)})</span>
+                )}
               </label>
             </div>
           </div>
