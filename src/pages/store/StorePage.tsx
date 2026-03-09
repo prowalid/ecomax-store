@@ -21,7 +21,7 @@ const StorePage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const slides = theme.slides?.length ? theme.slides : defaultAppearance.slides;
-  const catImages = theme.category_images?.length ? theme.category_images : defaultAppearance.category_images;
+  const defaultCatImages = defaultAppearance.category_images;
 
   useEffect(() => {
     const timer = setInterval(() => {
