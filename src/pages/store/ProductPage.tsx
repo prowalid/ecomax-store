@@ -24,6 +24,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
+import { useProductImages } from "@/hooks/useProductImages";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useCart } from "@/hooks/useCart";
