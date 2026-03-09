@@ -20,6 +20,7 @@ import Settings from "./pages/admin/Settings";
 import StoreLayout from "./components/store/StoreLayout";
 import StorePage from "./pages/store/StorePage";
 import ProductPage from "./pages/store/ProductPage";
+import CheckoutPage from "./pages/store/CheckoutPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/" element={<StorePage />} />
             <Route path="/shop" element={<StorePage />} />
             <Route path="/product/:id" element={<ProductPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
           </Route>
 
           {/* Admin Dashboard */}
