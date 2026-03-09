@@ -38,6 +38,25 @@ export interface OrderItem {
   total: number;
 }
 
+// Helper: adjust stock for order items (negative = decrement, positive = restore)
+async function adjustStock(items: { product_id?: string | null; quantity: number }[], direction: 1 | -1) {
+  for (const item of items) {
+    if (!item.product_id) continue;
+    const { data: product } = await supabase
+      .from("products")
+      .select("stock")
+      .eq("id", item.product_id)
+      .single();
+    if (product) {
+      const newStock = Math.max(0, product.stock + item.quantity * direction);
+      await supabase
+        .from("products")
+        .update({ stock: newStock, updated_at: new Date().toISOString() })
+        .eq("id", item.product_id);
+    }
+  }
+}
+
 export function useOrders() {
   return useQuery({
     queryKey: ["orders"],
@@ -67,6 +86,10 @@ export function useOrderItems(orderId: string | null) {
   });
 }
 
+// Statuses that mean stock should be "consumed" (not returned)
+const STOCK_CONSUMED_STATUSES: OrderStatus[] = ["new", "attempt", "no_answer", "confirmed", "ready", "shipped", "delivered"];
+const STOCK_RESTORED_STATUSES: OrderStatus[] = ["cancelled", "returned"];
+
 export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
@@ -78,6 +101,22 @@ export function useUpdateOrderStatus() {
       const { error } = await supabase.from("orders").update(updates).eq("id", id);
       if (error) throw error;
 
+      // Stock adjustment: restore stock when moving to cancelled/returned
+      const wasConsumed = STOCK_CONSUMED_STATUSES.includes(order.status);
+      const nowRestored = STOCK_RESTORED_STATUSES.includes(status);
+      const wasRestored = STOCK_RESTORED_STATUSES.includes(order.status);
+      const nowConsumed = STOCK_CONSUMED_STATUSES.includes(status);
+
+      if (wasConsumed && nowRestored) {
+        // Moving from active → cancelled/returned: restore stock
+        const { data: items } = await supabase.from("order_items").select("product_id, quantity").eq("order_id", id);
+        if (items) await adjustStock(items, 1); // +1 = restore
+      } else if (wasRestored && nowConsumed) {
+        // Moving from cancelled/returned → active: re-decrement stock
+        const { data: items } = await supabase.from("order_items").select("product_id, quantity").eq("order_id", id);
+        if (items) await adjustStock(items, -1); // -1 = decrement
+      }
+
       // Send WhatsApp notification in background
       sendOrderStatusNotification(
         `#${order.order_number}`,
@@ -85,7 +124,7 @@ export function useUpdateOrderStatus() {
         {
           customer_name: order.customer_name,
           customer_phone: order.customer_phone,
-          items: "", // Will be filled from order_items if needed
+          items: "",
           total: String(order.total),
           address: order.address || "",
           state: order.wilaya || "",
@@ -96,6 +135,7 @@ export function useUpdateOrderStatus() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
     },
     onError: () => toast.error("فشل تحديث حالة الطلب"),
   });
@@ -116,6 +156,9 @@ export function useCreateOrder() {
         }));
         const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
         if (itemsError) console.error("Failed to insert order items:", itemsError);
+
+        // Decrement stock for each product
+        await adjustStock(items, -1);
       }
 
       // Send admin notification
@@ -175,6 +218,7 @@ export function useCreateOrder() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("تم إنشاء الطلب");
     },
     onError: () => toast.error("فشل إنشاء الطلب"),
