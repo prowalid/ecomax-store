@@ -149,7 +149,6 @@ export default function CheckoutPage() {
           phone: values.customer_phone,
           wilaya: values.wilaya,
           commune: values.commune,
-          address: values.address || undefined,
         });
         customerId = customer.id;
       } catch {
@@ -161,7 +160,6 @@ export default function CheckoutPage() {
         customer_phone: values.customer_phone,
         wilaya: values.wilaya,
         commune: values.commune,
-        address: values.address || undefined,
         delivery_type: values.delivery_type as DeliveryType,
         subtotal,
         shipping_cost: shippingCost,

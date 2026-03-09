@@ -408,7 +408,7 @@ const ProductPage = () => {
                 <>
                   <div className="text-center mb-6">
                     <h2 className="text-2xl font-black text-gray-900">للطلب أدخل معلوماتك هنا</h2>
-                    <p className="text-gray-500 text-sm mt-1">والدفع يكون عند الاستلام (التوصيل مجاني)</p>
+                    <p className="text-gray-500 text-sm mt-1">والدفع يكون عند الاستلام</p>
                   </div>
 
                   <form onSubmit={handleSubmitOrder} className="space-y-4">
@@ -443,31 +443,83 @@ const ProductPage = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Wilaya */}
                       <div className="relative">
                         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                           <MapPin size={18} />
                         </div>
-                        <input
-                          type="text"
+                        <select
                           value={formWilaya}
                           onChange={(e) => setFormWilaya(e.target.value)}
-                          placeholder="الولاية"
-                          className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold"
-                        />
+                          required
+                          className="w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer"
+                        >
+                          <option value="">اختر الولاية</option>
+                          {wilayasWithPrices.map((w) => (
+                            <option key={w.id} value={w.name}>
+                              {String(w.id).padStart(2, "0")} - {w.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                          <ChevronDown size={16} />
+                        </div>
                       </div>
+
+                      {/* Commune */}
                       <div className="relative">
                         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                           <Truck size={18} />
                         </div>
-                        <input
-                          type="text"
-                          value={formAddress}
-                          onChange={(e) => setFormAddress(e.target.value)}
-                          placeholder="البلدية / العنوان"
-                          className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold"
-                        />
+                        <select
+                          value={formCommune}
+                          onChange={(e) => setFormCommune(e.target.value)}
+                          required
+                          disabled={!formWilaya}
+                          className={
+                            "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer" +
+                            (!formWilaya ? " opacity-50 cursor-not-allowed" : "")
+                          }
+                        >
+                          <option value="">اختر البلدية</option>
+                          {availableCommunes.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                          <ChevronDown size={16} />
+                        </div>
                       </div>
                     </div>
+
+                    {/* Shipping Cost Display */}
+                    {selectedWilaya ? (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Truck className="w-4 h-4 text-blue-600" />
+                          <h3 className="font-bold text-blue-900 text-xs">أسعار التوصيل - {selectedWilaya.name}</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-blue-700">🏠 للمنزل:</span>
+                            <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.homePrice)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-blue-700">🏢 للمكتب:</span>
+                            <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.deskPrice)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                        <div className="flex items-center justify-center gap-2 text-gray-500">
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-xs">اختر الولاية لعرض أسعار التوصيل</span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Delivery Type */}
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2">
@@ -476,26 +528,32 @@ const ProductPage = () => {
                         <button
                           type="button"
                           onClick={() => setDeliveryType("home")}
-                          className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                          className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                             deliveryType === "home"
                               ? "border-[#dc3545] bg-white text-[#dc3545]"
                               : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
                           }`}
                         >
-                          <Home size={18} />
-                          توصيل للمنزل
+                          <div className="flex items-center gap-2">
+                            <Home size={18} />
+                            توصيل للمنزل
+                          </div>
+                          {selectedWilaya && <span className="text-xs font-medium opacity-70">{formatPrice(selectedWilaya.homePrice)}</span>}
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeliveryType("desk")}
-                          className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                          className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                             deliveryType === "desk"
                               ? "border-[#dc3545] bg-white text-[#dc3545]"
                               : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
                           }`}
                         >
-                          <Building2 size={18} />
-                          نقطة تسليم / مكتب
+                          <div className="flex items-center gap-2">
+                            <Building2 size={18} />
+                            نقطة تسليم / مكتب
+                          </div>
+                          {selectedWilaya && <span className="text-xs font-medium opacity-70">{formatPrice(selectedWilaya.deskPrice)}</span>}
                         </button>
                       </div>
                     </div>
@@ -522,21 +580,81 @@ const ProductPage = () => {
                       </div>
                     </div>
 
-                    {/* Total */}
-                    <div className="bg-[#f8f9fa] p-5 rounded-xl border border-gray-200 mt-2 shadow-sm">
-                      <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
-                        <span>المجموع الفرعي ({qty} قطعة):</span>
-                        <span>{formatPrice(Number(product.price) * qty)}</span>
-                      </div>
-                      <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
-                        <span>التوصيل:</span>
-                        <span className="text-green-600 font-bold">مجاني</span>
-                      </div>
-                      <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
-                        <span>المجموع الكلي:</span>
-                        <span className="text-[#dc3545]">{formatPrice(Number(product.price) * qty)}</span>
-                      </div>
+                    {/* Coupon Code */}
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                      <p className="font-bold text-gray-700 mb-3 flex items-center gap-2 text-sm">
+                        <Tag size={14} />
+                        كود الخصم (اختياري)
+                      </p>
+                      {discount ? (
+                        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+                          <span className="text-xs font-bold text-green-700">
+                            {discount.code} — خصم {discount.type === "percentage" ? `${discount.value}%` : `${discount.value} د.ج`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              clearDiscount();
+                              setCouponCode("");
+                            }}
+                            className="p-1 rounded-full hover:bg-green-100 text-green-600 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="أدخل الكود"
+                            dir="ltr"
+                            className="flex-1 h-10 px-3 bg-white border border-gray-300 rounded-xl text-sm font-bold text-center uppercase focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => validateCode(couponCode)}
+                            disabled={isValidating || !couponCode.trim()}
+                            className="h-10 px-4 rounded-xl bg-[#dc3545] text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >
+                            {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
+                          </button>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Total */}
+                    {(() => {
+                      const subtotal = Number(product.price) * qty;
+                      const discountAmount = calculateDiscount(subtotal);
+                      const total = subtotal - discountAmount + shippingCost;
+
+                      return (
+                        <div className="bg-[#f8f9fa] p-5 rounded-xl border border-gray-200 mt-2 shadow-sm">
+                          <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
+                            <span>المجموع الفرعي ({qty} قطعة):</span>
+                            <span>{formatPrice(subtotal)}</span>
+                          </div>
+                          {discountAmount > 0 && (
+                            <div className="flex justify-between mb-3 text-sm text-green-600 font-bold">
+                              <span>الخصم ({discount?.code}):</span>
+                              <span>- {formatPrice(discountAmount)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
+                            <span>التوصيل:</span>
+                            <span className={selectedWilaya ? "text-gray-900 font-bold" : "text-gray-500"}>
+                              {selectedWilaya ? formatPrice(shippingCost) : "يُحسب حسب الولاية"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
+                            <span>المجموع الكلي:</span>
+                            <span className="text-[#dc3545]">{formatPrice(total)}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                       <button

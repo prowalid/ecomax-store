@@ -319,19 +319,6 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               </div>
             </div>
 
-            {/* Address (optional) */}
-            <div className="relative">
-              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
-                <Truck size={18} />
-              </div>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="العنوان التفصيلي (اختياري)"
-                className={inputClass}
-              />
-            </div>
 
             {/* Shipping Cost Display */}
             {selectedWilaya ? (
