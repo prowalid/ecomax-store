@@ -62,12 +62,14 @@ const ProductPage = () => {
     .filter((p) => p.id !== id && p.status === "active" && p.category_id === product?.category_id)
     .slice(0, 4);
 
-  // Set active image when product loads
+  // Set active image when product/gallery loads
   useEffect(() => {
-    if (product?.image_url) {
+    if (galleryImages.length > 0) {
+      setActiveImage(galleryImages[0].image_url);
+    } else if (product?.image_url) {
       setActiveImage(product.image_url);
     }
-  }, [product]);
+  }, [product, galleryImages]);
 
   // Timer
   useEffect(() => {
