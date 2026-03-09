@@ -129,6 +129,17 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
           if (discount) {
             await incrementUsage();
           }
+          track("Purchase", {
+            phone: phone,
+            firstName: name,
+            city: city || undefined,
+          }, {
+            value: total,
+            currency: "DZD",
+            content_ids: [product.id],
+            content_name: product.name,
+            num_items: quantity,
+          });
           setSubmitted(true);
         },
       }
