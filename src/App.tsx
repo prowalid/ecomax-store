@@ -21,6 +21,7 @@ import StoreLayout from "./components/store/StoreLayout";
 import StorePage from "./pages/store/StorePage";
 import ProductPage from "./pages/store/ProductPage";
 import CheckoutPage from "./pages/store/CheckoutPage";
+import DynamicPage from "./pages/store/DynamicPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
