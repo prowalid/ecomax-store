@@ -82,15 +82,6 @@ export function useValidateDiscount() {
 
   const incrementUsage = async () => {
     if (!discount) return;
-    await supabase.rpc("increment_discount_usage" as any, { discount_id: discount.id }).catch(() => {
-      // Fallback: manual increment
-      supabase
-        .from("discounts")
-        .update({ usage_count: undefined as any })
-        .eq("id", discount.id)
-        .then(() => {});
-    });
-    // Simple fallback - just increment via update
     const { data } = await supabase
       .from("discounts")
       .select("usage_count")
