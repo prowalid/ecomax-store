@@ -29,17 +29,10 @@ const REQUIRED_PARAMS = [
 
 const Marketing = () => {
   const { settings, setSettings, loading, saving, saveSettings } = useMarketingSettings();
-  const [pixelId, setPixelId] = useState("");
   const [accessToken, setAccessToken] = useState("");
-  const [webhookUrl, setWebhookUrl] = useState("");
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [selectedTestEvent, setSelectedTestEvent] = useState("PageView");
-
-  // Sync webhook from settings on load
-  useState(() => {
-    if (settings.webhook_url) setWebhookUrl(settings.webhook_url);
-  });
 
   const handleTestEvent = async () => {
     setTestLoading(true);
