@@ -31,8 +31,7 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
     try {
       const { error } = await supabase
         .from("store_settings")
-        .update({ value: newSettings as any, updated_at: new Date().toISOString() })
-        .eq("key", key);
+        .upsert({ key, value: newSettings as any, updated_at: new Date().toISOString() }, { onConflict: "key" });
       if (error) throw error;
       setSettings(newSettings);
       toast.success("تم حفظ الإعدادات");
