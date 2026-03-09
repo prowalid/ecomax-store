@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Loader2, Pencil, Trash2, X, Save, Image } from "lucide-react";
+import { Plus, Search, Loader2, Pencil, Trash2, X, Save, Image, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type ProductStatus } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import { useProductImages, useUploadProductImage, useDeleteProductImage } from "@/hooks/useProductImages";
 
 const statusLabels: Record<ProductStatus, { label: string; variant: "success" | "secondary" | "destructive" }> = {
   active: { label: "نشط", variant: "success" },
