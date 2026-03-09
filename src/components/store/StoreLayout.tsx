@@ -66,9 +66,8 @@ const StoreLayout = () => {
         {/* Mobile Nav */}
         {mobileMenuOpen && (
           <nav className="md:hidden border-t border-gray-100 pt-2 pb-1 px-4">
-            <Link to="/" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 text-sm font-semibold border-b border-gray-50 ${isActive("/") ? "text-[#dc3545] bg-red-50/50" : "text-gray-700 hover:bg-red-50/30 hover:pr-6"} transition-all`}>الرئيسية</Link>
-            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 text-sm font-semibold ${isActive("/shop") ? "text-[#dc3545] bg-red-50/50" : "text-gray-700 hover:bg-red-50/30 hover:pr-6"} transition-all`}>المتجر</Link>
-            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-red-50/30 hover:pr-6 transition-all">عروض حصرية</Link>
+            <a href="/#products" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold border-b border-gray-50 text-gray-700 hover:bg-red-50/30 hover:pr-6 transition-all">المنتجات</a>
+            <a href="/#offers" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-red-50/30 hover:pr-6 transition-all">العروض</a>
           </nav>
         )}
       </header>
