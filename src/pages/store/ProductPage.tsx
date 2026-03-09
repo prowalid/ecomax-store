@@ -350,17 +350,32 @@ const ProductPage = () => {
                       </div>
                     </div>
 
-                    <button
-                      type="submit"
-                      disabled={createOrder.isPending}
-                      className="w-full bg-gradient-to-r from-[#dc3545] to-[#e84a59] text-white font-black text-xl py-4 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center mt-4 disabled:opacity-50"
-                    >
-                      {createOrder.isPending ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      ) : (
-                        <>اضغط هنا للطلب الآن <ShoppingBag size={24} className="mr-3 animate-pulse" /></>
-                      )}
-                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                      <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        disabled={isAdding}
+                        className="bg-white border-2 border-[#dc3545] text-[#dc3545] font-bold py-3 rounded-xl hover:bg-[#dc3545] hover:text-white transition-all duration-300 flex justify-center items-center disabled:opacity-50"
+                      >
+                        {isAdding ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>أضف للسلة <ShoppingBag size={20} className="mr-2" /></>
+                        )}
+                      </button>
+                      
+                      <button
+                        type="submit"
+                        disabled={createOrder.isPending}
+                        className="bg-gradient-to-r from-[#dc3545] to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50"
+                      >
+                        {createOrder.isPending ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>اطلب الآن <ShoppingBag size={20} className="mr-2 animate-pulse" /></>
+                        )}
+                      </button>
+                    </div>
                   </form>
                 </>
               )}
