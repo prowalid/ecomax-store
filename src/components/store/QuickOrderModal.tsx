@@ -349,7 +349,9 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               )}
               <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
                 <span>التوصيل:</span>
-                <span className="text-green-600 font-bold">يُحدد عند التأكيد</span>
+                <span className={shippingCost > 0 ? "text-gray-900 font-bold" : "text-gray-500"}>
+                  {shippingCost > 0 ? formatPrice(shippingCost) : "يُحسب حسب الولاية"}
+                </span>
               </div>
               <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
                 <span>المجموع الكلي:</span>
