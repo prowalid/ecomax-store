@@ -31,6 +31,7 @@ import { useCart } from "@/hooks/useCart";
 import ProductCard from "@/components/store/ProductCard";
 import QuickOrderModal from "@/components/store/QuickOrderModal";
 import { toast } from "sonner";
+import { useTracking } from "@/hooks/useTracking";
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
