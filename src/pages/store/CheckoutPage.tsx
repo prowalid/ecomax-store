@@ -35,7 +35,6 @@ const checkoutSchema = z.object({
     .regex(/^0[5-7][0-9]{8}$/, { message: "رقم الهاتف غير صالح" }),
   wilaya: z.string().min(1, "الرجاء اختيار الولاية"),
   commune: z.string().min(1, "الرجاء اختيار البلدية"),
-  address: z.string().trim().optional(),
   delivery_type: z.enum(["home", "desk"]),
   note: z.string().trim().max(500).optional(),
 });
@@ -99,7 +98,6 @@ export default function CheckoutPage() {
       customer_phone: "",
       wilaya: "",
       commune: "",
-      address: "",
       delivery_type: "home",
       note: "",
     },
@@ -151,7 +149,6 @@ export default function CheckoutPage() {
           phone: values.customer_phone,
           wilaya: values.wilaya,
           commune: values.commune,
-          address: values.address || undefined,
         });
         customerId = customer.id;
       } catch {
@@ -163,7 +160,6 @@ export default function CheckoutPage() {
         customer_phone: values.customer_phone,
         wilaya: values.wilaya,
         commune: values.commune,
-        address: values.address || undefined,
         delivery_type: values.delivery_type as DeliveryType,
         subtotal,
         shipping_cost: shippingCost,
@@ -351,20 +347,6 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {/* Address (optional) */}
-          <div>
-            <div className="relative">
-              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
-                <Truck size={18} />
-              </div>
-              <input
-                type="text"
-                placeholder="العنوان التفصيلي (اختياري)"
-                {...register("address")}
-                className={inputClass}
-              />
-            </div>
-          </div>
 
           {/* Delivery Type */}
           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2">
