@@ -3,13 +3,15 @@ import { useParams, Link } from "react-router-dom";
 import {
   Phone, User, Truck, MapPin, ShoppingBag, Star, ChevronRight,
   CheckCircle2, AlertOctagon, TrendingUp, Clock, Package, Flame,
-  ShieldCheck, Headphones, RotateCcw, Globe, Loader2
+  ShieldCheck, Headphones, RotateCcw, Globe, Loader2, Check
 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
+import { useCart } from "@/hooks/useCart";
 import ProductCard from "@/components/store/ProductCard";
 import QuickOrderModal from "@/components/store/QuickOrderModal";
+import { toast } from "sonner";
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
