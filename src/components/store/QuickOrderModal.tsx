@@ -62,11 +62,23 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
 
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
+  const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
+
+  const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
+
+  const selectedWilaya = useMemo(
+    () => wilayas.find((w) => w.name === city),
+    [wilayas, city]
+  );
+
+  const shippingCost = useMemo(() => {
+    if (!selectedWilaya) return 0;
+    return deliveryType === "home" ? selectedWilaya.homePrice : selectedWilaya.deskPrice;
+  }, [selectedWilaya, deliveryType]);
 
   const subtotal = product.price * quantity;
   const discountAmount = calculateDiscount(subtotal);
-  const shippingCost = 0;
   const total = subtotal - discountAmount + shippingCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
