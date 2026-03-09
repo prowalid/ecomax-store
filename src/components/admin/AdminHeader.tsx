@@ -1,6 +1,16 @@
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const AdminHeader = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/admin/login", { replace: true });
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-card border-b border-border h-14 flex items-center px-6 gap-4">
       {/* Search */}
@@ -22,10 +32,21 @@ const AdminHeader = () => {
           <span className="absolute top-1.5 left-1.5 w-2 h-2 bg-critical rounded-full" />
         </button>
 
-        {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-          <span className="text-xs font-semibold text-primary-foreground">م</span>
-        </div>
+        {/* User email */}
+        {user && (
+          <span className="text-xs text-muted-foreground hidden sm:block max-w-[160px] truncate" dir="ltr">
+            {user.email}
+          </span>
+        )}
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+          title="تسجيل الخروج"
+        >
+          <LogOut className="w-[18px] h-[18px]" strokeWidth={1.75} />
+        </button>
       </div>
     </header>
   );
