@@ -64,6 +64,19 @@ const ProductPage = () => {
     .filter((p) => p.id !== id && p.status === "active" && p.category_id === product?.category_id)
     .slice(0, 4);
 
+  // Track ViewContent when product loads
+  useEffect(() => {
+    if (product) {
+      track("ViewContent", {}, {
+        content_name: product.name,
+        content_ids: [product.id],
+        content_type: "product",
+        value: Number(product.price),
+        currency: "DZD",
+      });
+    }
+  }, [product?.id]);
+
   // Set active image when product/gallery loads
   useEffect(() => {
     if (galleryImages.length > 0) {

@@ -156,6 +156,19 @@ export default function CheckoutPage() {
       }
 
       clearCart();
+
+      // Track Purchase event
+      track("Purchase", {
+        phone: values.customer_phone,
+        firstName: values.customer_name,
+        city: values.wilaya || undefined,
+      }, {
+        value: total,
+        currency: "DZD",
+        content_ids: items.map((i) => i.product_id),
+        num_items: items.length,
+      });
+
       toast.success(`تم إرسال طلبك بنجاح، رقم الطلب #${order.order_number}`);
       navigate("/", { replace: true });
     } catch (e) {
