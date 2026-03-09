@@ -11,9 +11,11 @@ import {
   Loader2,
   CheckCircle2,
   Truck,
+  Tag,
 } from "lucide-react";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
+import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 
 type DeliveryType = "home" | "desk";
 
@@ -44,13 +46,16 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const [quantity, setQuantity] = useState(product.quantity || 1);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
   const [submitted, setSubmitted] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
 
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
+  const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
 
   const subtotal = product.price * quantity;
+  const discountAmount = calculateDiscount(subtotal);
   const shippingCost = 0;
-  const total = subtotal + shippingCost;
+  const total = subtotal - discountAmount + shippingCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +98,10 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         ],
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          if (discount) {
+            await incrementUsage();
+          }
           setSubmitted(true);
         },
       }
@@ -256,12 +264,59 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               </div>
             </div>
 
+            {/* Coupon Code */}
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <p className="font-bold text-gray-700 mb-3 flex items-center gap-2 text-sm">
+                <Tag size={14} />
+                كود الخصم (اختياري)
+              </p>
+              {discount ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+                  <span className="text-xs font-bold text-green-700">
+                    {discount.code} — خصم {discount.type === "percentage" ? `${discount.value}%` : `${discount.value} د.ج`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { clearDiscount(); setCouponCode(""); }}
+                    className="p-1 rounded-full hover:bg-green-100 text-green-600 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="أدخل الكود"
+                    dir="ltr"
+                    className="flex-1 h-10 px-3 bg-white border border-gray-300 rounded-xl text-sm font-bold text-center uppercase focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => validateCode(couponCode)}
+                    disabled={isValidating || !couponCode.trim()}
+                    className="h-10 px-4 rounded-xl bg-[#dc3545] text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Total */}
             <div className="bg-[#f8f9fa] p-5 rounded-xl border border-gray-200 mt-1 shadow-sm">
               <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
                 <span>المجموع الفرعي ({quantity} قطعة):</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between mb-3 text-sm text-green-600 font-bold">
+                  <span>الخصم ({discount?.code}):</span>
+                  <span>- {formatPrice(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
                 <span>التوصيل:</span>
                 <span className="text-green-600 font-bold">يُحدد عند التأكيد</span>

@@ -1,15 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Phone, User, MapPin, Truck, Loader2, ShoppingBag, Home, Building2 } from "lucide-react";
+import { Phone, User, MapPin, Truck, Loader2, ShoppingBag, Home, Building2, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 
 interface WilayaShipping {
   id: number;
@@ -49,6 +50,9 @@ export default function CheckoutPage() {
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
+  const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
+
+  const [couponCode, setCouponCode] = useState("");
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
 
@@ -83,7 +87,12 @@ export default function CheckoutPage() {
   }, [selectedWilaya, deliveryTypeValue]);
 
   const subtotal = totalPrice;
-  const total = subtotal + shippingCost;
+  const discountAmount = calculateDiscount(subtotal);
+  const total = subtotal - discountAmount + shippingCost;
+
+  const handleApplyCoupon = async () => {
+    await validateCode(couponCode);
+  };
 
   const onSubmit = async (values: CheckoutFormValues) => {
     if (!items.length) {
@@ -92,7 +101,6 @@ export default function CheckoutPage() {
     }
 
     try {
-      // Create or update customer
       let customerId: string | undefined;
       try {
         const customer = await createCustomer.mutateAsync({
@@ -125,6 +133,11 @@ export default function CheckoutPage() {
           total: item.product_price * item.quantity,
         })),
       });
+
+      // Increment discount usage
+      if (discount) {
+        await incrementUsage();
+      }
 
       clearCart();
       toast.success(`تم إرسال طلبك بنجاح، رقم الطلب #${order.order_number}`);
@@ -274,6 +287,50 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Coupon Code */}
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <p className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <Tag size={16} />
+              كود الخصم
+            </p>
+            {discount ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Tag size={16} className="text-green-600" />
+                  <span className="text-sm font-bold text-green-700">
+                    {discount.code} — خصم {discount.type === "percentage" ? `${discount.value}%` : `${discount.value} د.ج`}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { clearDiscount(); setCouponCode(""); }}
+                  className="p-1 rounded-full hover:bg-green-100 text-green-600 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="أدخل كود الخصم"
+                  dir="ltr"
+                  className="flex-1 h-11 px-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold text-center uppercase"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={isValidating || !couponCode.trim()}
+                  className="h-11 px-5 rounded-xl bg-[#dc3545] text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Note */}
           <div>
             <textarea
@@ -327,6 +384,12 @@ export default function CheckoutPage() {
             <span>المجموع الفرعي:</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between mb-3 text-sm text-green-600 font-bold">
+              <span>الخصم ({discount?.code}):</span>
+              <span>- {formatPrice(discountAmount)}</span>
+            </div>
+          )}
           <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
             <span>سعر التوصيل:</span>
             <span className={shippingCost > 0 ? "text-gray-900 font-bold" : "text-gray-500"}>
