@@ -46,9 +46,8 @@ const StoreLayout = () => {
           </div>
 
           <nav className="hidden md:flex flex-1 justify-center space-x-8 space-x-reverse font-bold text-gray-700">
-            <Link to="/" className={`transition-colors ${isActive("/") ? "text-[#dc3545]" : "hover:text-[#dc3545]"}`}>الرئيسية</Link>
-            <Link to="/shop" className={`transition-colors ${isActive("/shop") || location.pathname.startsWith("/product") ? "text-[#dc3545]" : "hover:text-[#dc3545]"}`}>المتجر</Link>
-            <Link to="/shop" className="hover:text-[#dc3545] transition-colors">عروض حصرية</Link>
+            <a href="/#products" className="hover:text-[#dc3545] transition-colors">المنتجات</a>
+            <a href="/#offers" className="hover:text-[#dc3545] transition-colors">العروض</a>
           </nav>
 
           <div className="flex-1 flex justify-end">
