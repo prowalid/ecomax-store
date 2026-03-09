@@ -53,6 +53,11 @@ const Products = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: editImages = [], isLoading: imagesLoading } = useProductImages(editingId);
+  const uploadImage = useUploadProductImage();
+  const deleteImage = useDeleteProductImage();
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.includes(search) || (p.category_name || "").includes(search);
