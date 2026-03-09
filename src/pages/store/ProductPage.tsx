@@ -24,6 +24,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
+import { useProductImages } from "@/hooks/useProductImages";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useCart } from "@/hooks/useCart";
@@ -38,6 +39,7 @@ type DeliveryType = "home" | "desk";
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: products = [], isLoading } = useProducts();
+  const { data: galleryImages = [] } = useProductImages(id || null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [timeLeft, setTimeLeft] = useState(3600);
@@ -60,12 +62,14 @@ const ProductPage = () => {
     .filter((p) => p.id !== id && p.status === "active" && p.category_id === product?.category_id)
     .slice(0, 4);
 
-  // Set active image when product loads
+  // Set active image when product/gallery loads
   useEffect(() => {
-    if (product?.image_url) {
+    if (galleryImages.length > 0) {
+      setActiveImage(galleryImages[0].image_url);
+    } else if (product?.image_url) {
       setActiveImage(product.image_url);
     }
-  }, [product]);
+  }, [product, galleryImages]);
 
   // Timer
   useEffect(() => {
@@ -162,7 +166,9 @@ const ProductPage = () => {
     ? Math.round(((Number(product.compare_price) - Number(product.price)) / Number(product.compare_price)) * 100)
     : 0;
 
-  const productImages = product.image_url ? [product.image_url] : [];
+  const productImages = galleryImages.length > 0
+    ? galleryImages.map((gi) => gi.image_url)
+    : product.image_url ? [product.image_url] : [];
 
   return (
     <div className="font-[Cairo] pb-20 md:pb-0">

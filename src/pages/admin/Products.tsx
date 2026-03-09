@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Loader2, Pencil, Trash2, X, Save, Image } from "lucide-react";
+import { Plus, Search, Loader2, Pencil, Trash2, X, Save, Image, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type ProductStatus } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import { useProductImages, useUploadProductImage, useDeleteProductImage } from "@/hooks/useProductImages";
 
 const statusLabels: Record<ProductStatus, { label: string; variant: "success" | "secondary" | "destructive" }> = {
   active: { label: "نشط", variant: "success" },
@@ -52,6 +53,11 @@ const Products = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: editImages = [], isLoading: imagesLoading } = useProductImages(editingId);
+  const uploadImage = useUploadProductImage();
+  const deleteImage = useDeleteProductImage();
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.includes(search) || (p.category_name || "").includes(search);
@@ -302,25 +308,86 @@ const Products = () => {
 
             {/* Modal Body */}
             <div className="p-5 space-y-5">
-              {/* Image Preview */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">صورة المنتج (رابط)</label>
+              {/* Image Upload Section */}
+              <div className="space-y-3">
+                <label className="text-xs font-medium text-muted-foreground">صور المنتج</label>
+                
+                {/* Existing images grid */}
+                {editingId && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {editImages.map((img) => (
+                      <div key={img.id} className="relative group rounded-lg overflow-hidden border border-border aspect-square">
+                        <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => deleteImage.mutate({ id: img.id, productId: editingId, imageUrl: img.image_url })}
+                          className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {uploadImage.isPending && (
+                      <div className="rounded-lg border border-dashed border-border aspect-square flex items-center justify-center bg-muted">
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Upload button */}
+                {editingId ? (
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files || !editingId) return;
+                        Array.from(files).forEach((file) => {
+                          uploadImage.mutate({ productId: editingId, file });
+                        });
+                        e.target.value = "";
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadImage.isPending}
+                      className="h-9 px-4 flex items-center gap-2 rounded-lg border border-dashed border-input text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+                    >
+                      <Upload className="w-4 h-4" />
+                      رفع صور
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    💡 أضف المنتج أولاً ثم يمكنك رفع الصور عبر تعديله
+                  </p>
+                )}
+
+                {/* Fallback URL input */}
                 <div className="flex gap-3 items-start">
-                  <div className="w-20 h-20 rounded-lg border border-border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-16 h-16 rounded-lg border border-border bg-muted flex items-center justify-center overflow-hidden shrink-0">
                     {form.image_url ? (
                       <img src={form.image_url} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <Image className="w-6 h-6 text-muted-foreground" />
+                      <Image className="w-5 h-5 text-muted-foreground" />
                     )}
                   </div>
-                  <input
-                    type="text"
-                    value={form.image_url}
-                    onChange={(e) => updateField("image_url", e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    dir="ltr"
-                    className="flex-1 h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                  />
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs text-muted-foreground">أو ألصق رابط الصورة الرئيسية</label>
+                    <input
+                      type="text"
+                      value={form.image_url}
+                      onChange={(e) => updateField("image_url", e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                      dir="ltr"
+                      className="w-full h-8 px-3 rounded-lg border border-input bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                    />
+                  </div>
                 </div>
               </div>
 
