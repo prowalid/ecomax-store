@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
+import { usePublishedPages } from "@/hooks/usePages";
 import { initPixel } from "@/lib/facebook-pixel";
 import CartDrawer from "./CartDrawer";
 
@@ -14,15 +15,15 @@ const StoreLayout = () => {
   const { totalCount } = useCart();
   const { settings: t, loading } = useAppearanceSettings();
   const { settings: marketing } = useMarketingSettings();
+  const { data: headerPages = [] } = usePublishedPages("header");
+  const { data: footerPages = [] } = usePublishedPages("footer");
 
-  // Initialize Facebook Pixel when pixel_id is available
   useEffect(() => {
     if (marketing.pixel_id) {
       initPixel(marketing.pixel_id);
     }
   }, [marketing.pixel_id]);
 
-  // Use defaults while loading
   const theme = loading ? defaultAppearance : t;
 
   return (
@@ -67,6 +68,16 @@ const StoreLayout = () => {
           <nav className="hidden md:flex flex-1 justify-center space-x-8 space-x-reverse font-bold">
             <a href="/#products" className="hover:opacity-80 transition-opacity" style={{ color: theme.header_text }}>المنتجات</a>
             <a href="/#offers" className="hover:opacity-80 transition-opacity" style={{ color: theme.header_text }}>العروض</a>
+            {headerPages.map((page) => (
+              <Link
+                key={page.id}
+                to={`/page/${page.slug}`}
+                className="hover:opacity-80 transition-opacity"
+                style={{ color: theme.header_text }}
+              >
+                {page.title}
+              </Link>
+            ))}
           </nav>
 
           <div className="flex-1 flex justify-end">
@@ -90,6 +101,17 @@ const StoreLayout = () => {
           <nav className="md:hidden border-t pt-2 pb-1 px-4" style={{ borderColor: theme.header_text + '1a' }}>
             <a href="/#products" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold transition-all" style={{ color: theme.header_text }}>المنتجات</a>
             <a href="/#offers" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold transition-all" style={{ color: theme.header_text }}>العروض</a>
+            {headerPages.map((page) => (
+              <Link
+                key={page.id}
+                to={`/page/${page.slug}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 text-sm font-semibold transition-all"
+                style={{ color: theme.header_text }}
+              >
+                {page.title}
+              </Link>
+            ))}
           </nav>
         )}
       </header>
@@ -123,6 +145,19 @@ const StoreLayout = () => {
               <ul className="space-y-3 font-medium" style={{ color: theme.footer_text + 'aa' }}>
                 <li><a href="/#products" className="flex items-center transition-colors" style={{ color: theme.footer_text + 'aa' }} onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent} onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}><ChevronLeft size={16} className="ml-1" /> المنتجات</a></li>
                 <li><a href="/#offers" className="flex items-center transition-colors" style={{ color: theme.footer_text + 'aa' }} onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent} onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}><ChevronLeft size={16} className="ml-1" /> العروض</a></li>
+                {footerPages.map((page) => (
+                  <li key={page.id}>
+                    <Link
+                      to={`/page/${page.slug}`}
+                      className="flex items-center transition-colors"
+                      style={{ color: theme.footer_text + 'aa' }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent}
+                      onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}
+                    >
+                      <ChevronLeft size={16} className="ml-1" /> {page.title}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
