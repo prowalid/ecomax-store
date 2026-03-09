@@ -38,6 +38,7 @@ const App = () => (
             <Route path="/" element={<StorePage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/page/:slug" element={<DynamicPage />} />
           </Route>
 
           {/* Admin Dashboard */}
