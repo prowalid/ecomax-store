@@ -21,7 +21,7 @@ const StorePage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const slides = theme.slides?.length ? theme.slides : defaultAppearance.slides;
-  const catImages = theme.category_images?.length ? theme.category_images : defaultAppearance.category_images;
+  const defaultCatImages = defaultAppearance.category_images;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -230,7 +230,7 @@ const StorePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               {categories.slice(0, 3).map((cat, idx) => (
                 <button key={cat.id} onClick={() => { setSelectedCategory(cat.id); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); }} className="relative rounded-2xl overflow-hidden h-64 group cursor-pointer shadow-sm block w-full text-right">
-                  <img src={catImages[idx] || catImages[0]} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
+                  <img src={cat.image_url || defaultCatImages[idx] || defaultCatImages[0]} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-colors duration-500"></div>
                   <div className="absolute bottom-6 right-6 left-6 flex justify-between items-end">
                     <h3 className="text-white text-2xl font-bold">{cat.name}</h3>
@@ -244,7 +244,7 @@ const StorePage = () => {
 
             {/* Featured Banner */}
             <div className="relative rounded-2xl overflow-hidden h-80 group cursor-pointer shadow-md mt-6">
-              <img src={catImages[0] || defaultAppearance.category_images[0]} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
+              <img src={categories[3]?.image_url || defaultCatImages[0]} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
               <div className="absolute inset-0 transition-colors duration-500" style={{ background: `linear-gradient(to top right, ${theme.accent_color}e6, ${theme.accent_color}66)` }}></div>
               <div className="absolute inset-0 flex flex-col justify-center items-start p-10">
                 <div className="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold mb-4 inline-flex items-center border border-white/30">

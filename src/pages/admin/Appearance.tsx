@@ -203,33 +203,16 @@ const Appearance = () => {
           )}
         </div>
 
-        {/* Category Images */}
-        <div className="bg-card rounded-lg shadow-card border border-border p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Layers className="w-5 h-5 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">صور التصنيفات الافتراضية</h2>
-            </div>
-            <button onClick={addCatImage} className="h-7 px-2 flex items-center gap-1 rounded-md bg-primary text-primary-foreground text-xs font-medium">
-              <Plus className="w-3 h-3" /> إضافة
-            </button>
+        {/* Category Images Info */}
+        <div className="bg-card rounded-lg shadow-card border border-border p-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <Layers className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">صور التصنيفات</h2>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {(settings.category_images || []).map((url: string, idx: number) => (
-              <div key={idx} className="relative group rounded-lg overflow-hidden border border-border">
-                <img src={url} alt={`تصنيف ${idx + 1}`} className="w-full h-20 object-cover" />
-                <button
-                  onClick={() => removeCatImage(idx)}
-                  className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-          {(!settings.category_images || settings.category_images.length === 0) && (
-            <p className="text-xs text-muted-foreground text-center py-4">لا توجد صور افتراضية للتصنيفات</p>
-          )}
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            يمكنك تعيين صورة مخصصة لكل تصنيف من صفحة <a href="/admin/categories" className="text-primary underline font-medium">التصنيفات</a>.
+            كل تصنيف يمكنه الحصول على صورة خاصة تظهر في واجهة المتجر.
+          </p>
         </div>
 
         {/* Domain */}
