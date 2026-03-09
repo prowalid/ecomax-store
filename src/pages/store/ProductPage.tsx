@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   Phone,
@@ -22,16 +22,33 @@ import {
   Check,
   Home,
   Building2,
+  Tag,
+  X,
+  ChevronDown,
 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { useProductImages } from "@/hooks/useProductImages";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useCart } from "@/hooks/useCart";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { useValidateDiscount } from "@/hooks/useValidateDiscount";
+import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import ProductCard from "@/components/store/ProductCard";
 import QuickOrderModal from "@/components/store/QuickOrderModal";
 import { toast } from "sonner";
 import { useTracking } from "@/hooks/useTracking";
+
+interface WilayaShipping {
+  id: number;
+  name: string;
+  homePrice: number;
+  deskPrice: number;
+}
+
+interface ShippingSettings {
+  wilayas: WilayaShipping[];
+}
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
@@ -50,13 +67,16 @@ const ProductPage = () => {
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formWilaya, setFormWilaya] = useState("");
-  const [formAddress, setFormAddress] = useState("");
+  const [formCommune, setFormCommune] = useState("");
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
   const [submitted, setSubmitted] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
 
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
   const { addItem, isAdding } = useCart();
+  const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
+  const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
   const { track } = useTracking();
 
   const product = products.find((p) => p.id === id);
@@ -64,16 +84,53 @@ const ProductPage = () => {
     .filter((p) => p.id !== id && p.status === "active" && p.category_id === product?.category_id)
     .slice(0, 4);
 
+  // Merge shipping settings prices with ALGERIA_WILAYAS defaults
+  const wilayasWithPrices = useMemo(() => {
+    const settingsMap = new Map(shippingSettings.wilayas?.map((w) => [w.name, w]) ?? []);
+    return ALGERIA_WILAYAS.map((w) => {
+      const override = settingsMap.get(w.name);
+      return {
+        ...w,
+        homePrice: override?.homePrice ?? w.priceHome,
+        deskPrice: override?.deskPrice ?? w.priceDesk,
+      };
+    });
+  }, [shippingSettings]);
+
+  const selectedWilaya = useMemo(
+    () => wilayasWithPrices.find((w) => w.name === formWilaya),
+    [wilayasWithPrices, formWilaya]
+  );
+
+  const availableCommunes = useMemo(
+    () => selectedWilaya?.communes ?? [],
+    [selectedWilaya]
+  );
+
+  // Reset commune when wilaya changes
+  useEffect(() => {
+    setFormCommune("");
+  }, [formWilaya]);
+
+  const shippingCost = useMemo(() => {
+    if (!selectedWilaya) return 0;
+    return deliveryType === "home" ? selectedWilaya.homePrice : selectedWilaya.deskPrice;
+  }, [selectedWilaya, deliveryType]);
+
   // Track ViewContent when product loads
   useEffect(() => {
     if (product) {
-      track("ViewContent", {}, {
-        content_name: product.name,
-        content_ids: [product.id],
-        content_type: "product",
-        value: Number(product.price),
-        currency: "DZD",
-      });
+      track(
+        "ViewContent",
+        {},
+        {
+          content_name: product.name,
+          content_ids: [product.id],
+          content_type: "product",
+          value: Number(product.price),
+          currency: "DZD",
+        }
+      );
     }
   }, [product?.id]);
 
@@ -105,15 +162,22 @@ const ProductPage = () => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim() || !product) return;
 
+    if (!formWilaya || !formCommune) {
+      toast.error("الرجاء اختيار الولاية والبلدية");
+      return;
+    }
+
     const subtotal = Number(product.price) * qty;
+    const discountAmount = calculateDiscount(subtotal);
+    const total = subtotal - discountAmount + shippingCost;
 
     let customerId: string | undefined;
     try {
       const customer = await createCustomer.mutateAsync({
         name: formName.trim(),
         phone: formPhone.trim(),
-        wilaya: formWilaya.trim() || undefined,
-        address: formAddress.trim() || undefined,
+        wilaya: formWilaya,
+        commune: formCommune,
       });
       customerId = customer.id;
     } catch {}
@@ -122,13 +186,15 @@ const ProductPage = () => {
       {
         customer_name: formName.trim(),
         customer_phone: formPhone.trim(),
-        wilaya: formWilaya.trim() || undefined,
-        address: formAddress.trim() || undefined,
+        wilaya: formWilaya,
+        commune: formCommune,
         delivery_type: deliveryType,
         subtotal,
-        shipping_cost: 0,
-        total: subtotal,
+        shipping_cost: shippingCost,
+        total,
         customer_id: customerId,
+        discount_code: discount?.code || undefined,
+        discount_amount: discountAmount > 0 ? discountAmount : undefined,
         items: [
           {
             product_id: product.id,
@@ -139,7 +205,14 @@ const ProductPage = () => {
           },
         ],
       },
-      { onSuccess: () => setSubmitted(true) }
+      {
+        onSuccess: async () => {
+          if (discount) {
+            await incrementUsage();
+          }
+          setSubmitted(true);
+        },
+      }
     );
   };
 

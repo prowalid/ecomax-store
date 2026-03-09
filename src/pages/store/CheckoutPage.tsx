@@ -35,7 +35,6 @@ const checkoutSchema = z.object({
     .regex(/^0[5-7][0-9]{8}$/, { message: "رقم الهاتف غير صالح" }),
   wilaya: z.string().min(1, "الرجاء اختيار الولاية"),
   commune: z.string().min(1, "الرجاء اختيار البلدية"),
-  address: z.string().trim().optional(),
   delivery_type: z.enum(["home", "desk"]),
   note: z.string().trim().max(500).optional(),
 });
@@ -99,7 +98,6 @@ export default function CheckoutPage() {
       customer_phone: "",
       wilaya: "",
       commune: "",
-      address: "",
       delivery_type: "home",
       note: "",
     },

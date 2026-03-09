@@ -61,7 +61,6 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const [phone, setPhone] = useState("");
   const [wilaya, setWilaya] = useState("");
   const [commune, setCommune] = useState("");
-  const [address, setAddress] = useState("");
   const [quantity, setQuantity] = useState(product.quantity || 1);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
   const [submitted, setSubmitted] = useState(false);
@@ -122,7 +121,6 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         phone: phone.trim(),
         wilaya,
         commune,
-        address: address.trim() || undefined,
       });
       customerId = customer.id;
     } catch {
@@ -136,7 +134,6 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         customer_phone: phone.trim(),
         wilaya,
         commune,
-        address: address.trim() || undefined,
         delivery_type: deliveryType,
         subtotal,
         shipping_cost: shippingCost,
@@ -159,17 +156,21 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
           if (discount) {
             await incrementUsage();
           }
-          track("Purchase", {
-            phone: phone,
-            firstName: name,
-            city: wilaya,
-          }, {
-            value: total,
-            currency: "DZD",
-            content_ids: [product.id],
-            content_name: product.name,
-            num_items: quantity,
-          });
+          track(
+            "Purchase",
+            {
+              phone: phone,
+              firstName: name,
+              city: wilaya,
+            },
+            {
+              value: total,
+              currency: "DZD",
+              content_ids: [product.id],
+              content_name: product.name,
+              num_items: quantity,
+            }
+          );
           setSubmitted(true);
         },
       }
