@@ -81,7 +81,6 @@ const Products = () => {
       sku: p.sku || "",
       category_id: p.category_id || "",
       status: p.status,
-      status: p.status,
     });
     setShowModal(true);
   };
