@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Phone, Truck, User, ShoppingBag, ChevronLeft, ChevronRight,
-  ShieldCheck, Headphones, RotateCcw, Globe, Star, X, Flame, Tag, ArrowLeft, Grid, Loader2
+  ShieldCheck, Headphones, RotateCcw, Globe, Star, Flame, Tag, ArrowLeft, Grid, Loader2, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
-import QuickOrderModal from "@/components/store/QuickOrderModal";
+import { useCart } from "@/hooks/useCart";
 
 const slides = [
   { id: 1, image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=1600' },
@@ -23,11 +23,8 @@ const defaultCatImages = [
 const StorePage = () => {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const { addItem, isAdding } = useCart();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [qty, setQty] = useState(1);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -39,67 +36,18 @@ const StorePage = () => {
   const activeProducts = products.filter((p) => p.status === "active");
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
 
-  const openQuickOrder = useCallback((product: any) => {
-    setSelectedProduct({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      image_url: product.image_url || product.image,
+  const handleAddToCart = (product: any) => {
+    addItem({
+      product_id: product.id,
+      product_name: product.name,
+      product_price: Number(product.price),
+      product_image_url: product.image_url,
       quantity: 1,
     });
-    setQty(1);
-    setIsModalOpen(true);
-  }, []);
-
-  const showNoProductsQuickOrderToast = useCallback(() => {
-    toast.error("لا توجد منتجات متاحة حالياً للطلب السريع");
-  }, []);
-
-  const handleCloseQuickOrder = () => {
-    setIsModalOpen(false);
-    setSelectedProduct(null);
-
-    if (searchParams.get("quickOrder") === "1") {
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete("quickOrder");
-      nextParams.delete("ts");
-      setSearchParams(nextParams, { replace: true });
-    }
+    toast.success("تمت الإضافة للسلة", {
+      icon: <Check className="text-green-500" />,
+    });
   };
-
-  const openHeaderQuickOrder = useCallback(() => {
-    if (activeProducts.length === 0) {
-      showNoProductsQuickOrderToast();
-      return false;
-    }
-
-    openQuickOrder(activeProducts[0]);
-    return true;
-  }, [activeProducts, openQuickOrder, showNoProductsQuickOrderToast]);
-
-  useEffect(() => {
-    if (searchParams.get("quickOrder") !== "1" || isModalOpen) return;
-
-    const opened = openHeaderQuickOrder();
-
-    if (!opened) {
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete("quickOrder");
-      nextParams.delete("ts");
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [searchParams, isModalOpen, openHeaderQuickOrder, setSearchParams]);
-
-  useEffect(() => {
-    const handleHeaderQuickOrder = () => {
-      openHeaderQuickOrder();
-    };
-
-    window.addEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
-    return () => {
-      window.removeEventListener("store:open-quick-order", handleHeaderQuickOrder as EventListener);
-    };
-  }, [openHeaderQuickOrder]);
 
   if (isLoading) {
     return (
@@ -223,8 +171,12 @@ const StorePage = () => {
                     <span className="text-[#dc3545] font-black text-xl">{Number(product.price).toLocaleString("ar-DZ")} دج</span>
                   </div>
                   <button
-                    onClick={() => openQuickOrder(product)}
-                    className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAddToCart(product);
+                    }}
+                    disabled={isAdding}
+                    className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200 disabled:opacity-50"
                   >
                     <ShoppingBag size={20} className="ml-2" /> أضف إلى السلة
                   </button>
@@ -330,8 +282,12 @@ const StorePage = () => {
                     <span className="text-[#dc3545] font-black text-xl">{Number(product.price).toLocaleString("ar-DZ")} دج</span>
                   </div>
                   <button
-                    onClick={() => openQuickOrder(product)}
-                    className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAddToCart(product);
+                    }}
+                    disabled={isAdding}
+                    className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200 disabled:opacity-50"
                   >
                     <ShoppingBag size={20} className="ml-2" /> أضف إلى السلة
                   </button>
@@ -341,25 +297,6 @@ const StorePage = () => {
           </div>
         </section>
       )}
-
-      {/* Quick Order Modal */}
-      {selectedProduct && isModalOpen && (
-        <QuickOrderModal
-          open={isModalOpen}
-          onClose={handleCloseQuickOrder}
-          product={selectedProduct}
-        />
-      )}
-
-      {/* Floating Mobile Button */}
-      <div className="fixed bottom-6 left-6 md:hidden z-40">
-        <button
-          onClick={openHeaderQuickOrder}
-          className="bg-[#dc3545] text-white p-4 rounded-full shadow-[0_8px_20px_rgba(220,53,69,0.4)] flex items-center justify-center animate-bounce"
-        >
-          <ShoppingBag size={24} />
-        </button>
-      </div>
     </>
   );
 };
