@@ -32,6 +32,7 @@ const ProductPage = () => {
 
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
+  const { addItem, isAdding } = useCart();
 
   const product = products.find((p) => p.id === id);
   const relatedProducts = products
