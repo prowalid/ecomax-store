@@ -120,7 +120,7 @@ const StorePage = () => {
       </section>
 
       {/* Popular Products */}
-      <section className="container mx-auto px-4 py-10">
+      <section id="products" className="container mx-auto px-4 py-10 scroll-mt-20">
         <div className="text-center mb-10 flex flex-col items-center">
           <div className="bg-gradient-to-r from-[#dc3545] to-[#dc3545] text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md shadow-red-200 mb-4 inline-flex items-center">
             <Flame size={16} className="ml-2" /> الأكثر مبيعاً
