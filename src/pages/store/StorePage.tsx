@@ -35,6 +35,9 @@ const StorePage = () => {
   }, []);
 
   const activeProducts = products.filter((p) => p.status === "active");
+  const filteredProducts = selectedCategory
+    ? activeProducts.filter((p) => p.category_id === selectedCategory)
+    : activeProducts;
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
 
   const handleAddToCart = (product: any) => {
