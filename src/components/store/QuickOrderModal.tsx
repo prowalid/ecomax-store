@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   X,
   User,
@@ -16,6 +16,18 @@ import {
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useValidateDiscount } from "@/hooks/useValidateDiscount";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+
+interface WilayaShipping {
+  id: number;
+  name: string;
+  homePrice: number;
+  deskPrice: number;
+}
+
+interface ShippingSettings {
+  wilayas: WilayaShipping[];
+}
 
 type DeliveryType = "home" | "desk";
 
