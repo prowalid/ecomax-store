@@ -39,6 +39,7 @@ type DeliveryType = "home" | "desk";
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: products = [], isLoading } = useProducts();
+  const { data: galleryImages = [] } = useProductImages(id || null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [timeLeft, setTimeLeft] = useState(3600);
