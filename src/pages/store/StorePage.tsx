@@ -136,7 +136,36 @@ const StorePage = () => {
           <p className="text-gray-500 mt-4">قائمة بالمنتجات التي تباع بكثرة حاليا</p>
         </div>
 
-        {activeProducts.length > 0 ? (
+        {/* Category Filter Tabs */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                selectedCategory === null
+                  ? 'bg-[#dc3545] text-white shadow-md shadow-red-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              الكل
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#dc3545] text-white shadow-md shadow-red-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {activeProducts.map(product => (
               <div key={product.id} className="bg-white rounded-2xl shadow-sm overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 relative">
