@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
+import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 
 interface WilayaShipping {
