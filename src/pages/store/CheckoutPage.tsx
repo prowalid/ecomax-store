@@ -347,20 +347,6 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {/* Address (optional) */}
-          <div>
-            <div className="relative">
-              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
-                <Truck size={18} />
-              </div>
-              <input
-                type="text"
-                placeholder="العنوان التفصيلي (اختياري)"
-                {...register("address")}
-                className={inputClass}
-              />
-            </div>
-          </div>
 
           {/* Delivery Type */}
           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2">
