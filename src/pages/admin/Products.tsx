@@ -36,7 +36,7 @@ const emptyForm: ProductForm = {
   stock: "0",
   sku: "",
   category_id: "",
-  image_url: "",
+  status: "active",
   status: "active",
 };
 
