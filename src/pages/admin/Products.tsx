@@ -4,7 +4,7 @@ import { Plus, Search, Loader2, Pencil, Trash2, X, Save, Image, Upload } from "l
 import { cn } from "@/lib/utils";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type ProductStatus } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
-import { useProductImages, useUploadProductImage, useDeleteProductImage } from "@/hooks/useProductImages";
+import { useProductImages, useUploadProductImage, useDeleteProductImage, useReorderProductImages } from "@/hooks/useProductImages";
 
 const statusLabels: Record<ProductStatus, { label: string; variant: "success" | "secondary" | "destructive" }> = {
   active: { label: "نشط", variant: "success" },
@@ -56,6 +56,20 @@ const Products = () => {
   const { data: editImages = [], isLoading: imagesLoading } = useProductImages(editingId);
   const uploadImage = useUploadProductImage();
   const deleteImage = useDeleteProductImage();
+  const reorderImages = useReorderProductImages();
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  const handleDragStart = (idx: number) => setDragIdx(idx);
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx === null || dragIdx === dropIdx || !editingId) return;
+    const reordered = [...editImages];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.splice(dropIdx, 0, moved);
+    const updated = reordered.map((img, i) => ({ id: img.id, sort_order: i, image_url: img.image_url }));
+    reorderImages.mutate({ productId: editingId, images: updated });
+    setDragIdx(null);
+  };
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.includes(search) || (p.category_name || "").includes(search);
@@ -311,9 +325,23 @@ const Products = () => {
                 {/* Existing images grid */}
                 {editingId && (
                   <div className="grid grid-cols-4 gap-3">
-                    {editImages.map((img) => (
-                      <div key={img.id} className="relative group rounded-lg overflow-hidden border border-border aspect-square">
+                    {editImages.map((img, idx) => (
+                      <div
+                        key={img.id}
+                        draggable
+                        onDragStart={() => handleDragStart(idx)}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(idx)}
+                        className={cn(
+                          "relative group rounded-lg overflow-hidden border-2 aspect-square cursor-grab active:cursor-grabbing transition-all",
+                          dragIdx === idx ? "border-primary opacity-50 scale-95" : "border-border hover:border-primary/50",
+                          idx === 0 && "ring-2 ring-primary/30"
+                        )}
+                      >
                         <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                        {idx === 0 && (
+                          <span className="absolute bottom-1 right-1 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded">رئيسية</span>
+                        )}
                         <button
                           onClick={() => deleteImage.mutate({ id: img.id, productId: editingId, imageUrl: img.image_url })}
                           className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"

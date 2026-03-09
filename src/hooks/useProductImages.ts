@@ -82,6 +82,35 @@ export function useUploadProductImage() {
   });
 }
 
+export function useReorderProductImages() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, images }: { productId: string; images: { id: string; sort_order: number; image_url: string }[] }) => {
+      // Update sort_order for each image
+      for (const img of images) {
+        const { error } = await supabase
+          .from("product_images")
+          .update({ sort_order: img.sort_order })
+          .eq("id", img.id);
+        if (error) throw error;
+      }
+
+      // Update main product image to first image
+      if (images.length > 0) {
+        const first = images.reduce((a, b) => (a.sort_order < b.sort_order ? a : b));
+        await supabase
+          .from("products")
+          .update({ image_url: first.image_url })
+          .eq("id", productId);
+        qc.invalidateQueries({ queryKey: ["products"] });
+      }
+    },
+    onSuccess: (_, { productId }) => {
+      qc.invalidateQueries({ queryKey: ["product_images", productId] });
+    },
+  });
+}
+
 export function useDeleteProductImage() {
   const qc = useQueryClient();
   return useMutation({
