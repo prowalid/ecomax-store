@@ -99,7 +99,7 @@ const Products = () => {
       stock: Number(form.stock) || 0,
       sku: form.sku || null,
       category_id: form.category_id || null,
-      image_url: form.image_url || null,
+      status: form.status,
       status: form.status,
     };
 
