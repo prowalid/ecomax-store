@@ -54,6 +54,19 @@ export default function CheckoutPage() {
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
 
   const [couponCode, setCouponCode] = useState("");
+  const { track } = useTracking();
+
+  // Track InitiateCheckout when page loads with items
+  useEffect(() => {
+    if (items.length > 0) {
+      track("InitiateCheckout", {}, {
+        content_ids: items.map((i) => i.product_id),
+        num_items: items.length,
+        value: totalPrice,
+        currency: "DZD",
+      });
+    }
+  }, []);
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
 
