@@ -324,6 +324,33 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Shipping Cost Display */}
+          {selectedWilaya ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Truck className="w-5 h-5 text-blue-600" />
+                <h3 className="font-bold text-blue-900 text-sm">أسعار التوصيل - {selectedWilaya.name}</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-blue-700">🏠 للمنزل:</span>
+                  <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.homePrice)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-700">🏢 للمكتب:</span>
+                  <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.deskPrice)}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-gray-500">
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm">اختر الولاية لعرض أسعار التوصيل</span>
+              </div>
+            </div>
+          )}
+
           {/* Address (optional) */}
           <div>
             <div className="relative">
