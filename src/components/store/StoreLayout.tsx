@@ -93,9 +93,8 @@ const StoreLayout = () => {
             <div>
               <h4 className="text-lg font-bold mb-6 text-white border-b border-gray-800 pb-2 inline-block">روابط سريعة</h4>
               <ul className="space-y-3 text-gray-400 font-medium">
-                <li><Link to="/" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> الرئيسية</Link></li>
-                <li><Link to="/shop" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> المتجر</Link></li>
-                <li><a href="#" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> اتصل بنا</a></li>
+                <li><a href="/#products" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> المنتجات</a></li>
+                <li><a href="/#offers" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> العروض</a></li>
               </ul>
             </div>
             <div>

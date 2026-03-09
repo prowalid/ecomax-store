@@ -35,7 +35,6 @@ const App = () => (
           {/* Store (Customer-facing) */}
           <Route element={<StoreLayout />}>
             <Route path="/" element={<StorePage />} />
-            <Route path="/shop" element={<StorePage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
           </Route>
