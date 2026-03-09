@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { ShoppingBag, Star } from "lucide-react";
+import { ShoppingBag, Star, Check } from "lucide-react";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   id: string;
@@ -8,13 +10,28 @@ interface ProductCardProps {
   compare_price?: number | null;
   image_url?: string | null;
   category_name?: string;
-  onQuickOrder?: (id: string) => void;
 }
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
-const ProductCard = ({ id, name, price, compare_price, image_url, category_name, onQuickOrder }: ProductCardProps) => {
+const ProductCard = ({ id, name, price, compare_price, image_url }: ProductCardProps) => {
+  const { addItem, isAdding } = useCart();
   const hasDiscount = compare_price && compare_price > price;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem({
+      product_id: id,
+      product_name: name,
+      product_price: price,
+      product_image_url: image_url,
+      quantity: 1,
+    });
+    toast.success("تمت الإضافة للسلة", {
+      icon: <Check className="text-green-500" />,
+    });
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 relative">
@@ -71,11 +88,9 @@ const ProductCard = ({ id, name, price, compare_price, image_url, category_name,
       {/* Add to cart button */}
       <div className="px-5 pb-5">
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            onQuickOrder?.(id);
-          }}
-          className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200"
+          onClick={handleAddToCart}
+          disabled={isAdding}
+          className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200 disabled:opacity-50"
         >
           <ShoppingBag size={20} className="ml-2" /> أضف إلى السلة
         </button>
