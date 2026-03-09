@@ -102,6 +102,20 @@ const ProductPage = () => {
     );
   };
 
+  const handleAddToCart = () => {
+    if (!product) return;
+    addItem({
+      product_id: product.id,
+      product_name: product.name,
+      product_price: Number(product.price),
+      product_image_url: product.image_url,
+      quantity: qty,
+    });
+    toast.success(`تمت إضافة ${qty} قطعة للسلة`, {
+      icon: <Check className="text-green-500" />,
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32">
