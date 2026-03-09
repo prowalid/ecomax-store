@@ -1,5 +1,17 @@
 import { useState } from "react";
-import { X, User, Phone, MapPin, Home, Building2, Minus, Plus, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  User,
+  Phone,
+  MapPin,
+  Home,
+  Building2,
+  Minus,
+  Plus,
+  Loader2,
+  CheckCircle2,
+  Truck,
+} from "lucide-react";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 
@@ -21,6 +33,9 @@ interface QuickOrderModalProps {
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
+const inputClass =
+  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold";
+
 const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,6 +56,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) return;
 
+    // Create customer
     let customerId: string | undefined;
     try {
       const customer = await createCustomer.mutateAsync({
@@ -54,6 +70,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
       // continue even if customer creation fails
     }
 
+    // Create order
     createOrder.mutate(
       {
         customer_name: name.trim(),
@@ -76,7 +93,9 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         ],
       },
       {
-        onSuccess: () => setSubmitted(true),
+        onSuccess: () => {
+          setSubmitted(true);
+        },
       }
     );
   };
@@ -87,7 +106,6 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" dir="rtl">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95">
-
         {/* Header */}
         <div className="sticky top-0 bg-white border-b px-5 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h2 className="text-lg font-bold text-gray-900">اطلب الآن</h2>
@@ -98,12 +116,12 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
 
         {submitted ? (
           <div className="p-8 text-center">
-            <CheckCircle2 className="w-16 h-16 text-[hsl(var(--primary))] mx-auto mb-4" />
+            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-gray-900 mb-2">تم إرسال طلبك بنجاح!</h3>
             <p className="text-sm text-gray-500 mb-6">سنتصل بك لتأكيد الطلب في أقرب وقت</p>
             <button
               onClick={onClose}
-              className="w-full h-11 rounded-xl bg-[hsl(var(--primary))] text-white font-medium hover:opacity-90 transition-opacity"
+              className="w-full h-11 rounded-xl bg-[#dc3545] text-white font-bold hover:bg-red-700 transition-colors"
             >
               إغلاق
             </button>
@@ -113,7 +131,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
             <p className="text-center text-sm text-gray-500">املأ النموذج وسنتصل بك لتأكيد الطلب</p>
 
             {/* Product display */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
               <div className="w-16 h-16 rounded-lg bg-white border border-gray-100 overflow-hidden shrink-0">
                 {product.image_url ? (
                   <img src={product.image_url} alt="" className="w-full h-full object-cover" />
@@ -122,8 +140,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 line-clamp-2">{product.name}</p>
-                <p className="text-sm font-bold text-[hsl(var(--primary))] mt-1">{formatPrice(product.price)}</p>
+                <p className="text-sm font-bold text-gray-900 line-clamp-2">{product.name}</p>
+                <p className="text-sm font-black text-[#dc3545] mt-1">{formatPrice(product.price)}</p>
               </div>
             </div>
 
@@ -136,7 +154,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="text-lg font-bold w-10 text-center">{quantity}</span>
+              <span className="text-lg font-black w-10 text-center">{quantity}</span>
               <button
                 type="button"
                 onClick={() => setQuantity(quantity + 1)}
@@ -146,23 +164,28 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               </button>
             </div>
 
-            <p className="text-sm font-medium text-gray-700 text-center">للطلب، يرجى إدخال معلوماتك هنا:</p>
+            <p className="text-sm font-bold text-gray-700 text-center">للطلب، يرجى إدخال معلوماتك هنا:</p>
 
             {/* Name */}
             <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                <User size={18} />
+              </div>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="الاسم الكامل *"
                 required
-                className="w-full h-11 pr-10 pl-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent transition-colors"
+                className={inputClass}
               />
-              <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
 
             {/* Phone */}
             <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                <Phone size={18} />
+              </div>
               <input
                 type="tel"
                 value={phone}
@@ -170,88 +193,82 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                 placeholder="رقم الهاتف *"
                 required
                 dir="ltr"
-                className="w-full h-11 pr-10 pl-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent text-right transition-colors"
+                className={inputClass + " text-left"}
               />
-              <Phone className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
 
             {/* City */}
             <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                <MapPin size={18} />
+              </div>
               <input
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="الولاية / المدينة"
-                className="w-full h-11 pr-10 pl-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent transition-colors"
+                placeholder="الولاية"
+                className={inputClass}
               />
-              <MapPin className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
 
             {/* Address */}
             <div className="relative">
-              <textarea
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                <Truck size={18} />
+              </div>
+              <input
+                type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="العنوان الكامل"
-                rows={2}
-                className="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent resize-none transition-colors"
+                placeholder="البلدية / العنوان"
+                className={inputClass}
               />
-              <Home className="absolute right-3.5 top-3.5 w-4 h-4 text-gray-400" />
             </div>
 
             {/* Delivery Type */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">طريقة التوصيل</p>
-              <div className="grid grid-cols-2 gap-3">
-                {(
-                  [
-                    { value: "home" as DeliveryType, Icon: Home, label: "توصيل للمنزل", sub: "حتى باب البيت" },
-                    { value: "desk" as DeliveryType, Icon: Building2, label: "نقطة تسليم", sub: "من مكتب الشحن" },
-                  ]
-                ).map(({ value, Icon, label, sub }) => (
-                  <label
-                    key={value}
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      deliveryType === value
-                        ? "border-[hsl(var(--primary))] bg-red-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="delivery_type"
-                      value={value}
-                      checked={deliveryType === value}
-                      onChange={() => setDeliveryType(value)}
-                      className="hidden"
-                    />
-                    <Icon
-                      className={`w-5 h-5 shrink-0 ${
-                        deliveryType === value ? "text-[hsl(var(--primary))]" : "text-gray-400"
-                      }`}
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">{label}</p>
-                      <p className="text-xs text-gray-500">{sub}</p>
-                    </div>
-                  </label>
-                ))}
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-1">
+              <p className="font-bold text-gray-700 mb-3">طريقة التوصيل:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType("home")}
+                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                    deliveryType === "home"
+                      ? "border-[#dc3545] bg-white text-[#dc3545]"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                  }`}
+                >
+                  <Home size={18} />
+                  توصيل للمنزل
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType("desk")}
+                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                    deliveryType === "desk"
+                      ? "border-[#dc3545] bg-white text-[#dc3545]"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                  }`}
+                >
+                  <Building2 size={18} />
+                  نقطة تسليم / مكتب
+                </button>
               </div>
             </div>
 
             {/* Total */}
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>المجموع الفرعي:</span>
+            <div className="bg-[#f8f9fa] p-5 rounded-xl border border-gray-200 mt-1 shadow-sm">
+              <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
+                <span>المجموع الفرعي ({quantity} قطعة):</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>الشحن:</span>
-                <span className="text-[hsl(var(--primary))]">يُحدد عند التأكيد</span>
+              <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
+                <span>التوصيل:</span>
+                <span className="text-green-600 font-bold">يُحدد عند التأكيد</span>
               </div>
-              <div className="flex justify-between text-base font-bold text-gray-900 border-t border-gray-200 pt-2">
+              <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
                 <span>المجموع الكلي:</span>
-                <span className="text-[hsl(var(--primary))]">{formatPrice(total)}</span>
+                <span className="text-[#dc3545]">{formatPrice(total)}</span>
               </div>
             </div>
 
@@ -259,13 +276,10 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
             <button
               type="submit"
               disabled={createOrder.isPending}
-              className="w-full h-12 rounded-xl bg-[hsl(var(--primary))] text-white font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-[#dc3545] to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 flex justify-center items-center disabled:opacity-50"
             >
               {createOrder.isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  جاري المعالجة...
-                </>
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 "تأكيد الطلب"
               )}
