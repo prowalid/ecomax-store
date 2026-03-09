@@ -32,7 +32,21 @@ export function useDiscounts() {
 export function useCreateDiscount() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (discount: { code: string; type: string; value: number; usage_limit?: number; active?: boolean; expires_at?: string }) => {
+    mutationFn: async (input: { code: string; type: string; value: number; usage_limit?: number | null; active?: boolean; expires_at?: string | null }) => {
+      const discount: Record<string, unknown> = {
+        code: input.code,
+        type: input.type,
+        value: input.value,
+      };
+      if (input.usage_limit !== undefined && input.usage_limit !== null) {
+        discount.usage_limit = input.usage_limit;
+      }
+      if (input.expires_at !== undefined && input.expires_at !== null) {
+        discount.expires_at = input.expires_at;
+      }
+      if (input.active !== undefined) {
+        discount.active = input.active;
+      }
       const { data, error } = await supabase.from("discounts").insert([discount]).select().single();
       if (error) throw error;
       return data;
@@ -41,7 +55,10 @@ export function useCreateDiscount() {
       qc.invalidateQueries({ queryKey: ["discounts"] });
       toast.success("تم إنشاء الخصم");
     },
-    onError: () => toast.error("فشل إنشاء الخصم"),
+    onError: (err) => {
+      console.error("Create discount error:", err);
+      toast.error("فشل إنشاء الخصم");
+    },
   });
 }
 
