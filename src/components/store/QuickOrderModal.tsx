@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   X,
   User,
@@ -16,6 +16,18 @@ import {
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useValidateDiscount } from "@/hooks/useValidateDiscount";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+
+interface WilayaShipping {
+  id: number;
+  name: string;
+  homePrice: number;
+  deskPrice: number;
+}
+
+interface ShippingSettings {
+  wilayas: WilayaShipping[];
+}
 
 type DeliveryType = "home" | "desk";
 
@@ -50,11 +62,23 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
 
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
+  const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
+
+  const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
+
+  const selectedWilaya = useMemo(
+    () => wilayas.find((w) => w.name === city),
+    [wilayas, city]
+  );
+
+  const shippingCost = useMemo(() => {
+    if (!selectedWilaya) return 0;
+    return deliveryType === "home" ? selectedWilaya.homePrice : selectedWilaya.deskPrice;
+  }, [selectedWilaya, deliveryType]);
 
   const subtotal = product.price * quantity;
   const discountAmount = calculateDiscount(subtotal);
-  const shippingCost = 0;
   const total = subtotal - discountAmount + shippingCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +111,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         shipping_cost: shippingCost,
         total,
         customer_id: customerId,
+        discount_code: discount?.code || undefined,
+        discount_amount: discountAmount > 0 ? discountAmount : undefined,
         items: [
           {
             product_id: product.id,
@@ -212,11 +238,17 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               </div>
               <input
                 type="text"
+                list="quick-order-wilayas"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="الولاية"
                 className={inputClass}
               />
+              <datalist id="quick-order-wilayas">
+                {wilayas.map((w) => (
+                  <option key={w.id} value={w.name} />
+                ))}
+              </datalist>
             </div>
 
             {/* Address */}
@@ -319,7 +351,9 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               )}
               <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
                 <span>التوصيل:</span>
-                <span className="text-green-600 font-bold">يُحدد عند التأكيد</span>
+                <span className={shippingCost > 0 ? "text-gray-900 font-bold" : "text-gray-500"}>
+                  {shippingCost > 0 ? formatPrice(shippingCost) : "يُحسب حسب الولاية"}
+                </span>
               </div>
               <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
                 <span>المجموع الكلي:</span>
