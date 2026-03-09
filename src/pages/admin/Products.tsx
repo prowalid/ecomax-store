@@ -97,7 +97,6 @@ const Products = () => {
       sku: form.sku || null,
       category_id: form.category_id || null,
       status: form.status,
-      status: form.status,
     };
 
     if (editingId) {
