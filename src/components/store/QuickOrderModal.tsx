@@ -236,11 +236,17 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               </div>
               <input
                 type="text"
+                list="quick-order-wilayas"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="الولاية"
                 className={inputClass}
               />
+              <datalist id="quick-order-wilayas">
+                {wilayas.map((w) => (
+                  <option key={w.id} value={w.name} />
+                ))}
+              </datalist>
             </div>
 
             {/* Address */}
