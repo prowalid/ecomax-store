@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Phone, MapPin, Home, Building2, Loader2, CheckCircle2 } from "lucide-react";
+import { Phone, MapPin, Home, Building2, Loader2, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
 
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
@@ -12,7 +13,6 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { toast } from "@/components/ui/use-toast";
 
 interface WilayaShipping {
   id: number;
@@ -26,32 +26,26 @@ interface ShippingSettings {
 }
 
 const checkoutSchema = z.object({
-  customer_name: z
-    .string()
-    .trim()
-    .min(2, "الاسم قصير جداً")
-    .max(100, "الاسم طويل جداً"),
+  customer_name: z.string().trim().min(2, "الاسم قصير جداً").max(100, "الاسم طويل جداً"),
   customer_phone: z
     .string()
     .trim()
-    .regex(/^0[5-7][0-9]{8}$/,{ message: "رقم الهاتف غير صالح" }),
-  wilaya: z.string().min(1, "الولاية مطلوبة"),
+    .regex(/^0[5-7][0-9]{8}$/, { message: "رقم الهاتف غير صالح" }),
+  wilaya: z.string().trim().min(1, "الولاية مطلوبة"),
   commune: z.string().trim().min(2, "البلدية مطلوبة"),
   address: z.string().trim().min(5, "العنوان مفصل أكثر"),
-  delivery_type: z.enum(["home", "desk"], {
-    required_error: "نوع التوصيل مطلوب",
-  }),
+  delivery_type: z.enum(["home", "desk"], { required_error: "نوع التوصيل مطلوب" }),
   note: z.string().trim().max(500).optional(),
 });
 
-export type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 const formatPrice = (n: number) => `${n.toLocaleString("ar-DZ")} دج`;
 
-const CheckoutPage = () => {
+export default function CheckoutPage() {
   const navigate = useNavigate();
   const { items, totalPrice, clearCart, isLoading } = useCart();
-  const { mutateAsync: createOrder, isPending } = useCreateOrder();
+  const createOrder = useCreateOrder();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
@@ -69,35 +63,33 @@ const CheckoutPage = () => {
     },
   });
 
+  const wilayaValue = form.watch("wilaya");
+  const deliveryTypeValue = form.watch("delivery_type");
+
   const selectedWilaya = useMemo(
-    () => wilayas.find((w) => String(w.id) === form.watch("wilaya")),
-    [wilayas, form.watch("wilaya")]
+    () => wilayas.find((w) => w.name === wilayaValue),
+    [wilayas, wilayaValue]
   );
 
   const shippingCost = useMemo(() => {
     if (!selectedWilaya) return 0;
-    return form.getValues("delivery_type") === "home"
-      ? selectedWilaya.homePrice
-      : selectedWilaya.deskPrice;
-  }, [selectedWilaya, form.watch("delivery_type")]);
+    return deliveryTypeValue === "home" ? selectedWilaya.homePrice : selectedWilaya.deskPrice;
+  }, [selectedWilaya, deliveryTypeValue]);
 
   const subtotal = totalPrice;
   const total = subtotal + shippingCost;
 
   const onSubmit = async (values: CheckoutFormValues) => {
     if (!items.length) {
-      toast({
-        variant: "destructive",
-        description: "السلة فارغة، أضف منتجات أولاً",
-      });
+      toast.error("السلة فارغة، أضف منتجات أولاً");
       return;
     }
 
     try {
-      const order = await createOrder({
+      const order = await createOrder.mutateAsync({
         customer_name: values.customer_name,
         customer_phone: values.customer_phone,
-        wilaya: selectedWilaya ? selectedWilaya.name : values.wilaya,
+        wilaya: values.wilaya,
         commune: values.commune,
         address: values.address,
         delivery_type: values.delivery_type,
@@ -115,18 +107,11 @@ const CheckoutPage = () => {
       });
 
       clearCart();
-
-      toast({
-        description: `تم إرسال طلبك بنجاح، رقم الطلب #${order.order_number}`,
-      });
-
+      toast.success(`تم إرسال طلبك بنجاح، رقم الطلب #${order.order_number}`);
       navigate("/", { replace: true });
     } catch (e) {
       console.error(e);
-      toast({
-        variant: "destructive",
-        description: "حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى",
-      });
+      toast.error("حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى");
     }
   };
 
@@ -141,16 +126,15 @@ const CheckoutPage = () => {
   if (!items.length) {
     return (
       <div className="container mx-auto px-4 py-16 text-center space-y-4">
-        <CheckCircle2 className="w-12 h-12 mx-auto text-muted-foreground" />
-        <p className="text-muted-foreground text-sm">السلة فارغة حالياً، أضف منتجات للمتابعة إلى إتمام الطلب</p>
-        <Button variant="default" onClick={() => navigate("/shop")}>الذهاب إلى المتجر</Button>
+        <ShoppingBag className="w-12 h-12 mx-auto text-muted-foreground" />
+        <p className="text-muted-foreground text-sm">السلة فارغة حالياً، أضف منتجات للمتابعة</p>
+        <Button onClick={() => navigate("/shop")}>الذهاب إلى المتجر</Button>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8 grid gap-8 lg:grid-cols-[2fr,1.2fr]">
-      {/* Form */}
       <div className="bg-card rounded-2xl shadow-card border border-border p-6 space-y-6">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold text-foreground">إتمام الطلب</h1>
@@ -185,7 +169,7 @@ const CheckoutPage = () => {
                       <Input dir="ltr" className="pr-8" placeholder="07XXXXXXXX" {...field} />
                     </div>
                   </FormControl>
-                  <p className="text-[11px] text-muted-foreground mt-1">تأكد من صحة الرقم، سيتم الاتصال بك لتأكيد الطلب</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">سيتم الاتصال بك لتأكيد الطلب</p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -206,15 +190,18 @@ const CheckoutPage = () => {
                         <option value="">اختر الولاية</option>
                         {wilayas.length > 0
                           ? wilayas.map((w) => (
-                              <option key={w.id} value={String(w.id)}>
+                              <option key={w.id} value={w.name}>
                                 {w.id.toString().padStart(2, "0")} - {w.name}
                               </option>
                             ))
-                          : Array.from({ length: 58 }).map((_, idx) => (
-                              <option key={idx + 1} value={String(idx + 1)}>
-                                {String(idx + 1).padStart(2, "0")} - ولاية {idx + 1}
-                              </option>
-                            ))}
+                          : Array.from({ length: 58 }).map((_, idx) => {
+                              const name = `ولاية ${idx + 1}`;
+                              return (
+                                <option key={name} value={name}>
+                                  {String(idx + 1).padStart(2, "0")} - {name}
+                                </option>
+                              );
+                            })}
                       </select>
                     </FormControl>
                     <FormMessage />
@@ -267,7 +254,7 @@ const CheckoutPage = () => {
                       value={field.value}
                     >
                       <label className="flex items-center gap-3 border border-input rounded-xl p-3 cursor-pointer hover:border-ring transition-colors bg-background">
-                        <RadioGroupItem value="home" id="home" />
+                        <RadioGroupItem value="home" />
                         <div className="flex items-center gap-2">
                           <Home className="w-4 h-4 text-primary" />
                           <div>
@@ -278,7 +265,7 @@ const CheckoutPage = () => {
                       </label>
 
                       <label className="flex items-center gap-3 border border-input rounded-xl p-3 cursor-pointer hover:border-ring transition-colors bg-background">
-                        <RadioGroupItem value="desk" id="desk" />
+                        <RadioGroupItem value="desk" />
                         <div className="flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-primary" />
                           <div>
@@ -308,12 +295,8 @@ const CheckoutPage = () => {
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full h-11 text-sm font-semibold"
-              disabled={isPending}
-            >
-              {isPending ? (
+            <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={createOrder.isPending}>
+              {createOrder.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                   جاري إرسال الطلب...
@@ -326,7 +309,6 @@ const CheckoutPage = () => {
         </Form>
       </div>
 
-      {/* Summary */}
       <aside className="bg-card rounded-2xl shadow-card border border-border p-6 space-y-4 h-fit">
         <div className="space-y-1">
           <h2 className="text-base font-semibold text-foreground">ملخص الطلب</h2>
@@ -361,7 +343,7 @@ const CheckoutPage = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">سعر التوصيل</span>
-            <span className="font-medium">{shippingCost ? formatPrice(shippingCost) : "يتم حسابه حسب الولاية"}</span>
+            <span className="font-medium">{shippingCost ? formatPrice(shippingCost) : "يُحسب حسب الولاية"}</span>
           </div>
         </div>
 
@@ -371,11 +353,9 @@ const CheckoutPage = () => {
         </div>
 
         <p className="text-[11px] text-muted-foreground">
-          سيتم الاتصال بك هاتفياً لتأكيد الطلب قبل الشحن. الدفع يكون عند استلام الطلب.
+          سيتم الاتصال بك هاتفياً لتأكيد الطلب قبل الشحن، والدفع يكون عند الاستلام.
         </p>
       </aside>
     </div>
   );
-};
-
-export default CheckoutPage;
+}
