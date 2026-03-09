@@ -106,8 +106,12 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   }, [selectedWilaya, deliveryType]);
 
   const subtotal = product.price * quantity;
-  const discountAmount = calculateDiscount(subtotal);
+  const discountAmount = calculateDiscount(subtotal, product.price, quantity);
   const total = subtotal - discountAmount + shippingCost;
+
+  const handleApplyCoupon = async () => {
+    await validateCode(couponCode, { productId: product.id, quantity });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
