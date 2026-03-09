@@ -96,10 +96,11 @@ const Marketing = () => {
   };
 
   const handleSaveAll = async () => {
-    await saveSettings({
+    const updated = {
       ...settings,
-      webhook_url: webhookUrl,
-    });
+      pixel_configured: !!settings.pixel_id,
+    };
+    await saveSettings(updated);
   };
 
   const toggleEvent = (name: string) => {
