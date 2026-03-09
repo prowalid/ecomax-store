@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   X,
   User,
@@ -12,12 +12,14 @@ import {
   CheckCircle2,
   Truck,
   Tag,
+  ChevronDown,
 } from "lucide-react";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useTracking } from "@/hooks/useTracking";
+import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 
 interface WilayaShipping {
   id: number;
@@ -51,10 +53,14 @@ const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 const inputClass =
   "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold";
 
+const selectClass =
+  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
+
 const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("");
+  const [wilaya, setWilaya] = useState("");
+  const [commune, setCommune] = useState("");
   const [address, setAddress] = useState("");
   const [quantity, setQuantity] = useState(product.quantity || 1);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
@@ -67,12 +73,33 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
   const { track } = useTracking();
 
-  const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
+  // Merge shipping settings prices with ALGERIA_WILAYAS defaults
+  const wilayasWithPrices = useMemo(() => {
+    const settingsMap = new Map(shippingSettings.wilayas?.map((w) => [w.name, w]) ?? []);
+    return ALGERIA_WILAYAS.map((w) => {
+      const override = settingsMap.get(w.name);
+      return {
+        ...w,
+        homePrice: override?.homePrice ?? w.priceHome,
+        deskPrice: override?.deskPrice ?? w.priceDesk,
+      };
+    });
+  }, [shippingSettings]);
 
   const selectedWilaya = useMemo(
-    () => wilayas.find((w) => w.name === city),
-    [wilayas, city]
+    () => wilayasWithPrices.find((w) => w.name === wilaya),
+    [wilayasWithPrices, wilaya]
   );
+
+  const availableCommunes = useMemo(
+    () => selectedWilaya?.communes ?? [],
+    [selectedWilaya]
+  );
+
+  // Reset commune when wilaya changes
+  useEffect(() => {
+    setCommune("");
+  }, [wilaya]);
 
   const shippingCost = useMemo(() => {
     if (!selectedWilaya) return 0;
@@ -85,7 +112,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) return;
+    if (!name.trim() || !phone.trim() || !wilaya || !commune) return;
 
     // Create customer
     let customerId: string | undefined;
@@ -93,7 +120,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
       const customer = await createCustomer.mutateAsync({
         name: name.trim(),
         phone: phone.trim(),
-        wilaya: city.trim() || undefined,
+        wilaya,
+        commune,
         address: address.trim() || undefined,
       });
       customerId = customer.id;
@@ -106,7 +134,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
       {
         customer_name: name.trim(),
         customer_phone: phone.trim(),
-        wilaya: city.trim() || undefined,
+        wilaya,
+        commune,
         address: address.trim() || undefined,
         delivery_type: deliveryType,
         subtotal,
@@ -133,7 +162,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
           track("Purchase", {
             phone: phone,
             firstName: name,
-            city: city || undefined,
+            city: wilaya,
           }, {
             value: total,
             currency: "DZD",
@@ -244,27 +273,52 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               />
             </div>
 
-            {/* City */}
+            {/* Wilaya Select */}
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                 <MapPin size={18} />
               </div>
-              <input
-                type="text"
-                list="quick-order-wilayas"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="الولاية"
-                className={inputClass}
-              />
-              <datalist id="quick-order-wilayas">
-                {wilayas.map((w) => (
-                  <option key={w.id} value={w.name} />
+              <select
+                value={wilaya}
+                onChange={(e) => setWilaya(e.target.value)}
+                required
+                className={selectClass}
+              >
+                <option value="">اختر الولاية *</option>
+                {ALGERIA_WILAYAS.map((w) => (
+                  <option key={w.id} value={w.name}>
+                    {String(w.id).padStart(2, "0")} - {w.name}
+                  </option>
                 ))}
-              </datalist>
+              </select>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <ChevronDown size={16} />
+              </div>
             </div>
 
-            {/* Address */}
+            {/* Commune Select */}
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                <Truck size={18} />
+              </div>
+              <select
+                value={commune}
+                onChange={(e) => setCommune(e.target.value)}
+                required
+                disabled={!wilaya}
+                className={selectClass + (!wilaya ? " opacity-50 cursor-not-allowed" : "")}
+              >
+                <option value="">اختر البلدية *</option>
+                {availableCommunes.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <ChevronDown size={16} />
+              </div>
+            </div>
+
+            {/* Address (optional) */}
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                 <Truck size={18} />
@@ -273,7 +327,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="البلدية / العنوان"
+                placeholder="العنوان التفصيلي (اختياري)"
                 className={inputClass}
               />
             </div>
@@ -285,26 +339,36 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                 <button
                   type="button"
                   onClick={() => setDeliveryType("home")}
-                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                  className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                     deliveryType === "home"
                       ? "border-[#dc3545] bg-white text-[#dc3545]"
                       : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
                   }`}
                 >
-                  <Home size={18} />
-                  توصيل للمنزل
+                  <div className="flex items-center gap-2">
+                    <Home size={18} />
+                    توصيل للمنزل
+                  </div>
+                  {selectedWilaya && (
+                    <span className="text-xs font-medium opacity-70">{formatPrice(selectedWilaya.homePrice)}</span>
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDeliveryType("desk")}
-                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                  className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                     deliveryType === "desk"
                       ? "border-[#dc3545] bg-white text-[#dc3545]"
                       : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
                   }`}
                 >
-                  <Building2 size={18} />
-                  نقطة تسليم / مكتب
+                  <div className="flex items-center gap-2">
+                    <Building2 size={18} />
+                    نقطة تسليم / مكتب
+                  </div>
+                  {selectedWilaya && (
+                    <span className="text-xs font-medium opacity-70">{formatPrice(selectedWilaya.deskPrice)}</span>
+                  )}
                 </button>
               </div>
             </div>
