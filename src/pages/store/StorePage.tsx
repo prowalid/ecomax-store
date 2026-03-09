@@ -167,7 +167,7 @@ const StorePage = () => {
 
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {activeProducts.map(product => (
+            {filteredProducts.map(product => (
               <div key={product.id} className="bg-white rounded-2xl shadow-sm overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 relative">
                 <Link to={`/product/${product.id}`} className="relative overflow-hidden block cursor-pointer">
                   {product.compare_price && Number(product.compare_price) > Number(product.price) && (
