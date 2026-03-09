@@ -13,6 +13,14 @@ const StoreLayout = () => {
   const location = useLocation();
   const { totalCount } = useCart();
   const { settings: t, loading } = useAppearanceSettings();
+  const { settings: marketing } = useMarketingSettings();
+
+  // Initialize Facebook Pixel when pixel_id is available
+  useEffect(() => {
+    if (marketing.pixel_id) {
+      initPixel(marketing.pixel_id);
+    }
+  }, [marketing.pixel_id]);
 
   // Use defaults while loading
   const theme = loading ? defaultAppearance : t;

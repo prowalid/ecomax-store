@@ -307,8 +307,8 @@ const Marketing = () => {
         </div>
         <input
           type="url"
-          value={webhookUrl}
-          onChange={(e) => setWebhookUrl(e.target.value)}
+          value={settings.webhook_url}
+          onChange={(e) => setSettings((prev) => ({ ...prev, webhook_url: e.target.value }))}
           placeholder="https://your-webhook-url.com/endpoint"
           className={inputClass}
           dir="ltr"
