@@ -46,9 +46,8 @@ const StoreLayout = () => {
           </div>
 
           <nav className="hidden md:flex flex-1 justify-center space-x-8 space-x-reverse font-bold text-gray-700">
-            <Link to="/" className={`transition-colors ${isActive("/") ? "text-[#dc3545]" : "hover:text-[#dc3545]"}`}>الرئيسية</Link>
-            <Link to="/shop" className={`transition-colors ${isActive("/shop") || location.pathname.startsWith("/product") ? "text-[#dc3545]" : "hover:text-[#dc3545]"}`}>المتجر</Link>
-            <Link to="/shop" className="hover:text-[#dc3545] transition-colors">عروض حصرية</Link>
+            <a href="/#products" className="hover:text-[#dc3545] transition-colors">المنتجات</a>
+            <a href="/#offers" className="hover:text-[#dc3545] transition-colors">العروض</a>
           </nav>
 
           <div className="flex-1 flex justify-end">
@@ -67,9 +66,8 @@ const StoreLayout = () => {
         {/* Mobile Nav */}
         {mobileMenuOpen && (
           <nav className="md:hidden border-t border-gray-100 pt-2 pb-1 px-4">
-            <Link to="/" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 text-sm font-semibold border-b border-gray-50 ${isActive("/") ? "text-[#dc3545] bg-red-50/50" : "text-gray-700 hover:bg-red-50/30 hover:pr-6"} transition-all`}>الرئيسية</Link>
-            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 text-sm font-semibold ${isActive("/shop") ? "text-[#dc3545] bg-red-50/50" : "text-gray-700 hover:bg-red-50/30 hover:pr-6"} transition-all`}>المتجر</Link>
-            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-red-50/30 hover:pr-6 transition-all">عروض حصرية</Link>
+            <a href="/#products" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold border-b border-gray-50 text-gray-700 hover:bg-red-50/30 hover:pr-6 transition-all">المنتجات</a>
+            <a href="/#offers" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-red-50/30 hover:pr-6 transition-all">العروض</a>
           </nav>
         )}
       </header>
@@ -95,9 +93,8 @@ const StoreLayout = () => {
             <div>
               <h4 className="text-lg font-bold mb-6 text-white border-b border-gray-800 pb-2 inline-block">روابط سريعة</h4>
               <ul className="space-y-3 text-gray-400 font-medium">
-                <li><Link to="/" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> الرئيسية</Link></li>
-                <li><Link to="/shop" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> المتجر</Link></li>
-                <li><a href="#" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> اتصل بنا</a></li>
+                <li><a href="/#products" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> المنتجات</a></li>
+                <li><a href="/#offers" className="hover:text-[#dc3545] transition-colors flex items-center"><ChevronLeft size={16} className="ml-1" /> العروض</a></li>
               </ul>
             </div>
             <div>
