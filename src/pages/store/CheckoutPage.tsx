@@ -47,6 +47,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { items, totalPrice, clearCart, isLoading } = useCart();
   const createOrder = useCreateOrder();
+  const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
