@@ -82,7 +82,7 @@ const Products = () => {
       stock: String(p.stock),
       sku: p.sku || "",
       category_id: p.category_id || "",
-      image_url: p.image_url || "",
+      status: p.status,
       status: p.status,
     });
     setShowModal(true);
