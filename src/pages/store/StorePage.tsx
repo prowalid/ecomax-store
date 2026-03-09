@@ -25,6 +25,7 @@ const StorePage = () => {
   const { data: categories = [] } = useCategories();
   const { addItem, isAdding } = useCart();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
