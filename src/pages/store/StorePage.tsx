@@ -25,6 +25,7 @@ const StorePage = () => {
   const { data: categories = [] } = useCategories();
   const { addItem, isAdding } = useCart();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -34,6 +35,9 @@ const StorePage = () => {
   }, []);
 
   const activeProducts = products.filter((p) => p.status === "active");
+  const filteredProducts = selectedCategory
+    ? activeProducts.filter((p) => p.category_id === selectedCategory)
+    : activeProducts;
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
 
   const handleAddToCart = (product: any) => {
@@ -132,9 +136,38 @@ const StorePage = () => {
           <p className="text-gray-500 mt-4">قائمة بالمنتجات التي تباع بكثرة حاليا</p>
         </div>
 
-        {activeProducts.length > 0 ? (
+        {/* Category Filter Tabs */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                selectedCategory === null
+                  ? 'bg-[#dc3545] text-white shadow-md shadow-red-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              الكل
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#dc3545] text-white shadow-md shadow-red-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {activeProducts.map(product => (
+            {filteredProducts.map(product => (
               <div key={product.id} className="bg-white rounded-2xl shadow-sm overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 relative">
                 <Link to={`/product/${product.id}`} className="relative overflow-hidden block cursor-pointer">
                   {product.compare_price && Number(product.compare_price) > Number(product.price) && (
@@ -207,7 +240,7 @@ const StorePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               {categories.slice(0, 3).map((cat, idx) => (
-                <Link key={cat.id} to={`/shop?category=${cat.id}`} className="relative rounded-2xl overflow-hidden h-64 group cursor-pointer shadow-sm block">
+                <button key={cat.id} onClick={() => { setSelectedCategory(cat.id); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); }} className="relative rounded-2xl overflow-hidden h-64 group cursor-pointer shadow-sm block w-full text-right">
                   <img src={defaultCatImages[idx] || defaultCatImages[0]} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-[#7f187f]/90 transition-colors duration-500"></div>
                   <div className="absolute bottom-6 right-6 left-6 flex justify-between items-end">
@@ -216,7 +249,7 @@ const StorePage = () => {
                       <ArrowLeft size={20} />
                     </div>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
 
