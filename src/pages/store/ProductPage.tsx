@@ -1,9 +1,27 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
-  Phone, User, Truck, MapPin, ShoppingBag, Star, ChevronRight,
-  CheckCircle2, AlertOctagon, TrendingUp, Clock, Package, Flame,
-  ShieldCheck, Headphones, RotateCcw, Globe, Loader2, Check
+  Phone,
+  User,
+  Truck,
+  MapPin,
+  ShoppingBag,
+  Star,
+  ChevronRight,
+  CheckCircle2,
+  AlertOctagon,
+  TrendingUp,
+  Clock,
+  Package,
+  Flame,
+  ShieldCheck,
+  Headphones,
+  RotateCcw,
+  Globe,
+  Loader2,
+  Check,
+  Home,
+  Building2,
 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { useCreateOrder } from "@/hooks/useOrders";
@@ -14,6 +32,8 @@ import QuickOrderModal from "@/components/store/QuickOrderModal";
 import { toast } from "sonner";
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
+
+type DeliveryType = "home" | "desk";
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +48,7 @@ const ProductPage = () => {
   const [formPhone, setFormPhone] = useState("");
   const [formWilaya, setFormWilaya] = useState("");
   const [formAddress, setFormAddress] = useState("");
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
   const [submitted, setSubmitted] = useState(false);
 
   const createOrder = useCreateOrder();
@@ -84,6 +105,7 @@ const ProductPage = () => {
         customer_phone: formPhone.trim(),
         wilaya: formWilaya.trim() || undefined,
         address: formAddress.trim() || undefined,
+        delivery_type: deliveryType,
         subtotal,
         shipping_cost: 0,
         total: subtotal,
@@ -128,7 +150,9 @@ const ProductPage = () => {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <p className="text-xl text-gray-500 mb-4">المنتج غير موجود</p>
-        <Link to="/" className="text-[#dc3545] font-medium hover:underline">العودة للرئيسية</Link>
+        <Link to="/" className="text-[#dc3545] font-medium hover:underline">
+          العودة للرئيسية
+        </Link>
       </div>
     );
   }
@@ -145,13 +169,19 @@ const ProductPage = () => {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200 py-3 hidden md:block">
         <div className="container mx-auto px-4 text-sm text-gray-500 flex items-center">
-          <Link to="/" className="hover:text-[#dc3545]">الرئيسية</Link>
+          <Link to="/" className="hover:text-[#dc3545]">
+            الرئيسية
+          </Link>
           <ChevronRight size={14} className="mx-2 text-gray-400" />
-          <Link to="/shop" className="hover:text-[#dc3545]">المتجر</Link>
+          <Link to="/shop" className="hover:text-[#dc3545]">
+            المتجر
+          </Link>
           <ChevronRight size={14} className="mx-2 text-gray-400" />
           {product.category_name && (
             <>
-              <Link to={`/shop?category=${product.category_id}`} className="hover:text-[#dc3545]">{product.category_name}</Link>
+              <Link to={`/shop?category=${product.category_id}`} className="hover:text-[#dc3545]">
+                {product.category_name}
+              </Link>
               <ChevronRight size={14} className="mx-2 text-gray-400" />
             </>
           )}
@@ -162,7 +192,6 @@ const ProductPage = () => {
       {/* Main Product Section */}
       <section className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-4 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-12">
-
           {/* Images */}
           <div className="w-full lg:w-5/12">
             <div className="relative rounded-2xl overflow-hidden border border-gray-100 mb-4 group cursor-zoom-in shadow-sm">
@@ -171,7 +200,7 @@ const ProductPage = () => {
                   <TrendingUp size={16} className="ml-1" /> وفر {discountPercent}%
                 </span>
               )}
-              {(activeImage || product.image_url) ? (
+              {activeImage || product.image_url ? (
                 <img
                   src={activeImage || product.image_url || ""}
                   alt={product.name}
@@ -187,7 +216,9 @@ const ProductPage = () => {
                   <button
                     key={idx}
                     onClick={() => setActiveImage(img)}
-                    className={`rounded-xl overflow-hidden border-2 transition-all duration-300 ${activeImage === img ? "border-[#dc3545] shadow-md scale-105" : "border-transparent hover:border-gray-300"}`}
+                    className={`rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                      activeImage === img ? "border-[#dc3545] shadow-md scale-105" : "border-transparent hover:border-gray-300"
+                    }`}
                   >
                     <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-20 md:h-24 object-cover" />
                   </button>
@@ -225,7 +256,8 @@ const ProductPage = () => {
                 </div>
                 {hasDiscount && (
                   <p className="text-sm text-[#dc3545] font-bold flex items-center">
-                    <Clock size={14} className="ml-1" /> ينتهي العرض خلال: <span className="mr-1 bg-[#dc3545] text-white px-2 py-0.5 rounded text-xs">{formatTime(timeLeft)}</span>
+                    <Clock size={14} className="ml-1" /> ينتهي العرض خلال:{" "}
+                    <span className="mr-1 bg-[#dc3545] text-white px-2 py-0.5 rounded text-xs">{formatTime(timeLeft)}</span>
                   </p>
                 )}
               </div>
@@ -234,11 +266,16 @@ const ProductPage = () => {
               {product.stock > 0 && product.stock <= 20 && (
                 <div className="w-full md:w-48">
                   <p className="text-xs text-gray-600 font-bold mb-2 flex justify-between">
-                    <span className="flex items-center text-red-600"><AlertOctagon size={14} className="ml-1" /> أسرع! الكمية محدودة</span>
+                    <span className="flex items-center text-red-600">
+                      <AlertOctagon size={14} className="ml-1" /> أسرع! الكمية محدودة
+                    </span>
                     <span>{product.stock} قطع فقط</span>
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                    <div className="bg-gradient-to-r from-red-500 to-[#dc3545] h-2.5 rounded-full" style={{ width: `${Math.min(100, (product.stock / 50) * 100)}%` }} />
+                    <div
+                      className="bg-gradient-to-r from-red-500 to-[#dc3545] h-2.5 rounded-full"
+                      style={{ width: `${Math.min(100, (product.stock / 50) * 100)}%` }}
+                    />
                   </div>
                 </div>
               )}
@@ -255,7 +292,10 @@ const ProductPage = () => {
             )}
 
             {/* In-Page Order Form */}
-            <div id="order-form" className="bg-white border-2 border-[#dc3545]/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 mt-auto relative overflow-hidden">
+            <div
+              id="order-form"
+              className="bg-white border-2 border-[#dc3545]/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 mt-auto relative overflow-hidden"
+            >
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#dc3545] to-orange-400" />
 
               {submitted ? (
@@ -263,7 +303,10 @@ const ProductPage = () => {
                   <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
                   <h3 className="text-xl font-bold text-gray-900 mb-2">تم إرسال طلبك بنجاح!</h3>
                   <p className="text-sm text-gray-500 mb-6">سنتصل بك لتأكيد الطلب في أقرب وقت</p>
-                  <Link to="/" className="inline-block bg-[#dc3545] text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors">
+                  <Link
+                    to="/"
+                    className="inline-block bg-[#dc3545] text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
+                  >
                     العودة للرئيسية
                   </Link>
                 </div>
@@ -277,7 +320,9 @@ const ProductPage = () => {
                   <form onSubmit={handleSubmitOrder} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="relative">
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400"><User size={18} /></div>
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                          <User size={18} />
+                        </div>
                         <input
                           type="text"
                           value={formName}
@@ -288,7 +333,9 @@ const ProductPage = () => {
                         />
                       </div>
                       <div className="relative">
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400"><Phone size={18} /></div>
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                          <Phone size={18} />
+                        </div>
                         <input
                           type="tel"
                           value={formPhone}
@@ -303,7 +350,9 @@ const ProductPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="relative">
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400"><MapPin size={18} /></div>
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                          <MapPin size={18} />
+                        </div>
                         <input
                           type="text"
                           value={formWilaya}
@@ -313,7 +362,9 @@ const ProductPage = () => {
                         />
                       </div>
                       <div className="relative">
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400"><Truck size={18} /></div>
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                          <Truck size={18} />
+                        </div>
                         <input
                           type="text"
                           value={formAddress}
@@ -324,13 +375,56 @@ const ProductPage = () => {
                       </div>
                     </div>
 
+                    {/* Delivery Type */}
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2">
+                      <p className="font-bold text-gray-700 mb-3">طريقة التوصيل:</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryType("home")}
+                          className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                            deliveryType === "home"
+                              ? "border-[#dc3545] bg-white text-[#dc3545]"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                          }`}
+                        >
+                          <Home size={18} />
+                          توصيل للمنزل
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryType("desk")}
+                          className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all ${
+                            deliveryType === "desk"
+                              ? "border-[#dc3545] bg-white text-[#dc3545]"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                          }`}
+                        >
+                          <Building2 size={18} />
+                          نقطة تسليم / مكتب
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Quantity */}
                     <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200 mt-2">
                       <span className="font-bold text-gray-700">الكمية المطلوبة:</span>
                       <div className="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                        <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors">-</button>
+                        <button
+                          type="button"
+                          onClick={() => setQty(Math.max(1, qty - 1))}
+                          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors"
+                        >
+                          -
+                        </button>
                         <input type="text" readOnly value={qty} className="w-12 text-center font-bold text-gray-900 outline-none" />
-                        <button type="button" onClick={() => setQty(qty + 1)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors">+</button>
+                        <button
+                          type="button"
+                          onClick={() => setQty(qty + 1)}
+                          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors"
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
 
@@ -360,10 +454,12 @@ const ProductPage = () => {
                         {isAdding ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                          <>أضف للسلة <ShoppingBag size={20} className="mr-2" /></>
+                          <>
+                            أضف للسلة <ShoppingBag size={20} className="mr-2" />
+                          </>
                         )}
                       </button>
-                      
+
                       <button
                         type="submit"
                         disabled={createOrder.isPending}
@@ -372,7 +468,9 @@ const ProductPage = () => {
                         {createOrder.isPending ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                          <>اطلب الآن <ShoppingBag size={20} className="mr-2 animate-pulse" /></>
+                          <>
+                            اطلب الآن <ShoppingBag size={20} className="mr-2 animate-pulse" />
+                          </>
                         )}
                       </button>
                     </div>
@@ -405,7 +503,10 @@ const ProductPage = () => {
             { icon: RotateCcw, title: "إرجاع سهل", sub: "استبدال خلال 7 أيام" },
             { icon: Globe, title: "شحن مجاني", sub: "لكل الولايات" },
           ].map((badge, idx) => (
-            <div key={idx} className="bg-white p-5 rounded-2xl flex items-center space-x-4 space-x-reverse border border-gray-100 hover:border-[#dc3545]/30 hover:shadow-lg transition-all duration-300">
+            <div
+              key={idx}
+              className="bg-white p-5 rounded-2xl flex items-center space-x-4 space-x-reverse border border-gray-100 hover:border-[#dc3545]/30 hover:shadow-lg transition-all duration-300"
+            >
               <div className="bg-red-50 p-4 rounded-xl text-[#dc3545]">
                 <badge.icon size={26} />
               </div>
@@ -447,6 +548,19 @@ const ProductPage = () => {
           اطلب الآن والدفع عند الاستلام <ChevronRight size={20} className="mr-2" />
         </button>
       </div>
+
+      {/* Quick Order Modal (if used elsewhere) */}
+      <QuickOrderModal
+        open={orderModalOpen}
+        onClose={() => setOrderModalOpen(false)}
+        product={{
+          id: product.id,
+          name: product.name,
+          price: Number(product.price),
+          image_url: product.image_url,
+          quantity: qty,
+        }}
+      />
     </div>
   );
 };
