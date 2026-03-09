@@ -218,6 +218,8 @@ export type Database = {
           customer_name: string
           customer_phone: string
           delivery_type: Database["public"]["Enums"]["delivery_type"]
+          discount_amount: number | null
+          discount_code: string | null
           id: string
           note: string | null
           order_number: number
@@ -239,6 +241,8 @@ export type Database = {
           customer_name: string
           customer_phone: string
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          discount_amount?: number | null
+          discount_code?: string | null
           id?: string
           note?: string | null
           order_number?: number
@@ -260,6 +264,8 @@ export type Database = {
           customer_name?: string
           customer_phone?: string
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          discount_amount?: number | null
+          discount_code?: string | null
           id?: string
           note?: string | null
           order_number?: number
