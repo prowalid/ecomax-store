@@ -25,7 +25,6 @@ interface ProductForm {
   category_id: string;
   status: ProductStatus;
 }
-}
 
 const emptyForm: ProductForm = {
   name: "",
@@ -36,7 +35,6 @@ const emptyForm: ProductForm = {
   stock: "0",
   sku: "",
   category_id: "",
-  status: "active",
   status: "active",
 };
 
