@@ -9,6 +9,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
+import { useTracking } from "@/hooks/useTracking";
 
 const StorePage = () => {
   const { data: products = [], isLoading } = useProducts();
