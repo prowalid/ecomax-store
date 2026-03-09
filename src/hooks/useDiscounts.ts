@@ -33,7 +33,7 @@ export function useCreateDiscount() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { code: string; type: string; value: number; usage_limit?: number | null; active?: boolean; expires_at?: string | null }) => {
-      const discount: Record<string, unknown> = {
+      const discount: { code: string; type: string; value: number; usage_limit?: number; active?: boolean; expires_at?: string } = {
         code: input.code,
         type: input.type,
         value: input.value,
