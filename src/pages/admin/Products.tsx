@@ -23,8 +23,8 @@ interface ProductForm {
   stock: string;
   sku: string;
   category_id: string;
-  image_url: string;
   status: ProductStatus;
+}
 }
 
 const emptyForm: ProductForm = {
