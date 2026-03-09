@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
+import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 
 interface WilayaShipping {
@@ -46,6 +47,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { items, totalPrice, clearCart, isLoading } = useCart();
   const createOrder = useCreateOrder();
+  const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
@@ -90,6 +92,20 @@ export default function CheckoutPage() {
     }
 
     try {
+      // Create or update customer
+      let customerId: string | undefined;
+      try {
+        const customer = await createCustomer.mutateAsync({
+          name: values.customer_name,
+          phone: values.customer_phone,
+          wilaya: values.wilaya || undefined,
+          address: values.address,
+        });
+        customerId = customer.id;
+      } catch {
+        // Continue even if customer creation fails
+      }
+
       const order = await createOrder.mutateAsync({
         customer_name: values.customer_name,
         customer_phone: values.customer_phone,
@@ -100,6 +116,7 @@ export default function CheckoutPage() {
         shipping_cost: shippingCost,
         total,
         note: values.note || null,
+        customer_id: customerId,
         items: items.map((item) => ({
           product_id: item.product_id,
           product_name: item.product_name,

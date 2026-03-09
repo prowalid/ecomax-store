@@ -35,14 +35,39 @@ export function useCreateCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (customer: { name: string; phone: string; wilaya?: string; commune?: string; address?: string; notes?: string }) => {
+      // Check if customer with same phone exists
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("phone", customer.phone)
+        .maybeSingle();
+
+      if (existing) {
+        // Update existing customer with new info
+        const { data, error } = await supabase
+          .from("customers")
+          .update({
+            name: customer.name,
+            wilaya: customer.wilaya || null,
+            commune: customer.commune || null,
+            address: customer.address || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+
+      // Create new customer
       const { data, error } = await supabase.from("customers").insert([customer]).select().single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["customers"] });
-      toast.success("تم إضافة الزبون");
     },
-    onError: () => toast.error("فشل إضافة الزبون"),
+    // Silently fail for storefront - admin will see errors
   });
 }
