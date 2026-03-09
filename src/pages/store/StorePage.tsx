@@ -9,6 +9,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
+import { useTracking } from "@/hooks/useTracking";
 
 const StorePage = () => {
   const { data: products = [], isLoading } = useProducts();
@@ -36,6 +37,8 @@ const StorePage = () => {
     : activeProducts;
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
 
+  const { track } = useTracking();
+
   const handleAddToCart = (product: any) => {
     addItem({
       product_id: product.id,
@@ -43,6 +46,13 @@ const StorePage = () => {
       product_price: Number(product.price),
       product_image_url: product.image_url,
       quantity: 1,
+    });
+    track("AddToCart", {}, {
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: "product",
+      value: Number(product.price),
+      currency: "DZD",
     });
     toast.success("تمت الإضافة للسلة", { icon: <Check className="text-green-500" /> });
   };

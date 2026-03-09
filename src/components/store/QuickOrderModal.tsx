@@ -17,6 +17,7 @@ import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { useTracking } from "@/hooks/useTracking";
 
 interface WilayaShipping {
   id: number;
@@ -64,6 +65,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
+  const { track } = useTracking();
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
 
@@ -128,6 +130,17 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
           if (discount) {
             await incrementUsage();
           }
+          track("Purchase", {
+            phone: phone,
+            firstName: name,
+            city: city || undefined,
+          }, {
+            value: total,
+            currency: "DZD",
+            content_ids: [product.id],
+            content_name: product.name,
+            num_items: quantity,
+          });
           setSubmitted(true);
         },
       }

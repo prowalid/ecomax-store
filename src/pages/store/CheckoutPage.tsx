@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,7 @@ import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useValidateDiscount } from "@/hooks/useValidateDiscount";
+import { useTracking } from "@/hooks/useTracking";
 
 interface WilayaShipping {
   id: number;
@@ -53,6 +54,19 @@ export default function CheckoutPage() {
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
 
   const [couponCode, setCouponCode] = useState("");
+  const { track } = useTracking();
+
+  // Track InitiateCheckout when page loads with items
+  useEffect(() => {
+    if (items.length > 0) {
+      track("InitiateCheckout", {}, {
+        content_ids: items.map((i) => i.product_id),
+        num_items: items.length,
+        value: totalPrice,
+        currency: "DZD",
+      });
+    }
+  }, []);
 
   const wilayas = useMemo(() => shippingSettings.wilayas ?? [], [shippingSettings]);
 
@@ -142,6 +156,19 @@ export default function CheckoutPage() {
       }
 
       clearCart();
+
+      // Track Purchase event
+      track("Purchase", {
+        phone: values.customer_phone,
+        firstName: values.customer_name,
+        city: values.wilaya || undefined,
+      }, {
+        value: total,
+        currency: "DZD",
+        content_ids: items.map((i) => i.product_id),
+        num_items: items.length,
+      });
+
       toast.success(`تم إرسال طلبك بنجاح، رقم الطلب #${order.order_number}`);
       navigate("/", { replace: true });
     } catch (e) {
