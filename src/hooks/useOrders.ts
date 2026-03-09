@@ -131,6 +131,46 @@ export function useCreateOrder() {
         }
       );
 
+      // Send webhook notification in background
+      try {
+        const { data: settingsData } = await supabase
+          .from("store_settings")
+          .select("value")
+          .eq("key", "marketing")
+          .maybeSingle();
+        const webhookUrl = (settingsData?.value as any)?.webhook_url;
+        if (webhookUrl) {
+          fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "new_order",
+              order: {
+                id: data.id,
+                order_number: data.order_number,
+                customer_name: data.customer_name,
+                customer_phone: data.customer_phone,
+                wilaya: data.wilaya,
+                commune: data.commune,
+                address: data.address,
+                delivery_type: data.delivery_type,
+                subtotal: data.subtotal,
+                shipping_cost: data.shipping_cost,
+                discount_code: data.discount_code,
+                discount_amount: data.discount_amount,
+                total: data.total,
+                note: data.note,
+                status: data.status,
+                created_at: data.created_at,
+              },
+              items: items || [],
+            }),
+          }).catch((err) => console.error("Webhook failed:", err));
+        }
+      } catch (err) {
+        console.error("Webhook settings fetch failed:", err);
+      }
+
       return data;
     },
     onSuccess: () => {
