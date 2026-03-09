@@ -23,7 +23,6 @@ interface ProductForm {
   stock: string;
   sku: string;
   category_id: string;
-  image_url: string;
   status: ProductStatus;
 }
 
@@ -36,7 +35,6 @@ const emptyForm: ProductForm = {
   stock: "0",
   sku: "",
   category_id: "",
-  image_url: "",
   status: "active",
 };
 
@@ -82,7 +80,6 @@ const Products = () => {
       stock: String(p.stock),
       sku: p.sku || "",
       category_id: p.category_id || "",
-      image_url: p.image_url || "",
       status: p.status,
     });
     setShowModal(true);
@@ -99,7 +96,6 @@ const Products = () => {
       stock: Number(form.stock) || 0,
       sku: form.sku || null,
       category_id: form.category_id || null,
-      image_url: form.image_url || null,
       status: form.status,
     };
 
@@ -368,27 +364,6 @@ const Products = () => {
                   </p>
                 )}
 
-                {/* Fallback URL input */}
-                <div className="flex gap-3 items-start">
-                  <div className="w-16 h-16 rounded-lg border border-border bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                    {form.image_url ? (
-                      <img src={form.image_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <Image className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <label className="text-xs text-muted-foreground">أو ألصق رابط الصورة الرئيسية</label>
-                    <input
-                      type="text"
-                      value={form.image_url}
-                      onChange={(e) => updateField("image_url", e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      dir="ltr"
-                      className="w-full h-8 px-3 rounded-lg border border-input bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                    />
-                  </div>
-                </div>
               </div>
 
               {/* Name */}
