@@ -166,7 +166,9 @@ const ProductPage = () => {
     ? Math.round(((Number(product.compare_price) - Number(product.price)) / Number(product.compare_price)) * 100)
     : 0;
 
-  const productImages = product.image_url ? [product.image_url] : [];
+  const productImages = galleryImages.length > 0
+    ? galleryImages.map((gi) => gi.image_url)
+    : product.image_url ? [product.image_url] : [];
 
   return (
     <div className="font-[Cairo] pb-20 md:pb-0">
