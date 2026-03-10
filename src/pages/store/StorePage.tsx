@@ -20,16 +20,34 @@ const StorePage = () => {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const slides = theme.slides?.length ? theme.slides : defaultAppearance.slides;
-  const defaultCatImages = defaultAppearance.category_images;
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const activeSlides = isMobile && theme.mobile_slides?.length 
+    ? theme.mobile_slides 
+    : (theme.slides?.length ? theme.slides : defaultAppearance.slides);
+  
+  // Generic fallback images for categories without a specific image
+  const defaultCatImages = [
+    "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=600",
+    "https://images.unsplash.com/photo-1556910103-1c02745a8720?auto=format&fit=crop&q=80&w=600",
+    "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&q=80&w=600",
+  ];
+
+  useEffect(() => {
+    // Reset slide index if it exceeds new active slides boundary
+    setCurrentSlide(prev => prev >= activeSlides.length ? 0 : prev);
+    
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+      setCurrentSlide((prev) => (prev >= activeSlides.length - 1 ? 0 : prev + 1));
     }, 5000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [activeSlides.length]);
 
   const activeProducts = products.filter((p) => p.status === "active");
   const filteredProducts = selectedCategory
@@ -70,7 +88,7 @@ const StorePage = () => {
       {/* Hero Slider */}
       <section className="container mx-auto py-6 px-4">
         <div className="relative rounded-2xl overflow-hidden h-[250px] md:h-[450px] shadow-lg group">
-          {slides.map((image, index) => (
+          {activeSlides.map((image: string, index: number) => (
             <div
               key={index}
               className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
@@ -80,21 +98,21 @@ const StorePage = () => {
             </div>
           ))}
           <button
-            onClick={() => setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1)}
+            onClick={() => setCurrentSlide(prev => prev === 0 ? activeSlides.length - 1 : prev - 1)}
             className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
             style={{ color: theme.accent_color }}
           >
             <ChevronRight size={24} />
           </button>
           <button
-            onClick={() => setCurrentSlide(prev => prev === slides.length - 1 ? 0 : prev + 1)}
+            onClick={() => setCurrentSlide(prev => prev === activeSlides.length - 1 ? 0 : prev + 1)}
             className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
             style={{ color: theme.accent_color }}
           >
             <ChevronLeft size={24} />
           </button>
           <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center space-x-2 space-x-reverse">
-            {slides.map((_, idx) => (
+            {activeSlides.map((_: any, idx: number) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
@@ -254,7 +272,7 @@ const StorePage = () => {
 
             {/* Featured Banner */}
             <div className="relative rounded-2xl overflow-hidden h-80 group cursor-pointer shadow-md mt-6">
-              <img src={categories[3]?.image_url || defaultCatImages[0]} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
+              <img src={theme.offers_banner_url || "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200"} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
               <div className="absolute inset-0 transition-colors duration-500" style={{ background: `linear-gradient(to top right, ${theme.accent_color}e6, ${theme.accent_color}66)` }}></div>
               <div className="absolute inset-0 flex flex-col justify-center items-start p-10">
                 <div className="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold mb-4 inline-flex items-center border border-white/30">

@@ -343,7 +343,7 @@ const Products = () => {
                           <span className="absolute bottom-1 right-1 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded">رئيسية</span>
                         )}
                         <button
-                          onClick={() => deleteImage.mutate({ id: img.id, productId: editingId, imageUrl: img.image_url })}
+                          onClick={() => deleteImage.mutate({ id: img.id, productId: editingId })}
                           className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="w-3 h-3" />

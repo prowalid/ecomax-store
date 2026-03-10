@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export interface ValidatedDiscount {
@@ -29,36 +29,9 @@ export function useValidateDiscount() {
 
     setIsValidating(true);
     try {
-      const { data, error } = await supabase
-        .from("discounts")
-        .select("*")
-        .eq("code", trimmed)
-        .eq("active", true)
-        .maybeSingle();
+      const data = await api.post('/discounts/validate', { code: trimmed });
 
-      if (error) throw error;
-
-      if (!data) {
-        toast.error("كود الخصم غير صالح");
-        setDiscount(null);
-        return null;
-      }
-
-      // Check expiry
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        toast.error("كود الخصم منتهي الصلاحية");
-        setDiscount(null);
-        return null;
-      }
-
-      // Check usage limit
-      if (data.usage_limit && data.usage_count >= data.usage_limit) {
-        toast.error("تم استنفاد الحد الأقصى لاستخدام هذا الكود");
-        setDiscount(null);
-        return null;
-      }
-
-      // Check product scope
+      // Check product scope (this could also be moved to backend entirely, but client logic is fine)
       const applyTo = (data.apply_to as string) ?? "all";
       const productIds = (data.product_ids as string[]) ?? [];
       if (applyTo === "specific" && context?.productId && !productIds.includes(context.productId)) {
@@ -90,8 +63,9 @@ export function useValidateDiscount() {
       setDiscount(validated);
       toast.success(`تم تطبيق كود الخصم: ${data.type === "percentage" ? `${data.value}%` : `${data.value} د.ج`}`);
       return validated;
-    } catch {
-      toast.error("حدث خطأ أثناء التحقق من الكود");
+    } catch (err: any) {
+      // The backend returns appropriate 400/404 errors with err.message set by our wrapper
+      toast.error(err.message || "حدث خطأ أثناء التحقق من الكود");
       setDiscount(null);
       return null;
     } finally {
@@ -103,16 +77,12 @@ export function useValidateDiscount() {
 
   /**
    * احسب قيمة الخصم بناءً على سلوك الكمية
-   * @param subtotal - المجموع الفرعي الكلي
-   * @param unitPrice - سعر الوحدة (للحساب على قطعة واحدة)
-   * @param quantity - الكمية
    */
   const calculateDiscount = (subtotal: number, unitPrice?: number, quantity?: number): number => {
     if (!discount) return 0;
 
     const behavior = discount.quantity_behavior;
 
-    // تطبيق على قطعة واحدة فقط
     if (behavior === "single" && unitPrice !== undefined) {
       if (discount.type === "percentage") {
         return Math.round((unitPrice * discount.value) / 100);
@@ -120,13 +90,11 @@ export function useValidateDiscount() {
       return Math.min(discount.value, unitPrice);
     }
 
-    // تطبيق على الكمية الكلية فقط إذا تجاوزت الحد الأدنى
     if (behavior === "min_quantity") {
       const qty = quantity ?? 1;
       if (qty < discount.min_quantity) return 0;
     }
 
-    // تطبيق على كامل المبلغ (all أو min_quantity بعد التحقق)
     if (discount.type === "percentage") {
       return Math.round((subtotal * discount.value) / 100);
     }
@@ -135,16 +103,10 @@ export function useValidateDiscount() {
 
   const incrementUsage = async () => {
     if (!discount) return;
-    const { data } = await supabase
-      .from("discounts")
-      .select("usage_count")
-      .eq("id", discount.id)
-      .single();
-    if (data) {
-      await supabase
-        .from("discounts")
-        .update({ usage_count: data.usage_count + 1 })
-        .eq("id", discount.id);
+    try {
+      await api.post(`/discounts/${discount.id}/increment`, {});
+    } catch (err) {
+      console.error("Failed to increment discount usage", err);
     }
   };
 

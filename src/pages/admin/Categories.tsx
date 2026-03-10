@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Plus, FolderOpen, GripVertical, Loader2, Trash2, Image, X } from "lucide-react";
+import { Plus, FolderOpen, GripVertical, Loader2, Trash2, Image, X, Upload } from "lucide-react";
 import { useCategories, useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/hooks/useCategories";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const Categories = () => {
   const { data: categories = [], isLoading } = useCategories();
@@ -10,7 +12,7 @@ const Categories = () => {
   const [newName, setNewName] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [editingImage, setEditingImage] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImageId, setUploadingImageId] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!newName.trim()) return;
@@ -21,12 +23,18 @@ const Categories = () => {
     );
   };
 
-  const handleImageSave = (catId: string) => {
-    updateCategory.mutate({ id: catId, image_url: imageUrl || null });
-    setEditingImage(null);
-    setImageUrl("");
+  const handleImageUpload = async (catId: string, file: File) => {
+    setUploadingImageId(catId);
+    try {
+      const data = await api.upload('/upload', file);
+      updateCategory.mutate({ id: catId, image_url: data.url });
+      setEditingImage(null);
+    } catch {
+      toast.error("فشل رفع الصورة");
+    } finally {
+      setUploadingImageId(null);
+    }
   };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -93,7 +101,7 @@ const Categories = () => {
                 </div>
 
                 <button
-                  onClick={() => { setEditingImage(editingImage === cat.id ? null : cat.id); setImageUrl(cat.image_url || ""); }}
+                  onClick={() => setEditingImage(editingImage === cat.id ? null : cat.id)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                   title="تغيير الصورة"
                 >
@@ -108,30 +116,36 @@ const Categories = () => {
                 </button>
               </div>
 
-              {/* Image edit panel */}
               {editingImage === cat.id && (
                 <div className="mt-3 mr-8 flex items-center gap-2 animate-slide-in">
                   <input
-                    type="text"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="ألصق رابط صورة التصنيف..."
-                    dir="ltr"
-                    className="flex-1 h-8 px-3 rounded-lg border border-input bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id={`upload-${cat.id}`}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(cat.id, file);
+                      if (e.target) e.target.value = '';
+                    }}
                   />
-                  <button
-                    onClick={() => handleImageSave(cat.id)}
-                    disabled={updateCategory.isPending}
-                    className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-95 disabled:opacity-50"
-                  >
-                    حفظ
-                  </button>
+                  <div>
+                    <button
+                       onClick={() => document.getElementById(`upload-${cat.id}`)?.click()}
+                       disabled={uploadingImageId === cat.id}
+                       className="h-8 px-3 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-95 disabled:opacity-50"
+                    >
+                       {uploadingImageId === cat.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                       رفع صورة للتصنيف
+                    </button>
+                    <p className="text-[10px] text-muted-foreground mt-1">المقاس: 800×800 بكسل</p>
+                  </div>
                   {cat.image_url && (
                     <button
-                      onClick={() => { setImageUrl(""); updateCategory.mutate({ id: cat.id, image_url: null }); setEditingImage(null); }}
+                      onClick={() => { updateCategory.mutate({ id: cat.id, image_url: null }); setEditingImage(null); }}
                       className="h-8 px-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20"
                     >
-                      <X className="w-3 h-3" />
+                      إزالة الصورة
                     </button>
                   )}
                 </div>

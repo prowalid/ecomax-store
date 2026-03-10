@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export interface MarketingSettings {
@@ -30,12 +30,8 @@ export function useMarketingSettings() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("store_settings")
-        .select("value")
-        .eq("key", "marketing")
-        .single();
-      if (data && !error) {
+      const data = await api.get('/settings/marketing');
+      if (data && data.value) {
         const val = data.value as any;
         setSettings({
           pixel_id: val.pixel_id ?? "",
@@ -56,11 +52,7 @@ export function useMarketingSettings() {
   const saveSettings = async (newSettings: MarketingSettings) => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("store_settings")
-        .update({ value: newSettings as any, updated_at: new Date().toISOString() })
-        .eq("key", "marketing");
-      if (error) throw error;
+      await api.put('/settings/marketing', { value: newSettings });
       setSettings(newSettings);
       toast.success("تم حفظ إعدادات التسويق");
     } catch {

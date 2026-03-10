@@ -5,7 +5,8 @@
  * - Deduplication: shared event_id between browser & server events
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import ReactPixel from "react-facebook-pixel";
+import { api } from "./api";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -130,22 +131,25 @@ export async function sendCAPIEvent(payload: CAPIEventPayload) {
     custom_data: payload.customData || {},
   };
 
-  const { data, error } = await supabase.functions.invoke("facebook-capi", {
-    body,
-  });
+  try {
+    const data = await api.post('/integrations/facebook-capi', body);
 
-  if (error) {
-    console.error("[CAPI] Error sending event:", error);
+    if (!data.success) {
+      console.error("[CAPI] Error sending event:", data);
+      return { success: false, error: data.error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("[CAPI] Backend failure:", error);
     return { success: false, error };
   }
-
-  return { success: true, data };
 }
 
 /**
  * Convenience: fire both Pixel + CAPI for the same event (deduplication via event_id)
  */
-export function trackEvent(
+export async function trackEvent(
   eventName: string,
   userData: CAPIUserData,
   customData: Record<string, any> = {}

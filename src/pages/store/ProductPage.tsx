@@ -233,7 +233,7 @@ const ProductPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <Loader2 className="w-8 h-8 animate-spin text-[#dc3545]" />
+        <Loader2 className="w-8 h-8 animate-spin text-store-primary" />
       </div>
     );
   }
@@ -242,7 +242,7 @@ const ProductPage = () => {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <p className="text-xl text-gray-500 mb-4">المنتج غير موجود</p>
-        <Link to="/" className="text-[#dc3545] font-medium hover:underline">
+        <Link to="/" className="text-store-primary font-medium hover:underline">
           العودة للرئيسية
         </Link>
       </div>
@@ -263,17 +263,17 @@ const ProductPage = () => {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200 py-3 hidden md:block">
         <div className="container mx-auto px-4 text-sm text-gray-500 flex items-center">
-          <Link to="/" className="hover:text-[#dc3545]">
+          <Link to="/" className="hover:text-store-primary">
             الرئيسية
           </Link>
           <ChevronRight size={14} className="mx-2 text-gray-400" />
-          <Link to="/shop" className="hover:text-[#dc3545]">
+          <Link to="/shop" className="hover:text-store-primary">
             المتجر
           </Link>
           <ChevronRight size={14} className="mx-2 text-gray-400" />
           {product.category_name && (
             <>
-              <Link to={`/shop?category=${product.category_id}`} className="hover:text-[#dc3545]">
+              <Link to={`/shop?category=${product.category_id}`} className="hover:text-store-primary">
                 {product.category_name}
               </Link>
               <ChevronRight size={14} className="mx-2 text-gray-400" />
@@ -290,7 +290,7 @@ const ProductPage = () => {
           <div className="w-full lg:w-5/12">
             <div className="relative rounded-2xl overflow-hidden border border-gray-100 mb-4 group cursor-zoom-in shadow-sm">
               {hasDiscount && (
-                <span className="absolute top-4 right-4 bg-[#dc3545] text-white text-sm font-bold px-4 py-1.5 rounded-full z-10 shadow-md flex items-center">
+                <span className="absolute top-4 right-4 bg-store-primary text-white text-sm font-bold px-4 py-1.5 rounded-full z-10 shadow-md flex items-center">
                   <TrendingUp size={16} className="ml-1" /> وفر {discountPercent}%
                 </span>
               )}
@@ -311,7 +311,7 @@ const ProductPage = () => {
                     key={idx}
                     onClick={() => setActiveImage(img)}
                     className={`rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                      activeImage === img ? "border-[#dc3545] shadow-md scale-105" : "border-transparent hover:border-gray-300"
+                      activeImage === img ? "border-store-primary shadow-md scale-105" : "border-transparent hover:border-gray-300"
                     }`}
                   >
                     <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-20 md:h-24 object-cover" />
@@ -343,15 +343,15 @@ const ProductPage = () => {
             <div className="bg-red-50/50 p-4 rounded-2xl border border-red-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-end space-x-3 space-x-reverse mb-1">
-                  <span className="text-4xl font-black text-[#dc3545] tracking-tight">{formatPrice(Number(product.price))}</span>
+                  <span className="text-4xl font-black text-store-primary tracking-tight">{formatPrice(Number(product.price))}</span>
                   {hasDiscount && (
                     <span className="text-xl text-gray-400 line-through mb-1 font-semibold">{formatPrice(Number(product.compare_price))}</span>
                   )}
                 </div>
                 {hasDiscount && (
-                  <p className="text-sm text-[#dc3545] font-bold flex items-center">
+                  <p className="text-sm text-store-primary font-bold flex items-center">
                     <Clock size={14} className="ml-1" /> ينتهي العرض خلال:{" "}
-                    <span className="mr-1 bg-[#dc3545] text-white px-2 py-0.5 rounded text-xs">{formatTime(timeLeft)}</span>
+                    <span className="mr-1 bg-store-primary text-white px-2 py-0.5 rounded text-xs">{formatTime(timeLeft)}</span>
                   </p>
                 )}
               </div>
@@ -367,7 +367,7 @@ const ProductPage = () => {
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-red-500 to-[#dc3545] h-2.5 rounded-full"
+                      className="bg-gradient-to-r from-red-500 to-store-primary h-2.5 rounded-full"
                       style={{ width: `${Math.min(100, (product.stock / 50) * 100)}%` }}
                     />
                   </div>
@@ -388,9 +388,9 @@ const ProductPage = () => {
             {/* In-Page Order Form */}
             <div
               id="order-form"
-              className="bg-white border-2 border-[#dc3545]/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 mt-auto relative overflow-hidden"
+              className="bg-white border-2 border-store-primary/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 mt-auto relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#dc3545] to-orange-400" />
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-store-primary to-orange-400" />
 
               {submitted ? (
                 <div className="py-8 text-center">
@@ -399,7 +399,7 @@ const ProductPage = () => {
                   <p className="text-sm text-gray-500 mb-6">سنتصل بك لتأكيد الطلب في أقرب وقت</p>
                   <Link
                     to="/"
-                    className="inline-block bg-[#dc3545] text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
+                    className="inline-block bg-store-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
                   >
                     العودة للرئيسية
                   </Link>
@@ -423,7 +423,7 @@ const ProductPage = () => {
                           onChange={(e) => setFormName(e.target.value)}
                           placeholder="الاسم الكامل"
                           required
-                          className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold"
+                          className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold"
                         />
                       </div>
                       <div className="relative">
@@ -436,7 +436,7 @@ const ProductPage = () => {
                           onChange={(e) => setFormPhone(e.target.value)}
                           placeholder="رقم الهاتف"
                           required
-                          className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-left font-bold text-gray-800"
+                          className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-left font-bold text-gray-800"
                           dir="ltr"
                         />
                       </div>
@@ -452,7 +452,7 @@ const ProductPage = () => {
                           value={formWilaya}
                           onChange={(e) => setFormWilaya(e.target.value)}
                           required
-                          className="w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer"
+                          className="w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer"
                         >
                           <option value="">اختر الولاية</option>
                           {wilayasWithPrices.map((w) => (
@@ -477,7 +477,7 @@ const ProductPage = () => {
                           required
                           disabled={!formWilaya}
                           className={
-                            "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer" +
+                            "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer" +
                             (!formWilaya ? " opacity-50 cursor-not-allowed" : "")
                           }
                         >
@@ -530,8 +530,8 @@ const ProductPage = () => {
                           onClick={() => setDeliveryType("home")}
                           className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                             deliveryType === "home"
-                              ? "border-[#dc3545] bg-white text-[#dc3545]"
-                              : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                              ? "border-store-primary bg-white text-store-primary"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-store-primary/40"
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -545,8 +545,8 @@ const ProductPage = () => {
                           onClick={() => setDeliveryType("desk")}
                           className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                             deliveryType === "desk"
-                              ? "border-[#dc3545] bg-white text-[#dc3545]"
-                              : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                              ? "border-store-primary bg-white text-store-primary"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-store-primary/40"
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -610,13 +610,13 @@ const ProductPage = () => {
                             onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                             placeholder="أدخل الكود"
                             dir="ltr"
-                            className="flex-1 h-10 px-3 bg-white border border-gray-300 rounded-xl text-sm font-bold text-center uppercase focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all"
+                            className="flex-1 h-10 px-3 bg-white border border-gray-300 rounded-xl text-sm font-bold text-center uppercase focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all"
                           />
                           <button
                             type="button"
                             onClick={() => validateCode(couponCode)}
                             disabled={isValidating || !couponCode.trim()}
-                            className="h-10 px-4 rounded-xl bg-[#dc3545] text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
+                            className="h-10 px-4 rounded-xl bg-store-primary text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
                           >
                             {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
                           </button>
@@ -650,7 +650,7 @@ const ProductPage = () => {
                           </div>
                           <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
                             <span>المجموع الكلي:</span>
-                            <span className="text-[#dc3545]">{formatPrice(total)}</span>
+                            <span className="text-store-primary">{formatPrice(total)}</span>
                           </div>
                         </div>
                       );
@@ -661,7 +661,7 @@ const ProductPage = () => {
                         type="button"
                         onClick={handleAddToCart}
                         disabled={isAdding}
-                        className="bg-white border-2 border-[#dc3545] text-[#dc3545] font-bold py-3 rounded-xl hover:bg-[#dc3545] hover:text-white transition-all duration-300 flex justify-center items-center disabled:opacity-50"
+                        className="bg-white border-2 border-store-primary text-store-primary font-bold py-3 rounded-xl hover:bg-store-primary hover:text-white transition-all duration-300 flex justify-center items-center disabled:opacity-50"
                       >
                         {isAdding ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -675,7 +675,7 @@ const ProductPage = () => {
                       <button
                         type="submit"
                         disabled={createOrder.isPending}
-                        className="bg-gradient-to-r from-[#dc3545] to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50"
+                        className="bg-gradient-to-r from-store-primary to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50"
                       >
                         {createOrder.isPending ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -698,7 +698,7 @@ const ProductPage = () => {
       {product.description && (
         <section className="container mx-auto px-4 py-8">
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 inline-block border-b-4 border-[#dc3545] pb-2">وصف المنتج</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 inline-block border-b-4 border-store-primary pb-2">وصف المنتج</h2>
             <div className="prose max-w-none text-gray-600 font-medium leading-relaxed text-lg">
               <p className="whitespace-pre-line">{product.description}</p>
             </div>
@@ -717,9 +717,9 @@ const ProductPage = () => {
           ].map((badge, idx) => (
             <div
               key={idx}
-              className="bg-white p-5 rounded-2xl flex items-center space-x-4 space-x-reverse border border-gray-100 hover:border-[#dc3545]/30 hover:shadow-lg transition-all duration-300"
+              className="bg-white p-5 rounded-2xl flex items-center space-x-4 space-x-reverse border border-gray-100 hover:border-store-primary/30 hover:shadow-lg transition-all duration-300"
             >
-              <div className="bg-red-50 p-4 rounded-xl text-[#dc3545]">
+              <div className="bg-red-50 p-4 rounded-xl text-store-primary">
                 <badge.icon size={26} />
               </div>
               <div>
@@ -734,7 +734,7 @@ const ProductPage = () => {
       {/* Related Products */}
       {relatedProducts.length > 0 && (
         <section className="container mx-auto px-4 mt-6 mb-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 inline-block border-b-4 border-[#dc3545] pb-2">منتجات ذات صلة</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 inline-block border-b-4 border-store-primary pb-2">منتجات ذات صلة</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {relatedProducts.map((p) => (
               <ProductCard
@@ -755,7 +755,7 @@ const ProductPage = () => {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-200 md:hidden z-50">
         <button
           onClick={() => document.getElementById("order-form")?.scrollIntoView({ behavior: "smooth" })}
-          className="w-full bg-[#dc3545] text-white font-bold text-lg py-3.5 rounded-xl shadow-[0_5px_15px_rgba(220,53,69,0.3)] flex justify-center items-center"
+          className="w-full bg-store-primary text-white font-bold text-lg py-3.5 rounded-xl shadow-[0_5px_15px_rgba(220,53,69,0.3)] flex justify-center items-center"
         >
           اطلب الآن والدفع عند الاستلام <ChevronRight size={20} className="mr-2" />
         </button>

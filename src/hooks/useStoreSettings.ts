@@ -1,21 +1,33 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export function useStoreSettings<T>(key: string, defaultValue: T) {
-  const [settings, setSettings] = useState<T>(defaultValue);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `store_settings_${key}`;
+
+  const getInitialSettings = (): T => {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) return { ...defaultValue, ...JSON.parse(cached) };
+    } catch { /* ignore */ }
+    return defaultValue;
+  };
+
+  const getInitialLoading = () => {
+    return !localStorage.getItem(cacheKey);
+  };
+
+  const [settings, setSettings] = useState<T>(getInitialSettings);
+  const [loading, setLoading] = useState(getInitialLoading);
   const [saving, setSaving] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("store_settings")
-        .select("value")
-        .eq("key", key)
-        .maybeSingle();
-      if (data && !error) {
-        setSettings({ ...defaultValue, ...(data.value as any) });
+      const data = await api.get(`/settings/${key}`);
+      if (data && data.value) {
+        const mergedSettings = { ...defaultValue, ...(data.value as any) };
+        setSettings(mergedSettings);
+        localStorage.setItem(cacheKey, JSON.stringify(data.value));
       }
     } catch (err) {
       console.error(`Failed to fetch ${key} settings:`, err);
@@ -29,11 +41,9 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
   const saveSettings = async (newSettings: T) => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("store_settings")
-        .upsert({ key, value: newSettings as any, updated_at: new Date().toISOString() }, { onConflict: "key" });
-      if (error) throw error;
+      await api.put(`/settings/${key}`, { value: newSettings });
       setSettings(newSettings);
+      localStorage.setItem(cacheKey, JSON.stringify(newSettings));
       toast.success("تم حفظ الإعدادات");
     } catch {
       toast.error("فشل حفظ الإعدادات");

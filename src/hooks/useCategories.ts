@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export interface Category {
@@ -16,11 +16,7 @@ export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
+      const data = await api.get('/categories');
       return data as Category[];
     },
   });
@@ -29,16 +25,14 @@ export function useCategories() {
 export function useCreateCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (cat: { name: string; slug?: string; sort_order?: number }) => {
-      const { data, error } = await supabase.from("categories").insert(cat).select().single();
-      if (error) throw error;
-      return data;
+    mutationFn: async (cat: { name: string; slug?: string; sort_order?: number; image_url?: string }) => {
+      return await api.post('/categories', cat);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["categories"] });
       toast.success("تم إضافة التصنيف");
     },
-    onError: () => toast.error("فشل إضافة التصنيف"),
+    onError: (error: Error) => toast.error(error.message || "فشل إضافة التصنيف"),
   });
 }
 
@@ -46,14 +40,13 @@ export function useUpdateCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Category> & { id: string }) => {
-      const { error } = await supabase.from("categories").update(updates).eq("id", id);
-      if (error) throw error;
+      return await api.patch(`/categories/${id}`, updates);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["categories"] });
       toast.success("تم تحديث التصنيف");
     },
-    onError: () => toast.error("فشل تحديث التصنيف"),
+    onError: (error: Error) => toast.error(error.message || "فشل تحديث التصنيف"),
   });
 }
 
@@ -61,13 +54,12 @@ export function useDeleteCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("categories").delete().eq("id", id);
-      if (error) throw error;
+      return await api.delete(`/categories/${id}`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["categories"] });
       toast.success("تم حذف التصنيف");
     },
-    onError: () => toast.error("فشل حذف التصنيف"),
+    onError: (error: Error) => toast.error(error.message || "فشل حذف التصنيف"),
   });
 }

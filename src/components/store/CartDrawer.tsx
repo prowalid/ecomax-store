@@ -21,10 +21,10 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
         <SheetHeader className="p-4 border-b bg-white">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-xl font-bold flex items-center gap-2">
-              <ShoppingBag className="text-[#dc3545]" size={24} />
+              <ShoppingBag className="text-store-primary" size={24} />
               سلة التسوق
               {totalCount > 0 && (
-                <span className="bg-[#dc3545] text-white text-sm px-2 py-0.5 rounded-full">
+                <span className="bg-store-primary text-white text-sm px-2 py-0.5 rounded-full">
                   {totalCount}
                 </span>
               )}
@@ -39,7 +39,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
 
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#dc3545]" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-store-primary" />
           </div>
         ) : items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
@@ -49,7 +49,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
             <SheetClose asChild>
               <Link
                 to="/"
-                className="bg-[#dc3545] text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
+                className="bg-store-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
               >
                 تصفح المنتجات
               </Link>
@@ -85,7 +85,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
                         <h4 className="font-bold text-gray-900 text-sm line-clamp-2 leading-tight">
                           {item.product_name}
                         </h4>
-                        <p className="text-[#dc3545] font-bold text-sm mt-1">
+                        <p className="text-store-primary font-bold text-sm mt-1">
                           {formatPrice(item.product_price)}
                         </p>
                       </div>
@@ -125,13 +125,13 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
             <div className="border-t bg-white p-4 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">المجموع:</span>
-                <span className="text-xl font-black text-[#dc3545]">{formatPrice(totalPrice)}</span>
+                <span className="text-xl font-black text-store-primary">{formatPrice(totalPrice)}</span>
               </div>
 
               <SheetClose asChild>
                 <Link
                   to="/checkout"
-                  className="block w-full bg-[#dc3545] text-white text-center py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md"
+                  className="block w-full bg-store-primary text-white text-center py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md"
                 >
                   إتمام الطلب
                 </Link>

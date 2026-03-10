@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export interface NotificationSettings {
@@ -26,13 +26,9 @@ export function useNotificationSettings() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("store_settings")
-        .select("value")
-        .eq("key", "whatsapp_notifications")
-        .single();
+      const data = await api.get('/settings/whatsapp_notifications');
 
-      if (data && !error) {
+      if (data && data.value) {
         const val = data.value as any;
         setSettings({
           enabled_notifications: val.enabled_notifications || DEFAULT_SETTINGS.enabled_notifications,
@@ -54,15 +50,8 @@ export function useNotificationSettings() {
   const saveSettings = async (newSettings: NotificationSettings) => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("store_settings")
-        .update({
-          value: newSettings as any,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("key", "whatsapp_notifications");
+      await api.put('/settings/whatsapp_notifications', { value: newSettings });
 
-      if (error) throw error;
       setSettings(newSettings);
       toast.success("تم حفظ الإعدادات بنجاح");
     } catch (err: any) {

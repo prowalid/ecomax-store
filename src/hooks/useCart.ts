@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useCallback, useMemo } from "react";
 
 const SESSION_KEY = "cart_session_id";
@@ -30,12 +30,7 @@ export function useCart() {
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["cart", sessionId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("*")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
+      const data = await api.get(`/cart/${sessionId}`);
       return data as CartItem[];
     },
   });
@@ -48,59 +43,31 @@ export function useCart() {
       product_image_url?: string | null;
       quantity?: number;
     }) => {
-      // Check if item already exists
-      const existing = items.find((i) => i.product_id === product.product_id);
-      if (existing) {
-        const { error } = await supabase
-          .from("cart_items")
-          .update({ quantity: existing.quantity + (product.quantity || 1) })
-          .eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("cart_items").insert([
-          {
-            session_id: sessionId,
-            product_id: product.product_id,
-            product_name: product.product_name,
-            product_price: product.product_price,
-            product_image_url: product.product_image_url || null,
-            quantity: product.quantity || 1,
-          },
-        ]);
-        if (error) throw error;
-      }
+      await api.post('/cart', {
+        ...product,
+        session_id: sessionId
+      });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });
 
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
-      if (quantity <= 0) {
-        const { error } = await supabase.from("cart_items").delete().eq("id", itemId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("cart_items")
-          .update({ quantity })
-          .eq("id", itemId);
-        if (error) throw error;
-      }
+      await api.patch(`/cart/${itemId}`, { quantity });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });
 
   const removeItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
-      const { error } = await supabase.from("cart_items").delete().eq("id", itemId);
-      if (error) throw error;
+      await api.delete(`/cart/${itemId}`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });
 
   const clearCartMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("cart_items").delete().eq("session_id", sessionId);
-      if (error) throw error;
+      await api.delete(`/cart/session/${sessionId}`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });

@@ -1,12 +1,18 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, X } from "lucide-react";
+import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, X, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
 import { usePublishedPages } from "@/hooks/usePages";
 import { initPixel } from "@/lib/facebook-pixel";
 import CartDrawer from "./CartDrawer";
+
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : '220 53 69';
+};
 
 const StoreLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,6 +23,7 @@ const StoreLayout = () => {
   const { settings: marketing } = useMarketingSettings();
   const { data: headerPages = [] } = usePublishedPages("header");
   const { data: footerPages = [] } = usePublishedPages("footer");
+  const { settings: generalSettings } = useStoreSettings("general", { phone: "", email: "", store_name: "ECOMAX", currency: "DZD" });
 
   useEffect(() => {
     if (marketing.pixel_id) {
@@ -24,17 +31,42 @@ const StoreLayout = () => {
     }
   }, [marketing.pixel_id]);
 
-  const theme = loading ? defaultAppearance : t;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-10 h-10 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  const theme = t;
 
   return (
     <div dir="rtl" className="min-h-screen font-sans overflow-x-hidden" style={{ backgroundColor: theme.body_bg, fontFamily: `'${theme.body_font}', sans-serif` }}>
+      <style>
+        {`
+          :root {
+            --store-primary: ${hexToRgb(theme.accent_color)};
+            --store-button: ${hexToRgb(theme.button_color)};
+          }
+        `}
+      </style>
+
 
       {/* Announcement Bar */}
       <div className="py-2 text-sm hidden md:block transition-colors" style={{ backgroundColor: theme.top_bar_bg, color: theme.top_bar_text }}>
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="flex space-x-6 space-x-reverse">
-            <a href="tel:+21239216250" className="flex items-center hover:opacity-80 transition-opacity"><Phone size={14} className="ml-1" /> +21239216250</a>
-            <a href="mailto:support@codwoo.com" className="flex items-center hover:opacity-80 transition-opacity"><Mail size={14} className="ml-1" /> support@codwoo.com</a>
+            {generalSettings.phone && (
+              <a href={`tel:${generalSettings.phone}`} className="flex items-center hover:opacity-80 transition-opacity" dir="ltr">
+                <Phone size={14} className="ml-1" /> {generalSettings.phone}
+              </a>
+            )}
+            {generalSettings.email && (
+              <a href={`mailto:${generalSettings.email}`} className="flex items-center hover:opacity-80 transition-opacity">
+                <Mail size={14} className="ml-1" /> {generalSettings.email}
+              </a>
+            )}
           </div>
           <div className="flex space-x-6 space-x-reverse font-medium">
             <span className="flex items-center"><Truck size={14} className="ml-1" /> التوصيل مجاني</span>
@@ -60,7 +92,7 @@ const StoreLayout = () => {
               {theme.logo_url ? (
                 <img src={theme.logo_url} alt={theme.store_name} className="h-10 object-contain" />
               ) : (
-                <>OUTER<span style={{ color: theme.accent_color }}>LUXE</span></>
+                <span className="tracking-tight font-black">{theme.store_name || "ECOMAX"}</span>
               )}
             </Link>
           </div>
@@ -130,10 +162,10 @@ const StoreLayout = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-2">
               <h3 className="text-3xl font-black mb-6">
-                {theme.logo_url ? (
-                  <img src={theme.logo_url} alt={theme.store_name} className="h-10 object-contain brightness-0 invert" />
+                {theme.footer_logo_url || theme.logo_url ? (
+                  <img src={theme.footer_logo_url || theme.logo_url} alt={theme.store_name} className="h-10 object-contain brightness-0 invert" />
                 ) : (
-                  <>OUTER<span style={{ color: theme.footer_accent }}>LUXE</span></>
+                  <span className="tracking-tight font-black">{theme.store_name || "ECOMAX"}</span>
                 )}
               </h3>
               <p className="leading-relaxed max-w-md" style={{ color: theme.footer_text + 'aa' }}>
@@ -163,14 +195,18 @@ const StoreLayout = () => {
             <div>
               <h4 className="text-lg font-bold mb-6 pb-2 inline-block" style={{ borderBottom: `1px solid ${theme.footer_text}33` }}>تواصل معنا</h4>
               <ul className="space-y-4 font-medium" style={{ color: theme.footer_text + 'aa' }}>
-                <li className="flex items-start">
-                  <div className="p-2 rounded-lg ml-3" style={{ backgroundColor: theme.footer_text + '1a', color: theme.footer_accent }}><Phone size={18} /></div>
-                  <span className="pt-1" dir="ltr">+212 39 216 250</span>
-                </li>
-                <li className="flex items-start">
-                  <div className="p-2 rounded-lg ml-3" style={{ backgroundColor: theme.footer_text + '1a', color: theme.footer_accent }}><Mail size={18} /></div>
-                  <span className="pt-1">support@codwoo.com</span>
-                </li>
+                {generalSettings.phone && (
+                  <li className="flex items-start">
+                    <div className="p-2 rounded-lg ml-3" style={{ backgroundColor: theme.footer_text + '1a', color: theme.footer_accent }}><Phone size={18} /></div>
+                    <span className="pt-1" dir="ltr">{generalSettings.phone}</span>
+                  </li>
+                )}
+                {generalSettings.email && (
+                  <li className="flex items-start">
+                    <div className="p-2 rounded-lg ml-3" style={{ backgroundColor: theme.footer_text + '1a', color: theme.footer_accent }}><Mail size={18} /></div>
+                    <span className="pt-1">{generalSettings.email}</span>
+                  </li>
+                )}
               </ul>
             </div>
           </div>

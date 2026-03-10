@@ -75,7 +75,7 @@ const AdminSidebar = ({ collapsed, onToggle }: AdminSidebarProps) => {
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-sidebar-active truncate">متجري</p>
+            <p className="text-sm font-semibold text-sidebar-active truncate">ECOMAX</p>
           </div>
         )}
       </div>

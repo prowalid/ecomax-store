@@ -1,6 +1,6 @@
 import { Save, CheckCircle2, XCircle, Info, Send, Shield, Eye, ShoppingCart, CreditCard, Loader2, Wifi, WifiOff } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { generateEventId, getFbp, getFbc } from "@/lib/facebook-pixel";
 import { toast } from "sonner";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
@@ -64,12 +64,10 @@ const Marketing = () => {
             : {},
       };
 
-      const { data, error } = await supabase.functions.invoke("facebook-capi", {
-        body: testPayload,
-      });
+      const data = await api.post('/integrations/facebook-capi', testPayload);
 
-      if (error) {
-        setTestResult({ success: false, message: `خطأ: ${error.message}` });
+      if (!data?.success) {
+        setTestResult({ success: false, message: `خطأ: ${data?.error || "خطأ غير معروف"}` });
         toast.error("فشل إرسال الحدث التجريبي");
       } else if (data?.success) {
         setTestResult({

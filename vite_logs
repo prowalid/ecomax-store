@@ -1,0 +1,7 @@
+
+> vite_react_shadcn_ts@0.0.0 preview
+> vite preview --host --port 8080
+
+  ➜  Local:   http://localhost:8080/
+  ➜  Network: http://91.99.239.223:8080/
+  ➜  press h + enter to show help

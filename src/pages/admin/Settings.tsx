@@ -6,14 +6,16 @@ interface GeneralSettings {
   phone: string;
   email: string;
   currency: string;
+  custom_domain: string;
 }
 
 const Settings = () => {
   const { settings, setSettings, loading, saving, saveSettings } = useStoreSettings<GeneralSettings>("general", {
-    store_name: "متجري",
+    store_name: "ECOMAX",
     phone: "",
     email: "",
     currency: "DZD",
+    custom_domain: "",
   });
 
   if (loading) {
@@ -79,6 +81,18 @@ const Settings = () => {
             >
               <option value="DZD">دينار جزائري (د.ج)</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">النطاق المخصص (الدومين)</label>
+            <input
+              type="text"
+              value={settings.custom_domain}
+              onChange={(e) => setSettings({ ...settings, custom_domain: e.target.value })}
+              placeholder="www.mystore.com"
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+              dir="ltr"
+            />
           </div>
         </div>
 

@@ -37,7 +37,7 @@
     --store-primary: #e84360;
     --store-badge-bg: #f99898;
     --store-card-bg: #f4f6f8;
-    --store-sale-badge: #dc3545;
+    --store-sale-badge: rgb(var(--store-primary));
 
     --secondary: 240 5% 33%;
     --secondary-foreground: 0 0% 98%;

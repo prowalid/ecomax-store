@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldCheck, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,39 +11,31 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { setSession } = useAuth();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const response = await api.post('/auth/login', {
         email: email.trim(),
         password,
       });
-      if (error) throw error;
 
-      // Check admin role
-      const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
-        _user_id: data.user.id,
-        _role: "admin",
-      });
-
-      if (roleError || !isAdmin) {
-        await supabase.auth.signOut();
+      if (response.user.role !== "admin") {
         toast.error("هذا الحساب ليس لديه صلاحيات المدير");
         return;
       }
 
+      setSession(response.token, response.user);
+      
       toast.success("تم تسجيل الدخول بنجاح");
       navigate("/admin", { replace: true });
     } catch (err: any) {
       console.error("Login error:", err);
-      if (err.message?.includes("Invalid login")) {
-        toast.error("البريد أو كلمة المرور غير صحيح");
-      } else {
-        toast.error(err.message || "حدث خطأ أثناء تسجيل الدخول");
-      }
+      toast.error(err.message || "البريد أو كلمة المرور غير صحيح");
     } finally {
       setLoading(false);
     }

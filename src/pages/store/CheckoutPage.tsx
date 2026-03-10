@@ -44,10 +44,10 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 const formatPrice = (n: number) => `${n.toLocaleString("ar-DZ")} دج`;
 
 const selectClass =
-  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
+  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
 
 const inputClass =
-  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold";
+  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -197,17 +197,20 @@ export default function CheckoutPage() {
       });
 
       toast.success(`تم إرسال طلبك بنجاح، رقم الطلب #${order.order_number}`);
-      navigate("/", { replace: true });
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 2000);
     } catch (e) {
       console.error(e);
-      toast.error("حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى");
+      const message = e instanceof Error ? e.message : "حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى";
+      toast.error(message);
     }
   };
 
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-16 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#dc3545]" />
+        <Loader2 className="w-8 h-8 animate-spin text-store-primary" />
       </div>
     );
   }
@@ -219,7 +222,7 @@ export default function CheckoutPage() {
         <p className="text-gray-500 text-sm">السلة فارغة حالياً، أضف منتجات للمتابعة</p>
         <button
           onClick={() => navigate("/shop")}
-          className="inline-block bg-[#dc3545] text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
+          className="inline-block bg-store-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
         >
           الذهاب إلى المتجر
         </button>
@@ -230,8 +233,8 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8 grid gap-8 lg:grid-cols-[2fr,1.2fr]" dir="rtl">
       {/* Form */}
-      <div className="bg-white border-2 border-[#dc3545]/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#dc3545] to-orange-400" />
+      <div className="bg-white border-2 border-store-primary/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-store-primary to-orange-400" />
 
         <div className="text-center mb-6 mt-2">
           <h1 className="text-2xl font-black text-gray-900">إتمام الطلب</h1>
@@ -355,8 +358,8 @@ export default function CheckoutPage() {
               <label
                 className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold cursor-pointer transition-all ${
                   deliveryTypeValue === "home"
-                    ? "border-[#dc3545] bg-white text-[#dc3545]"
-                    : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                    ? "border-store-primary bg-white text-store-primary"
+                    : "border-gray-300 bg-white text-gray-700 hover:border-store-primary/40"
                 }`}
               >
                 <input type="radio" value="home" {...register("delivery_type")} className="hidden" />
@@ -370,8 +373,8 @@ export default function CheckoutPage() {
               <label
                 className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold cursor-pointer transition-all ${
                   deliveryTypeValue === "desk"
-                    ? "border-[#dc3545] bg-white text-[#dc3545]"
-                    : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                    ? "border-store-primary bg-white text-store-primary"
+                    : "border-gray-300 bg-white text-gray-700 hover:border-store-primary/40"
                 }`}
               >
                 <input type="radio" value="desk" {...register("delivery_type")} className="hidden" />
@@ -414,13 +417,13 @@ export default function CheckoutPage() {
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   placeholder="أدخل كود الخصم"
                   dir="ltr"
-                  className="flex-1 h-11 px-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold text-center uppercase"
+                  className="flex-1 h-11 px-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold text-center uppercase"
                 />
                 <button
                   type="button"
                   onClick={handleApplyCoupon}
                   disabled={isValidating || !couponCode.trim()}
-                  className="h-11 px-5 rounded-xl bg-[#dc3545] text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="h-11 px-5 rounded-xl bg-store-primary text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
                 </button>
@@ -434,14 +437,14 @@ export default function CheckoutPage() {
               rows={2}
               placeholder="ملاحظات إضافية (اختياري)"
               {...register("note")}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-medium resize-none"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-medium resize-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={createOrder.isPending}
-            className="w-full bg-gradient-to-r from-[#dc3545] to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 flex justify-center items-center disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-store-primary to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 flex justify-center items-center disabled:opacity-50"
           >
             {createOrder.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "تأكيد الطلب"}
           </button>
@@ -471,7 +474,7 @@ export default function CheckoutPage() {
                   <p className="text-[11px] text-gray-400">الكمية: {item.quantity}</p>
                 </div>
               </div>
-              <p className="font-black text-[#dc3545]">{formatPrice(item.product_price * item.quantity)}</p>
+              <p className="font-black text-store-primary">{formatPrice(item.product_price * item.quantity)}</p>
             </div>
           ))}
         </div>
@@ -495,7 +498,7 @@ export default function CheckoutPage() {
           </div>
           <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
             <span>المجموع الكلي:</span>
-            <span className="text-[#dc3545]">{formatPrice(total)}</span>
+            <span className="text-store-primary">{formatPrice(total)}</span>
           </div>
         </div>
 

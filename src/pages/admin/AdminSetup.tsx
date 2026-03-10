@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldCheck, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,16 +13,18 @@ export default function AdminSetup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { setSession } = useAuth();
+
   useEffect(() => {
-    // Check if any admin exists
-    supabase.rpc("admin_count").then(({ data, error }) => {
-      if (error) {
-        console.error("admin_count error:", error);
-        setHasAdmin(true); // Assume admin exists on error to prevent unauthorized setup
-      } else {
-        setHasAdmin((data ?? 0) > 0);
-      }
-    });
+    // Check if an admin already exists using the dedicated endpoint
+    api.get('/auth/setup-status')
+      .then((res: any) => {
+        setHasAdmin(res.hasAdmin);
+      })
+      .catch((err) => {
+        console.error('Failed to check setup status:', err);
+        setHasAdmin(true); // Default to true if API fails so it redirects to login
+      });
   }, []);
 
   // Redirect if admin already exists
@@ -38,32 +41,27 @@ export default function AdminSetup() {
       toast.error("كلمة المرور غير متطابقة");
       return;
     }
-    if (password.length < 8) {
-      toast.error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+    if (password.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       return;
     }
 
     setLoading(true);
     try {
-      // 1. Create user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      // 1. Create user and get token
+      const response = await api.post('/auth/register', {
         email: email.trim(),
         password,
       });
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error("فشل إنشاء الحساب");
 
-      // 2. Assign admin role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({ user_id: authData.user.id, role: "admin" });
-      if (roleError) throw roleError;
+      // 2. Save session
+      setSession(response.token, response.user);
 
       toast.success("تم إنشاء حساب المدير بنجاح!");
       navigate("/admin", { replace: true });
     } catch (err: any) {
       console.error("Setup error:", err);
-      if (err.message?.includes("already registered")) {
+      if (err.message?.includes("already exists")) {
         toast.error("هذا البريد مسجل مسبقاً");
       } else {
         toast.error(err.message || "حدث خطأ أثناء الإعداد");

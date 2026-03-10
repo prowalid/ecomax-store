@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "./api";
 
 export type WhatsAppTemplate =
   | "order_confirmed"
@@ -13,38 +13,43 @@ export interface SendWhatsAppParams {
   data?: Record<string, any>;
 }
 
-export async function sendWhatsAppNotification(params: SendWhatsAppParams) {
-  const { data, error } = await supabase.functions.invoke("whatsapp-notify", {
-    body: params,
-  });
+export const sendWhatsAppNotification = async (params: SendWhatsAppParams) => {
+  try {
+    const payload = {
+      template: params.template,
+      phone: params.phone,
+      data: params.data || {},
+    };
+    const data = await api.post('/integrations/whatsapp-notify', payload);
 
-  if (error) {
-    throw new Error(error.message);
+    if (!data.success) {
+      console.error("WhatsApp Notification Error:", data);
+      throw new Error(data.error || "Failed to send WhatsApp notification");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Failed to send WhatsApp notification:", error);
+    throw new Error(error.message || "Failed to send WhatsApp notification");
   }
-
-  if (!data?.success) {
-    throw new Error(data?.error || "فشل إرسال الرسالة");
-  }
-
-  return data;
-}
+};
 
 /**
- * Get notification settings from store_settings table
+ * Get notification settings from backend api
  */
 export async function getNotificationSettings() {
-  const { data, error } = await supabase
-    .from("store_settings")
-    .select("value")
-    .eq("key", "whatsapp_notifications")
-    .single();
-
-  if (error || !data) return null;
-  return data.value as {
-    enabled_notifications: Record<string, boolean>;
-    admin_phone: string;
-    api_configured: boolean;
-  };
+  try {
+    const data = await api.get('/settings/whatsapp_notifications');
+    if (!data || !data.value) return null;
+    return data.value as {
+      enabled_notifications: Record<string, boolean>;
+      admin_phone: string;
+      api_configured: boolean;
+    };
+  } catch (err) {
+    console.error("getNotificationSettings error:", err);
+    return null;
+  }
 }
 
 /**

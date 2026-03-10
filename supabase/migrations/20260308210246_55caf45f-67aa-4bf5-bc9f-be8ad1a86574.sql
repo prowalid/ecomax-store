@@ -41,8 +41,8 @@ CREATE POLICY "Public delete discounts" ON public.discounts FOR DELETE USING (tr
 -- Insert default settings rows for shipping, general, appearance
 INSERT INTO public.store_settings (key, value) VALUES
   ('shipping', '{"wilayas": []}'),
-  ('general', '{"store_name": "متجري", "phone": "", "email": "", "currency": "DZD"}'),
-  ('appearance', '{"logo_url": "", "store_name": "متجري", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}')
+  ('general', '{"store_name": "ECOMAX", "phone": "", "email": "", "currency": "DZD"}'),
+  ('appearance', '{"logo_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}')
 ON CONFLICT DO NOTHING;
 
 -- Insert default pages

@@ -51,10 +51,10 @@ interface QuickOrderModalProps {
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
 const inputClass =
-  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold";
+  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold";
 
 const selectClass =
-  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
+  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
 
 const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const [name, setName] = useState("");
@@ -202,7 +202,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
             <p className="text-sm text-gray-500 mb-6">سنتصل بك لتأكيد الطلب في أقرب وقت</p>
             <button
               onClick={onClose}
-              className="w-full h-11 rounded-xl bg-[#dc3545] text-white font-bold hover:bg-red-700 transition-colors"
+              className="w-full h-11 rounded-xl bg-store-primary text-white font-bold hover:bg-red-700 transition-colors"
             >
               إغلاق
             </button>
@@ -222,7 +222,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 line-clamp-2">{product.name}</p>
-                <p className="text-sm font-black text-[#dc3545] mt-1">{formatPrice(product.price)}</p>
+                <p className="text-sm font-black text-store-primary mt-1">{formatPrice(product.price)}</p>
               </div>
             </div>
 
@@ -360,8 +360,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                   onClick={() => setDeliveryType("home")}
                   className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                     deliveryType === "home"
-                      ? "border-[#dc3545] bg-white text-[#dc3545]"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                      ? "border-store-primary bg-white text-store-primary"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-store-primary/40"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -377,8 +377,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                   onClick={() => setDeliveryType("desk")}
                   className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-bold transition-all ${
                     deliveryType === "desk"
-                      ? "border-[#dc3545] bg-white text-[#dc3545]"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-[#dc3545]/40"
+                      ? "border-store-primary bg-white text-store-primary"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-store-primary/40"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -419,13 +419,13 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                     placeholder="أدخل الكود"
                     dir="ltr"
-                    className="flex-1 h-10 px-3 bg-white border border-gray-300 rounded-xl text-sm font-bold text-center uppercase focus:ring-2 focus:ring-[#dc3545]/50 focus:border-[#dc3545] outline-none transition-all"
+                    className="flex-1 h-10 px-3 bg-white border border-gray-300 rounded-xl text-sm font-bold text-center uppercase focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all"
                   />
                   <button
                     type="button"
                     onClick={handleApplyCoupon}
                     disabled={isValidating || !couponCode.trim()}
-                    className="h-10 px-4 rounded-xl bg-[#dc3545] text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
+                    className="h-10 px-4 rounded-xl bg-store-primary text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
                     {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
                   </button>
@@ -453,7 +453,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               </div>
               <div className="flex justify-between font-black text-xl border-t border-gray-300 pt-3 mt-1 text-gray-900">
                 <span>المجموع الكلي:</span>
-                <span className="text-[#dc3545]">{formatPrice(total)}</span>
+                <span className="text-store-primary">{formatPrice(total)}</span>
               </div>
             </div>
 
@@ -461,7 +461,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
             <button
               type="submit"
               disabled={createOrder.isPending}
-              className="w-full bg-gradient-to-r from-[#dc3545] to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 flex justify-center items-center disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-store-primary to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 flex justify-center items-center disabled:opacity-50"
             >
               {createOrder.isPending ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

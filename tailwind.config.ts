@@ -93,6 +93,8 @@ export default {
   			]
   		},
   		colors: {
+  			'store-primary': 'rgb(var(--store-primary) / <alpha-value>)',
+  			'store-button': 'rgb(var(--store-button) / <alpha-value>)',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',

@@ -39,7 +39,7 @@ const ProductCard = ({ id, name, price, compare_price, image_url }: ProductCardP
         {/* Image */}
         <div className="relative overflow-hidden">
           {hasDiscount && (
-            <span className="absolute top-3 right-3 bg-[#dc3545] text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow-md">
+            <span className="absolute top-3 right-3 bg-store-primary text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow-md">
               تخفيض!
             </span>
           )}
@@ -56,7 +56,7 @@ const ProductCard = ({ id, name, price, compare_price, image_url }: ProductCardP
 
           {/* Overlay hover button */}
           <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <span className="bg-white text-[#dc3545] font-bold py-2 px-6 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg flex items-center">
+            <span className="bg-white text-store-primary font-bold py-2 px-6 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg flex items-center">
               <ShoppingBag size={18} className="ml-2" /> عرض سريع
             </span>
           </div>
@@ -64,14 +64,14 @@ const ProductCard = ({ id, name, price, compare_price, image_url }: ProductCardP
 
         {/* Content */}
         <div className="p-5 text-center">
-          <h3 className="text-gray-900 font-bold mb-3 line-clamp-2 h-12 hover:text-[#dc3545] transition-colors cursor-pointer font-[Cairo]">
+          <h3 className="text-gray-900 font-bold mb-3 line-clamp-2 h-12 hover:text-store-primary transition-colors cursor-pointer font-[Cairo]">
             {name}
           </h3>
 
           {/* Star rating */}
           <div className="flex items-center justify-center mb-3">
             {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} size={16} className="text-[#dc3545] fill-current" />
+              <Star key={star} size={16} className="text-store-primary fill-current" />
             ))}
           </div>
 
@@ -80,7 +80,7 @@ const ProductCard = ({ id, name, price, compare_price, image_url }: ProductCardP
             {hasDiscount && (
               <span className="text-gray-400 line-through text-sm">{formatPrice(compare_price)}</span>
             )}
-            <span className="text-[#dc3545] font-black text-xl">{formatPrice(price)}</span>
+            <span className="text-store-primary font-black text-xl">{formatPrice(price)}</span>
           </div>
         </div>
       </Link>
@@ -90,7 +90,7 @@ const ProductCard = ({ id, name, price, compare_price, image_url }: ProductCardP
         <button
           onClick={handleAddToCart}
           disabled={isAdding}
-          className="w-full bg-[#dc3545] text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200 disabled:opacity-50"
+          className="w-full bg-store-primary text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-red-700 transition-colors shadow-md shadow-red-200 disabled:opacity-50"
         >
           <ShoppingBag size={20} className="ml-2" /> أضف إلى السلة
         </button>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bell, Send, CheckCircle2, XCircle, MessageCircle, Phone, Settings2, FileText, Loader2, Save, Wifi, WifiOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 
@@ -51,15 +51,7 @@ const Notifications = () => {
     setApiStatus(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("update-green-api", {
-        body: { instance_id: instanceId, api_token: apiToken },
-      });
-
-      if (error) {
-        setApiStatus({ connected: false });
-        toast.error("فشل التحقق من بيانات API");
-        return;
-      }
+      const data = await api.post('/integrations/update-green-api', { instance_id: instanceId, api_token: apiToken });
 
       if (data?.success) {
         setApiStatus({ connected: true, state: data.state });
@@ -70,11 +62,12 @@ const Notifications = () => {
         setApiToken("");
       } else {
         setApiStatus({ connected: false });
+        // Make sure to display the error we sent from node backend
         toast.error(data?.error || "بيانات API غير صالحة");
       }
     } catch (err: any) {
       setApiStatus({ connected: false });
-      toast.error("خطأ في الاتصال");
+      toast.error(err.message || "خطأ في الاتصال");
     } finally {
       setApiValidating(false);
     }
@@ -106,14 +99,9 @@ const Notifications = () => {
         shipping_company: "يلديز إكسبراس",
       };
 
-      const { data, error } = await supabase.functions.invoke("whatsapp-notify", {
-        body: { template: selectedTemplate, phone: testPhone, data: testData },
-      });
+      const data = await api.post('/integrations/whatsapp-notify', { template: selectedTemplate, phone: testPhone, data: testData });
 
-      if (error) {
-        setTestResult({ success: false, message: `خطأ: ${error.message}` });
-        toast.error("فشل إرسال الرسالة التجريبية");
-      } else if (data?.success) {
+      if (data?.success) {
         setTestResult({ success: true, message: `✅ تم الإرسال بنجاح` });
         toast.success("تم إرسال الرسالة بنجاح!");
       } else {

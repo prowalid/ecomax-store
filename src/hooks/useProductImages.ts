@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export interface ProductImage {
@@ -15,12 +15,7 @@ export function useProductImages(productId: string | null) {
     queryKey: ["product_images", productId],
     enabled: !!productId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("product_images")
-        .select("*")
-        .eq("product_id", productId!)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
+      const data = await api.get(`/products/${productId}/images`);
       return data as ProductImage[];
     },
   });
@@ -30,45 +25,18 @@ export function useUploadProductImage() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ productId, file }: { productId: string; file: File }) => {
-      const ext = file.name.split(".").pop();
-      const path = `${productId}/${Date.now()}.${ext}`;
+      // 1. Upload file to backend storage
+      const uploadRes = await api.upload('/upload', file);
+      
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const rootUrl = API_URL.replace('/api', ''); // Get the base server URL for static files
+      const fullUrl = `${rootUrl}${uploadRes.url}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(path, file, { upsert: false });
-      if (uploadError) throw uploadError;
+      // 2. Add image to product
+      const data = await api.post(`/products/${productId}/images`, { image_url: fullUrl });
 
-      const { data: urlData } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(path);
-
-      // Get current max sort_order
-      const { data: existing } = await supabase
-        .from("product_images")
-        .select("sort_order")
-        .eq("product_id", productId)
-        .order("sort_order", { ascending: false })
-        .limit(1);
-
-      const nextOrder = (existing?.[0]?.sort_order ?? -1) + 1;
-
-      const { data, error } = await supabase
-        .from("product_images")
-        .insert({
-          product_id: productId,
-          image_url: urlData.publicUrl,
-          sort_order: nextOrder,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
-      // If this is the first image, also set it as the product's main image
-      if (nextOrder === 0) {
-        await supabase
-          .from("products")
-          .update({ image_url: urlData.publicUrl })
-          .eq("id", productId);
+      // Refresh products cache if this was the first image
+      if (data.sort_order === 0) {
         qc.invalidateQueries({ queryKey: ["products"] });
       }
 
@@ -78,7 +46,7 @@ export function useUploadProductImage() {
       qc.invalidateQueries({ queryKey: ["product_images", productId] });
       toast.success("تم رفع الصورة");
     },
-    onError: () => toast.error("فشل رفع الصورة"),
+    onError: (error: Error) => toast.error(error.message || "فشل رفع الصورة"),
   });
 }
 
@@ -86,24 +54,8 @@ export function useReorderProductImages() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ productId, images }: { productId: string; images: { id: string; sort_order: number; image_url: string }[] }) => {
-      // Update sort_order for each image
-      for (const img of images) {
-        const { error } = await supabase
-          .from("product_images")
-          .update({ sort_order: img.sort_order })
-          .eq("id", img.id);
-        if (error) throw error;
-      }
-
-      // Update main product image to first image
-      if (images.length > 0) {
-        const first = images.reduce((a, b) => (a.sort_order < b.sort_order ? a : b));
-        await supabase
-          .from("products")
-          .update({ image_url: first.image_url })
-          .eq("id", productId);
-        qc.invalidateQueries({ queryKey: ["products"] });
-      }
+      await api.put(`/products/${productId}/images/reorder`, { images });
+      qc.invalidateQueries({ queryKey: ["products"] });
     },
     onSuccess: (_, { productId }) => {
       qc.invalidateQueries({ queryKey: ["product_images", productId] });
@@ -114,39 +66,14 @@ export function useReorderProductImages() {
 export function useDeleteProductImage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, productId, imageUrl }: { id: string; productId: string; imageUrl: string }) => {
-      // Delete from storage
-      try {
-        const url = new URL(imageUrl);
-        const pathParts = url.pathname.split("/product-images/");
-        if (pathParts[1]) {
-          await supabase.storage.from("product-images").remove([decodeURIComponent(pathParts[1])]);
-        }
-      } catch {}
-
-      // Delete from DB
-      const { error } = await supabase.from("product_images").delete().eq("id", id);
-      if (error) throw error;
-
-      // Check if we need to update main image
-      const { data: remaining } = await supabase
-        .from("product_images")
-        .select("image_url")
-        .eq("product_id", productId)
-        .order("sort_order", { ascending: true })
-        .limit(1);
-
-      await supabase
-        .from("products")
-        .update({ image_url: remaining?.[0]?.image_url || null })
-        .eq("id", productId);
-
+    mutationFn: async ({ id, productId }: { id: string; productId: string }) => {
+      await api.delete(`/products/${productId}/images/${id}`);
       qc.invalidateQueries({ queryKey: ["products"] });
     },
     onSuccess: (_, { productId }) => {
       qc.invalidateQueries({ queryKey: ["product_images", productId] });
       toast.success("تم حذف الصورة");
     },
-    onError: () => toast.error("فشل حذف الصورة"),
+    onError: (error: Error) => toast.error(error.message || "فشل حذف الصورة"),
   });
 }
