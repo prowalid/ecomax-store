@@ -1,5 +1,8 @@
 # استمرارية المشروع ومسار التطوير والإصدارات
 
+قبل أي عمل، اقرأ هذا الملف أولًا:
+- [deploy/SOURCE_OF_TRUTH_AND_RELEASE_RULES.md](/root/express-trade-kit/deploy/SOURCE_OF_TRUTH_AND_RELEASE_RULES.md)
+
 هذا الملف يشرح ماذا تفعل إذا فقدتم سيرفر التطوير الحالي، وكيف تعيدون إنشاء بيئة تطوير جديدة وتتابعون بناء:
 - `V2`
 - `V3`
