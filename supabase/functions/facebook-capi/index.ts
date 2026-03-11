@@ -18,8 +18,29 @@ async function sha256(value: string): Promise<string> {
 
 // Normalize phone: remove spaces, dashes, +; ensure digits only
 function normalizePhone(phone: string): string {
-  return phone.replace(/[\s\-\+\(\)]/g, "");
+  return phone.replace(/[\s\-+()]/g, "");
 }
+
+type UserData = {
+  ph?: string;
+  fn?: string;
+  ln?: string;
+  ct?: string;
+  st?: string;
+  em?: string;
+  client_user_agent?: string;
+  fbp?: string;
+  fbc?: string;
+};
+
+type FacebookRequestBody = {
+  event_name?: string;
+  event_id?: string;
+  event_time?: number;
+  event_source_url?: string;
+  user_data?: UserData;
+  custom_data?: Record<string, unknown>;
+};
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -40,7 +61,7 @@ serve(async (req: Request) => {
       );
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as FacebookRequestBody;
     const {
       event_name,
       event_id,
@@ -64,7 +85,7 @@ serve(async (req: Request) => {
       null;
 
     // Build user_data with hashing
-    const hashedUserData: Record<string, any> = {};
+    const hashedUserData: Record<string, unknown> = {};
 
     // Hash required fields (PII)
     if (user_data.ph) {
@@ -101,7 +122,7 @@ serve(async (req: Request) => {
     }
 
     // Build the event payload
-    const eventPayload: Record<string, any> = {
+    const eventPayload: Record<string, unknown> = {
       event_name,
       event_time: event_time || Math.floor(Date.now() / 1000),
       event_id,
@@ -114,7 +135,7 @@ serve(async (req: Request) => {
       eventPayload.custom_data = custom_data;
     }
 
-    const fbPayload: Record<string, any> = {
+    const fbPayload: Record<string, unknown> = {
       data: [eventPayload],
     };
 

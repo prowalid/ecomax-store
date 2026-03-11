@@ -10,7 +10,7 @@ export type WhatsAppTemplate =
 export interface SendWhatsAppParams {
   template: WhatsAppTemplate;
   phone: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 export const sendWhatsAppNotification = async (params: SendWhatsAppParams) => {
@@ -28,9 +28,10 @@ export const sendWhatsAppNotification = async (params: SendWhatsAppParams) => {
     }
 
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to send WhatsApp notification:", error);
-    throw new Error(error.message || "Failed to send WhatsApp notification");
+    const message = error instanceof Error ? error.message : "Failed to send WhatsApp notification";
+    throw new Error(message);
   }
 };
 

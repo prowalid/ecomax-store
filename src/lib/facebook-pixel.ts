@@ -5,8 +5,22 @@
  * - Deduplication: shared event_id between browser & server events
  */
 
-import ReactPixel from "react-facebook-pixel";
 import { api } from "./api";
+
+type FBQ = ((...args: unknown[]) => void) & {
+  callMethod?: (...args: unknown[]) => void;
+  queue?: unknown[][];
+  push?: (...args: unknown[]) => void;
+  loaded?: boolean;
+  version?: string;
+};
+
+declare global {
+  interface Window {
+    fbq?: FBQ;
+    _fbq?: FBQ;
+  }
+}
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -44,25 +58,34 @@ export function initPixel(pixelId: string) {
   if (pixelInitialized || !pixelId) return;
 
   // Standard Facebook Pixel base code
-  (function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
+  (function (f: Window, b: Document, e: string, v: string, n?: FBQ, t?: HTMLScriptElement, s?: Element) {
     if (f.fbq) return;
-    n = f.fbq = function () {
-      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    n = f.fbq = ((...args: unknown[]) => {
+      if (!n) return;
+      if (n.callMethod) {
+        n.callMethod(...args);
+      } else {
+        n.queue?.push(args);
+      }
+    }) as FBQ;
+    f.fbq = n;
+    if (!f._fbq) {
+      f._fbq = n;
+    }
+    n.push = (...args: unknown[]) => {
+      n?.queue?.push(args);
     };
-    if (!f._fbq) f._fbq = n;
-    n.push = n;
-    n.loaded = !0;
+    n.loaded = true;
     n.version = "2.0";
     n.queue = [];
     t = b.createElement(e);
-    t.async = !0;
+    t.async = true;
     t.src = v;
     s = b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t, s);
+    s?.parentNode?.insertBefore(t, s);
   })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
 
-  (window as any).fbq("init", pixelId);
-  (window as any).fbq("track", "PageView");
+  window.fbq?.("init", pixelId);
   pixelInitialized = true;
 }
 
@@ -71,12 +94,12 @@ export function initPixel(pixelId: string) {
  */
 export function trackPixelEvent(
   eventName: string,
-  params: Record<string, any> = {},
+  params: Record<string, unknown> = {},
   eventId?: string
 ) {
-  if (!(window as any).fbq) return;
+  if (!window.fbq) return;
   const id = eventId || generateEventId();
-  (window as any).fbq("track", eventName, params, { eventID: id });
+  window.fbq("track", eventName, params, { eventID: id });
   return id;
 }
 
@@ -97,11 +120,25 @@ export interface CAPIEventPayload {
   eventTime?: number;
   eventSourceUrl: string;
   userData: CAPIUserData;
-  customData?: Record<string, any>;
+  customData?: Record<string, unknown>;
   // Auto-collected
   fbp?: string | null;
   fbc?: string | null;
   userAgent?: string;
+}
+
+function normalizeUserData(userData: CAPIUserData) {
+  const normalized = { ...userData };
+
+  if (normalized.firstName && !normalized.lastName) {
+    const parts = normalized.firstName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length > 1) {
+      normalized.firstName = parts[0];
+      normalized.lastName = parts.slice(1).join(" ");
+    }
+  }
+
+  return normalized;
 }
 
 /**
@@ -112,18 +149,19 @@ export interface CAPIEventPayload {
  * - Sending to Facebook Graph API
  */
 export async function sendCAPIEvent(payload: CAPIEventPayload) {
+  const userData = normalizeUserData(payload.userData);
   const body = {
     event_name: payload.eventName,
     event_id: payload.eventId,
     event_time: payload.eventTime || Math.floor(Date.now() / 1000),
     event_source_url: payload.eventSourceUrl,
     user_data: {
-      ph: payload.userData.phone || null,
-      fn: payload.userData.firstName || null,
-      ln: payload.userData.lastName || null,
-      ct: payload.userData.city || null,
-      st: payload.userData.state || null,
-      em: payload.userData.email || null,
+      ph: userData.phone || null,
+      fn: userData.firstName || null,
+      ln: userData.lastName || null,
+      ct: userData.city || null,
+      st: userData.state || null,
+      em: userData.email || null,
       fbp: payload.fbp ?? getFbp(),
       fbc: payload.fbc ?? getFbc(),
       client_user_agent: payload.userAgent || navigator.userAgent,
@@ -152,7 +190,7 @@ export async function sendCAPIEvent(payload: CAPIEventPayload) {
 export async function trackEvent(
   eventName: string,
   userData: CAPIUserData,
-  customData: Record<string, any> = {}
+  customData: Record<string, unknown> = {}
 ) {
   const eventId = generateEventId();
 

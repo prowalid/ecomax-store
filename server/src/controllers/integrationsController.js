@@ -1,5 +1,15 @@
 const crypto = require('crypto');
 const pool = require('../config/db');
+const logger = require('../utils/logger');
+
+async function getMarketingSettings() {
+  const { rows } = await pool.query(
+    "SELECT key, value FROM store_settings WHERE key = ANY($1) ORDER BY CASE WHEN key = 'marketing_settings' THEN 0 ELSE 1 END",
+    [['marketing', 'marketing_settings']]
+  );
+
+  return rows.reduce((acc, row) => ({ ...acc, ...(row.value || {}) }), {});
+}
 
 // SHA-256 hash helper (lowercase hex)
 function sha256(value) {
@@ -11,14 +21,171 @@ function normalizePhone(phone) {
   return phone.replace(/[\s\-\+\(\)]/g, "");
 }
 
+function createWebhookSignature(secret, rawBody) {
+  return crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+}
+
+function sanitizeWebhookUrl(url) {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = new URL(trimmed);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return '';
+    }
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+}
+
+async function sendOrderWebhook(eventType, payload) {
+  try {
+    const settings = await getMarketingSettings();
+    const webhookUrl = sanitizeWebhookUrl(settings.webhook_url);
+
+    if (!webhookUrl) {
+      return { success: false, skipped: true, reason: 'webhook_url_not_configured' };
+    }
+
+    const webhookSecret = String(settings.webhook_secret || '').trim();
+    const body = JSON.stringify(payload);
+    const headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'ExpressTradeKit-Webhook/1.0',
+      'X-ETK-Event': eventType,
+      'X-ETK-Event-Id': payload.event.id,
+      'X-ETK-Event-Time': payload.event.occurred_at,
+    };
+
+    if (webhookSecret) {
+      headers['X-ETK-Signature'] = createWebhookSignature(webhookSecret, body);
+      headers['X-ETK-Signature-Alg'] = 'sha256';
+    }
+
+    const maxAttempts = 2;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers,
+          body,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeout);
+
+        if (response.ok) {
+          logger.info('[Webhook] Delivered order webhook', {
+            eventType,
+            webhookUrl,
+            attempt,
+            status: response.status,
+            orderNumber: payload.order?.order_number || null,
+          });
+          return { success: true, status: response.status };
+        }
+
+        const text = await response.text().catch(() => '');
+        logger.warn('[Webhook] Non-2xx webhook response', {
+          eventType,
+          webhookUrl,
+          attempt,
+          status: response.status,
+          body: text.slice(0, 500),
+        });
+      } catch (error) {
+        clearTimeout(timeout);
+        logger.warn('[Webhook] Webhook attempt failed', {
+          eventType,
+          webhookUrl,
+          attempt,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    return { success: false, skipped: false, reason: 'delivery_failed' };
+  } catch (error) {
+    logger.error('[Webhook] Unexpected webhook error', {
+      eventType,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { success: false, skipped: false, reason: 'unexpected_error' };
+  }
+}
+
+function buildOrderWebhookPayload(eventType, order, items, metadata = {}) {
+  const normalizedItems = Array.isArray(items)
+    ? items.map((item) => ({
+        product_id: item.product_id || null,
+        product_name: item.product_name,
+        quantity: Number(item.quantity) || 0,
+        unit_price: Number(item.unit_price) || 0,
+        total: Number(item.total) || 0,
+      }))
+    : [];
+
+  const totalItemsQuantity = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  return {
+    event: {
+      id: crypto.randomUUID(),
+      type: eventType,
+      source: 'express-trade-kit',
+      version: '1.0',
+      occurred_at: new Date().toISOString(),
+    },
+    order: {
+      id: order.id,
+      order_number: order.order_number,
+      status: order.status,
+      customer_id: order.customer_id || null,
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      wilaya: order.wilaya || null,
+      commune: order.commune || null,
+      address: order.address || null,
+      delivery_type: order.delivery_type || null,
+      subtotal: Number(order.subtotal) || 0,
+      shipping_cost: Number(order.shipping_cost) || 0,
+      discount_code: order.discount_code || null,
+      discount_amount: Number(order.discount_amount) || 0,
+      total: Number(order.total) || 0,
+      shipping_company: order.shipping_company || null,
+      tracking_number: order.tracking_number || null,
+      call_attempts: Number(order.call_attempts) || 0,
+      note: order.note || null,
+      created_at: order.created_at || null,
+      updated_at: order.updated_at || null,
+      items_count: normalizedItems.length,
+      total_quantity: totalItemsQuantity,
+    },
+    customer: {
+      id: order.customer_id || null,
+      name: order.customer_name,
+      phone: order.customer_phone,
+      wilaya: order.wilaya || null,
+      commune: order.commune || null,
+      address: order.address || null,
+    },
+    items: normalizedItems,
+    metadata,
+  };
+}
+
 // POST /api/integrations/facebook-capi
 async function facebookCapi(req, res, next) {
   try {
-    const { rows } = await pool.query("SELECT value FROM store_settings WHERE key = 'marketing_settings' LIMIT 1");
-    const settings = rows.length > 0 ? rows[0].value : {};
+    const settings = await getMarketingSettings();
 
-    const PIXEL_ID = settings.pixel_id || process.env.FACEBOOK_PIXEL_ID;
-    const ACCESS_TOKEN = settings.capi_token || process.env.FACEBOOK_ACCESS_TOKEN;
+    const PIXEL_ID = settings.pixel_id || settings.facebook_pixel_id || process.env.FACEBOOK_PIXEL_ID;
+    const ACCESS_TOKEN = settings.capi_token || settings.access_token || process.env.FACEBOOK_ACCESS_TOKEN;
     const TEST_EVENT_CODE = process.env.FACEBOOK_TEST_EVENT_CODE;
 
     if (!PIXEL_ID || !ACCESS_TOKEN) {
@@ -35,17 +202,37 @@ async function facebookCapi(req, res, next) {
 
     const hashedUserData = {};
 
-    if (user_data.ph) hashedUserData.ph = [sha256(normalizePhone(user_data.ph))];
-    if (user_data.fn) hashedUserData.fn = [sha256(user_data.fn)];
-    if (user_data.ln) hashedUserData.ln = [sha256(user_data.ln)];
-    if (user_data.ct) hashedUserData.ct = [sha256(user_data.ct)];
-    if (user_data.st) hashedUserData.st = [sha256(user_data.st)];
-    if (user_data.em) hashedUserData.em = [sha256(user_data.em)];
+    if (user_data.ph) {
+      hashedUserData.ph = [sha256(normalizePhone(user_data.ph))];
+    }
+    if (user_data.fn) {
+      hashedUserData.fn = [sha256(user_data.fn)];
+    }
+    if (user_data.ln) {
+      hashedUserData.ln = [sha256(user_data.ln)];
+    }
+    if (user_data.ct) {
+      hashedUserData.ct = [sha256(user_data.ct)];
+    }
+    if (user_data.st) {
+      hashedUserData.st = [sha256(user_data.st)];
+    }
+    if (user_data.em) {
+      hashedUserData.em = [sha256(user_data.em)];
+    }
 
-    if (clientIp) hashedUserData.client_ip_address = clientIp;
-    if (user_data.client_user_agent) hashedUserData.client_user_agent = user_data.client_user_agent;
-    if (user_data.fbp) hashedUserData.fbp = user_data.fbp;
-    if (user_data.fbc) hashedUserData.fbc = user_data.fbc;
+    if (clientIp) {
+      hashedUserData.client_ip_address = clientIp;
+    }
+    if (user_data.client_user_agent) {
+      hashedUserData.client_user_agent = user_data.client_user_agent;
+    }
+    if (user_data.fbp) {
+      hashedUserData.fbp = user_data.fbp;
+    }
+    if (user_data.fbc) {
+      hashedUserData.fbc = user_data.fbc;
+    }
 
     const eventPayload = {
       event_name,
@@ -81,7 +268,11 @@ async function facebookCapi(req, res, next) {
       });
     }
 
-    res.json({ success: true, events_received: fbResult.events_received, messages: fbResult.messages || [] });
+    res.json({
+      success: true,
+      events_received: fbResult.events_received,
+      messages: fbResult.messages || [],
+    });
   } catch (err) {
     next(err);
   }
@@ -107,21 +298,29 @@ async function sendWhatsAppInternal({ template, phone, data }) {
     const { rows } = await pool.query("SELECT value FROM store_settings WHERE key = 'whatsapp_notifications' LIMIT 1");
     const settings = rows.length > 0 ? rows[0].value : {};
     
-    if (!settings.api_configured) return;
+    if (!settings.api_configured) {
+      return { success: false, error: "API is not configured" };
+    }
     
     const INSTANCE_ID = settings.instance_id || process.env.GREEN_API_INSTANCE_ID;
     const API_TOKEN = settings.api_token || process.env.GREEN_API_TOKEN;
 
-    if (!INSTANCE_ID || !API_TOKEN) return;
+    if (!INSTANCE_ID || !API_TOKEN) {
+      return { success: false, error: "Missing Green API credentials" };
+    }
 
-    if (!template || !phone) return;
+    if (!template || !phone) {
+      return { success: false, error: "template and phone are required" };
+    }
 
     let message;
     if (template === "custom") {
       message = data?.message || "";
     } else {
       const templateFn = TEMPLATES[template];
-      if (!templateFn) return;
+      if (!templateFn) {
+        return { success: false, error: `Unknown template: ${template}` };
+      }
       message = templateFn(data || {});
     }
 
@@ -137,10 +336,31 @@ async function sendWhatsAppInternal({ template, phone, data }) {
     });
 
     if (!greenResponse.ok) {
-      console.error("[WhatsApp] Green API error:", await greenResponse.text());
+      const errorText = await greenResponse.text();
+      console.error("[WhatsApp] Green API error:", errorText);
+      return { success: false, error: errorText || "Green API request failed" };
     }
+
+    const payload = await greenResponse.json().catch(() => ({}));
+    return { success: true, idMessage: payload.idMessage };
   } catch (err) {
     console.error("[WhatsApp] Exception:", err);
+    return { success: false, error: err.message || "Unexpected WhatsApp error" };
+  }
+}
+
+// POST /api/integrations/whatsapp-notify
+// Protected route for admin testing/manual sends.
+async function whatsappNotify(req, res, next) {
+  try {
+    const { template, phone, data } = req.body;
+    const result = await sendWhatsAppInternal({ template, phone, data });
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    next(err);
   }
 }
 
@@ -215,4 +435,63 @@ async function updateGreenApi(req, res, next) {
   }
 }
 
-module.exports = { facebookCapi, updateGreenApi, triggerOrderStatusNotification };
+async function testOrderWebhook(req, res, next) {
+  try {
+    const sampleOrder = {
+      id: '00000000-0000-0000-0000-000000000000',
+      order_number: 999999,
+      status: 'new',
+      customer_id: null,
+      customer_name: 'زبون تجريبي',
+      customer_phone: '0555123456',
+      wilaya: 'الجزائر',
+      commune: 'باب الزوار',
+      address: 'حي تجريبي 123',
+      delivery_type: 'home',
+      subtotal: 4500,
+      shipping_cost: 600,
+      discount_code: 'TEST10',
+      discount_amount: 450,
+      total: 4650,
+      shipping_company: null,
+      tracking_number: null,
+      call_attempts: 0,
+      note: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const sampleItems = [
+      { product_id: 'sample-product-1', product_name: 'منتج تجريبي 1', quantity: 2, unit_price: 1500, total: 3000 },
+      { product_id: 'sample-product-2', product_name: 'منتج تجريبي 2', quantity: 1, unit_price: 1500, total: 1500 },
+    ];
+
+    const payload = buildOrderWebhookPayload('order.test', sampleOrder, sampleItems, {
+      triggered_from: 'admin_marketing_page',
+      test: true,
+    });
+
+    const result = await sendOrderWebhook('order.test', payload);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.reason || 'Webhook delivery failed',
+      });
+    }
+
+    res.json({ success: true, payload });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  facebookCapi,
+  whatsappNotify,
+  updateGreenApi,
+  triggerOrderStatusNotification,
+  sendOrderWebhook,
+  buildOrderWebhookPayload,
+  testOrderWebhook,
+};

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,9 @@ import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 import { useTracking } from "@/hooks/useTracking";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { useProducts } from "@/hooks/useProducts";
+import { saveTrackingProfile } from "@/lib/trackingProfile";
+import OrderSuccessMessage from "@/components/store/OrderSuccessMessage";
 
 interface WilayaShipping {
   id: number;
@@ -36,7 +39,6 @@ const checkoutSchema = z.object({
   wilaya: z.string().min(1, "الرجاء اختيار الولاية"),
   commune: z.string().min(1, "الرجاء اختيار البلدية"),
   delivery_type: z.enum(["home", "desk"]),
-  note: z.string().trim().max(500).optional(),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
@@ -44,33 +46,38 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 const formatPrice = (n: number) => `${n.toLocaleString("ar-DZ")} دج`;
 
 const selectClass =
-  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
+  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer";
 
 const inputClass =
-  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold";
+  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { items, totalPrice, clearCart, isLoading } = useCart();
+  const { items, totalPrice, clearCartAsync, isLoading } = useCart();
+  const { data: products = [] } = useProducts();
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
 
   const [couponCode, setCouponCode] = useState("");
+  const [submittedOrderNumber, setSubmittedOrderNumber] = useState<number | null>(null);
   const { track } = useTracking();
+  const leadTrackedRef = useRef(false);
 
   // Track InitiateCheckout when page loads with items
   useEffect(() => {
     if (items.length > 0) {
       track("InitiateCheckout", {}, {
         content_ids: items.map((i) => i.product_id),
-        num_items: items.length,
+        content_type: "product",
+        contents: items.map((i) => ({ id: i.product_id, quantity: i.quantity, item_price: i.product_price })),
+        num_items: items.reduce((sum, i) => sum + i.quantity, 0),
         value: totalPrice,
         currency: "DZD",
       });
     }
-  }, []);
+  }, [items, totalPrice, track]);
 
   // Merge shipping settings prices with ALGERIA_WILAYAS defaults
   const wilayasWithPrices = useMemo(() => {
@@ -99,13 +106,51 @@ export default function CheckoutPage() {
       wilaya: "",
       commune: "",
       delivery_type: "home",
-      note: "",
     },
   });
 
   const wilayaValue = watch("wilaya");
   const communeValue = watch("commune");
   const deliveryTypeValue = watch("delivery_type") as DeliveryType;
+  const customerNameValue = watch("customer_name");
+  const customerPhoneValue = watch("customer_phone");
+
+  useEffect(() => {
+    const hasLeadData =
+      customerNameValue.trim().length >= 2 &&
+      /^0[5-7][0-9]{8}$/.test(customerPhoneValue.trim()) &&
+      !!wilayaValue &&
+      !!communeValue &&
+      items.length > 0;
+
+    if (!hasLeadData || leadTrackedRef.current) {
+      return;
+    }
+
+    saveTrackingProfile({
+      name: customerNameValue,
+      phone: customerPhoneValue,
+      state: wilayaValue,
+      city: communeValue,
+    });
+
+    track(
+      "Lead",
+      {
+        firstName: customerNameValue,
+        phone: customerPhoneValue,
+        state: wilayaValue,
+        city: communeValue,
+      },
+      {
+        content_ids: items.map((i) => i.product_id),
+        content_type: "product",
+        value: totalPrice,
+        currency: "DZD",
+      }
+    );
+    leadTrackedRef.current = true;
+  }, [customerNameValue, customerPhoneValue, wilayaValue, communeValue, items, totalPrice, track]);
 
   const selectedWilaya = useMemo(
     () => wilayasWithPrices.find((w) => w.name === wilayaValue),
@@ -128,16 +173,53 @@ export default function CheckoutPage() {
   }, [selectedWilaya, deliveryTypeValue]);
 
   const subtotal = totalPrice;
-  const discountAmount = calculateDiscount(subtotal);
+  const discountAmount = calculateDiscount(subtotal, {
+    lineItems: items.map((item) => ({
+      productId: item.product_id,
+      unitPrice: item.product_price,
+      quantity: item.quantity,
+    })),
+  });
   const total = subtotal - discountAmount + shippingCost;
 
   const handleApplyCoupon = async () => {
-    await validateCode(couponCode);
+    await validateCode(couponCode, {
+      lineItems: items.map((item) => ({
+        productId: item.product_id,
+        unitPrice: item.product_price,
+        quantity: item.quantity,
+      })),
+    });
   };
+
+  const unavailableItems = useMemo(() => {
+    if (!items.length || !products.length) return [];
+
+    return items
+      .map((item) => {
+        const product = products.find((entry) => entry.id === item.product_id);
+        if (!product) {
+          return { name: item.product_name, reason: "المنتج لم يعد موجوداً" };
+        }
+        if (Number(product.stock) <= 0) {
+          return { name: item.product_name, reason: "نفد المخزون" };
+        }
+        if (item.quantity > Number(product.stock)) {
+          return { name: item.product_name, reason: `المتوفر حالياً ${product.stock} فقط` };
+        }
+        return null;
+      })
+      .filter((entry): entry is { name: string; reason: string } => entry !== null);
+  }, [items, products]);
 
   const onSubmit = async (values: CheckoutFormValues) => {
     if (!items.length) {
       toast.error("السلة فارغة، أضف منتجات أولاً");
+      return;
+    }
+
+    if (unavailableItems.length > 0) {
+      toast.error(`${unavailableItems[0].name}: ${unavailableItems[0].reason}`);
       return;
     }
 
@@ -164,7 +246,6 @@ export default function CheckoutPage() {
         subtotal,
         shipping_cost: shippingCost,
         total,
-        note: values.note || null,
         customer_id: customerId,
         discount_code: discount?.code || undefined,
         discount_amount: discountAmount > 0 ? discountAmount : undefined,
@@ -182,24 +263,32 @@ export default function CheckoutPage() {
         await incrementUsage();
       }
 
-      clearCart();
+      saveTrackingProfile({
+        name: values.customer_name,
+        phone: values.customer_phone,
+        state: values.wilaya,
+        city: values.commune,
+      });
+
+      await clearCartAsync();
 
       // Track Purchase event
       track("Purchase", {
         phone: values.customer_phone,
         firstName: values.customer_name,
-        city: values.wilaya,
+        city: values.commune,
+        state: values.wilaya,
       }, {
         value: total,
         currency: "DZD",
         content_ids: items.map((i) => i.product_id),
-        num_items: items.length,
+        content_type: "product",
+        contents: items.map((i) => ({ id: i.product_id, quantity: i.quantity, item_price: i.product_price })),
+        num_items: items.reduce((sum, i) => sum + i.quantity, 0),
       });
 
+      setSubmittedOrderNumber(order.order_number);
       toast.success(`تم إرسال طلبك بنجاح، رقم الطلب #${order.order_number}`);
-      setTimeout(() => {
-        navigate("/", { replace: true });
-      }, 2000);
     } catch (e) {
       console.error(e);
       const message = e instanceof Error ? e.message : "حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى";
@@ -211,6 +300,18 @@ export default function CheckoutPage() {
     return (
       <div className="container mx-auto px-4 py-16 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-store-primary" />
+      </div>
+    );
+  }
+
+  if (submittedOrderNumber) {
+    return (
+      <div className="container mx-auto px-4 py-16" dir="rtl">
+        <OrderSuccessMessage
+          orderNumber={submittedOrderNumber}
+          actionLabel="العودة إلى المتجر"
+          onAction={() => navigate("/", { replace: true })}
+        />
       </div>
     );
   }
@@ -236,12 +337,30 @@ export default function CheckoutPage() {
       <div className="bg-white border-2 border-store-primary/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-store-primary to-orange-400" />
 
-        <div className="text-center mb-6 mt-2">
-          <h1 className="text-2xl font-black text-gray-900">إتمام الطلب</h1>
+        {/* Wait, adding the progress steps */}
+        <div className="flex items-center justify-center gap-2 mb-8 mt-2">
+          <div className="flex flex-col items-center">
+            <div className="w-8 h-8 rounded-full bg-store-primary text-white flex items-center justify-center font-bold text-sm shadow-sm ring-4 ring-store-primary/20">1</div>
+            <span className="text-xs font-bold text-gray-800 mt-2">المعلومات</span>
+          </div>
+          <div className="w-10 h-1 bg-store-primary rounded-full mb-5"></div>
+          <div className="flex flex-col items-center">
+            <div className="w-8 h-8 rounded-full bg-store-primary text-white flex items-center justify-center font-bold text-sm shadow-sm">2</div>
+            <span className="text-xs font-bold text-gray-800 mt-2">التوصيل</span>
+          </div>
+          <div className="w-10 h-1 bg-gray-200 rounded-full mb-5"></div>
+          <div className="flex flex-col items-center opacity-50">
+            <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm">3</div>
+            <span className="text-xs font-medium text-gray-500 mt-2">التأكيد</span>
+          </div>
+        </div>
+
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-black text-gray-900">معلومات الطلب والتوصيل</h1>
           <p className="text-gray-500 text-sm mt-1">والدفع يكون عند الاستلام</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete="on">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
             <div>
@@ -253,6 +372,7 @@ export default function CheckoutPage() {
                   type="text"
                   placeholder="الاسم الكامل"
                   {...register("customer_name")}
+                  autoComplete="name"
                   className={inputClass}
                 />
               </div>
@@ -270,6 +390,8 @@ export default function CheckoutPage() {
                   dir="ltr"
                   placeholder="رقم الهاتف"
                   {...register("customer_phone")}
+                  autoComplete="tel-national"
+                  inputMode="tel"
                   className={inputClass + " text-left"}
                 />
               </div>
@@ -284,7 +406,7 @@ export default function CheckoutPage() {
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                   <MapPin size={18} />
                 </div>
-                <select {...register("wilaya")} className={selectClass}>
+                <select {...register("wilaya")} autoComplete="address-level1" className={selectClass}>
                   <option value="">اختر الولاية</option>
                   {ALGERIA_WILAYAS.map((w) => (
                     <option key={w.id} value={w.name}>
@@ -307,6 +429,7 @@ export default function CheckoutPage() {
                 </div>
                 <select
                   {...register("commune")}
+                  autoComplete="address-level2"
                   disabled={!wilayaValue}
                   className={selectClass + (!wilayaValue ? " opacity-50 cursor-not-allowed" : "")}
                 >
@@ -429,16 +552,6 @@ export default function CheckoutPage() {
                 </button>
               </div>
             )}
-          </div>
-
-          {/* Note */}
-          <div>
-            <textarea
-              rows={2}
-              placeholder="ملاحظات إضافية (اختياري)"
-              {...register("note")}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-medium resize-none"
-            />
           </div>
 
           <button

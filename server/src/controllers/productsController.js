@@ -4,12 +4,23 @@ const format = require('pg-format');
 // GET /api/products
 async function getProducts(req, res, next) {
   try {
-    const { rows } = await pool.query(`
-      SELECT p.*, c.name as category_name 
-      FROM products p 
-      LEFT JOIN categories c ON p.category_id = c.id 
-      ORDER BY p.created_at DESC
-    `);
+    const isAdmin = req.user?.role === 'admin';
+    const query = isAdmin
+      ? `
+        SELECT p.*, c.name as category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        ORDER BY p.created_at DESC
+      `
+      : `
+        SELECT p.*, c.name as category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'active'
+        ORDER BY p.created_at DESC
+      `;
+
+    const { rows } = await pool.query(query);
     res.json(rows);
   } catch (err) {
     next(err);

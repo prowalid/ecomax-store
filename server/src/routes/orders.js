@@ -4,9 +4,16 @@ const { getOrders, getOrderItems, createOrder, updateOrderStatus } = require('..
 const authMiddleware = require('../middleware/auth');
 const { validateBody } = require('../middleware/validate');
 const { createOrderSchema, updateOrderStatusSchema } = require('../validators/orderSchemas');
+const { createRateLimit } = require('../middleware/rateLimit');
+
+const createOrderRateLimit = createRateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 20,
+  message: 'Too many order attempts. Please wait a moment.',
+});
 
 // Public route to create orders (Store checkout)
-router.post('/', validateBody(createOrderSchema), createOrder);
+router.post('/', createOrderRateLimit, validateBody(createOrderSchema), createOrder);
 
 // Protected routes (Admin viewing/managing orders)
 router.use(authMiddleware);

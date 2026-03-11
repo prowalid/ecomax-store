@@ -16,7 +16,18 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp|svg\+xml/;
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (_req, file, cb) => {
+    const extOk = /\.(jpe?g|png|gif|webp|svg)$/i.test(file.originalname);
+    const mimeOk = ALLOWED_TYPES.test(file.mimetype);
+    if (extOk && mimeOk) return cb(null, true);
+    cb(new Error('Only image files (jpg, png, gif, webp, svg) are allowed'));
+  },
+});
 
 // Protected route: Only authenticated admins can upload images
 router.use(authMiddleware);

@@ -28,9 +28,11 @@ export function useUploadProductImage() {
       // 1. Upload file to backend storage
       const uploadRes = await api.upload('/upload', file);
       
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const rootUrl = API_URL.replace('/api', ''); // Get the base server URL for static files
-      const fullUrl = `${rootUrl}${uploadRes.url}`;
+      const API_URL = import.meta.env.VITE_API_URL || "/api";
+      const rootUrl = API_URL.endsWith("/api") ? API_URL.slice(0, -4) : API_URL;
+      const fullUrl = rootUrl.startsWith("http")
+        ? `${rootUrl}${uploadRes.url}`
+        : `${window.location.origin}${uploadRes.url}`;
 
       // 2. Add image to product
       const data = await api.post(`/products/${productId}/images`, { image_url: fullUrl });

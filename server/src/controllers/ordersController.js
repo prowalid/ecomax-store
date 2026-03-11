@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 const format = require('pg-format');
-const { triggerOrderStatusNotification } = require('./integrationsController');
+const { triggerOrderStatusNotification, sendOrderWebhook, buildOrderWebhookPayload } = require('./integrationsController');
 
 // GET /api/orders
 async function getOrders(req, res, next) {
@@ -57,6 +57,99 @@ async function adjustStock(client, items, direction) {
   }
 }
 
+function asNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function round2(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function formatNotificationItems(items) {
+  if (!Array.isArray(items) || items.length === 0) return "—";
+  return items
+    .map((item) => `${item.product_name} × ${item.quantity}`)
+    .join("، ");
+}
+
+async function consumeDiscountCode(client, discountCode, items, subtotal) {
+  if (!discountCode) {
+    return { code: null, amount: 0 };
+  }
+
+  const normalizedCode = String(discountCode).trim().toUpperCase();
+  const { rows } = await client.query(
+    `
+      SELECT *
+      FROM discounts
+      WHERE code = $1 AND active = true
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [normalizedCode]
+  );
+
+  if (rows.length === 0) {
+    const err = new Error('Invalid discount code');
+    err.status = 400;
+    throw err;
+  }
+
+  const discount = rows[0];
+  if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
+    const err = new Error('Discount code expired');
+    err.status = 400;
+    throw err;
+  }
+
+  if (discount.usage_limit && discount.usage_count >= discount.usage_limit) {
+    const err = new Error('Usage limit reached');
+    err.status = 400;
+    throw err;
+  }
+
+  const applicableItems = discount.apply_to === 'specific'
+    ? items.filter((item) => (discount.product_ids || []).includes(item.product_id))
+    : items;
+
+  if (applicableItems.length === 0) {
+    const err = new Error('Discount code does not apply to selected items');
+    err.status = 400;
+    throw err;
+  }
+
+  const applicableSubtotal = applicableItems.reduce((sum, item) => sum + asNumber(item.total), 0);
+  const applicableQty = applicableItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  let baseAmount = applicableSubtotal;
+  if (discount.quantity_behavior === 'single') {
+    baseAmount = Math.max(...applicableItems.map((item) => asNumber(item.unit_price, 0)));
+  } else if (discount.quantity_behavior === 'min_quantity' && applicableQty < discount.min_quantity) {
+    const err = new Error(`Discount requires minimum quantity of ${discount.min_quantity}`);
+    err.status = 400;
+    throw err;
+  }
+
+  const value = asNumber(discount.value, 0);
+  let amount = discount.type === 'percentage'
+    ? (baseAmount * value) / 100
+    : Math.min(value, baseAmount);
+
+  amount = Math.max(0, Math.min(round2(amount), subtotal));
+
+  await client.query(
+    `
+      UPDATE discounts
+      SET usage_count = usage_count + 1, updated_at = NOW()
+      WHERE id = $1
+    `,
+    [discount.id]
+  );
+
+  return { code: normalizedCode, amount };
+}
+
 // POST /api/orders
 async function createOrder(req, res, next) {
   const client = await pool.connect();
@@ -64,49 +157,73 @@ async function createOrder(req, res, next) {
     await client.query('BEGIN');
     
     const { items, ...rawOrderData } = req.body;
-    
-    // Whitelist allowed columns to prevent SQL injection
-    const allowedOrderFields = ['customer_name', 'customer_phone', 'customer_id', 'wilaya', 'commune', 'address', 'delivery_type', 'subtotal', 'shipping_cost', 'total', 'note', 'discount_code', 'discount_amount'];
+
+    const requestedQtyByProduct = {};
+    for (const item of items) {
+      requestedQtyByProduct[item.product_id] = (requestedQtyByProduct[item.product_id] || 0) + item.quantity;
+    }
+    const productIds = Object.keys(requestedQtyByProduct);
+    const { rows: dbProducts } = await client.query(
+      'SELECT id, name, price, stock FROM products WHERE id = ANY($1) FOR UPDATE',
+      [productIds]
+    );
+
+    if (dbProducts.length !== productIds.length) {
+      const err = new Error('One or more products are missing.');
+      err.status = 400;
+      throw err;
+    }
+
+    const dbProductMap = new Map(dbProducts.map((p) => [p.id, p]));
+    let computedSubtotal = 0;
+    const normalizedItems = items.map((item) => {
+      const dbProduct = dbProductMap.get(item.product_id);
+      if (!dbProduct) {
+        const err = new Error(`Product not found: ${item.product_id}`);
+        err.status = 400;
+        throw err;
+      }
+
+      if (dbProduct.stock < requestedQtyByProduct[item.product_id]) {
+        const err = new Error(`Insufficient stock for product: ${dbProduct.name}`);
+        err.status = 400;
+        throw err;
+      }
+
+      const unitPrice = asNumber(dbProduct.price, 0);
+      const lineTotal = unitPrice * item.quantity;
+      computedSubtotal += lineTotal;
+
+      return {
+        product_id: item.product_id,
+        product_name: dbProduct.name,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        total: lineTotal,
+      };
+    });
+
+    const shippingCost = Math.max(0, asNumber(rawOrderData.shipping_cost, 0));
+    const consumedDiscount = await consumeDiscountCode(
+      client,
+      rawOrderData.discount_code,
+      normalizedItems,
+      computedSubtotal
+    );
+    const discountAmount = consumedDiscount.amount;
+    const finalTotal = Math.max(0, round2(computedSubtotal + shippingCost - discountAmount));
+
+    // Whitelist allowed columns and inject server-side computed totals.
+    const allowedOrderFields = ['customer_name', 'customer_phone', 'customer_id', 'wilaya', 'commune', 'address', 'delivery_type', 'note'];
     const orderData = {};
     for (const key of allowedOrderFields) {
       if (rawOrderData[key] !== undefined) orderData[key] = rawOrderData[key];
     }
-
-    // Step 0: Security Validation (BE-ORD-02)
-    // Server-side Price & Stock Tampering Prevention
-    if (items && items.length > 0) {
-      const productIds = items.map(i => i.product_id).filter(Boolean);
-      if (productIds.length > 0) {
-        const { rows: dbProducts } = await client.query('SELECT id, price FROM products WHERE id = ANY($1)', [productIds]);
-        const priceMap = {};
-        dbProducts.forEach(p => priceMap[p.id] = p.price);
-        
-        let realSubtotal = 0;
-        for (const item of items) {
-          if (!item.product_id) continue;
-          const realPrice = priceMap[item.product_id] || 0;
-          if (Math.abs(item.unit_price - realPrice) > 1) { // 1 dinar tolerance
-             const err = new Error(`Price tampering detected for product ${item.product_name}. Expected ${realPrice}, got ${item.unit_price}`);
-             err.status = 400;
-             throw err;
-          }
-          realSubtotal += realPrice * item.quantity;
-        }
-        
-        if (Math.abs(realSubtotal - orderData.subtotal) > 1) {
-           const err = new Error(`Subtotal mismatch detected. Expected ${realSubtotal}, got ${orderData.subtotal}`);
-           err.status = 400;
-           throw err;
-        }
-        
-        const expectedTotal = orderData.subtotal + (orderData.shipping_cost || 0) - (orderData.discount_amount || 0);
-        if (Math.abs(expectedTotal - orderData.total) > 1) {
-           const err = new Error(`Total mismatch detected. Check shipping or discounts.`);
-           err.status = 400;
-           throw err;
-        }
-      }
-    }
+    orderData.subtotal = computedSubtotal;
+    orderData.shipping_cost = shippingCost;
+    orderData.discount_amount = discountAmount;
+    orderData.discount_code = consumedDiscount.code;
+    orderData.total = finalTotal;
 
     // Insert Order
     const orderCols = Object.keys(orderData);
@@ -122,10 +239,10 @@ async function createOrder(req, res, next) {
     const newOrder = orderRows[0];
     
     // Insert Items and adjust stock
-    if (items && items.length > 0) {
-      const itemValues = items.map(item => [
+    if (normalizedItems.length > 0) {
+      const itemValues = normalizedItems.map(item => [
         newOrder.id,
-        item.product_id || null,
+        item.product_id,
         item.product_name,
         item.quantity,
         item.unit_price,
@@ -140,18 +257,24 @@ async function createOrder(req, res, next) {
       await client.query(itemsQuery);
       
       // Decrement stock efficiently
-      await adjustStock(client, items, -1);
+      await adjustStock(client, normalizedItems, -1);
     }
     
     await client.query('COMMIT');
     
-    // Webhook firing natively behind the scenes
+    const webhookPayload = buildOrderWebhookPayload('order.created', newOrder, normalizedItems, {
+      trigger: 'order_create',
+    });
+
+    void sendOrderWebhook('order.created', webhookPayload);
+
     triggerOrderStatusNotification(newOrder.order_number, "new", {
       customer_name: newOrder.customer_name,
       customer_phone: newOrder.customer_phone,
       total: String(newOrder.total),
       address: newOrder.address || "",
       state: newOrder.wilaya || "",
+      items: formatNotificationItems(normalizedItems),
     });
     
     res.status(201).json(newOrder);
@@ -212,6 +335,19 @@ async function updateOrderStatus(req, res, next) {
     }
     
     await client.query('COMMIT');
+
+    const { rows: orderItems } = await pool.query(
+      'SELECT product_id, product_name, quantity, unit_price, total FROM order_items WHERE order_id = $1 ORDER BY created_at ASC',
+      [id]
+    );
+
+    const webhookPayload = buildOrderWebhookPayload('order.status_updated', updatedOrder, orderItems, {
+      trigger: 'order_status_update',
+      previous_status: oldStatus,
+      current_status: status,
+    });
+
+    void sendOrderWebhook('order.status_updated', webhookPayload);
     
     triggerOrderStatusNotification(updatedOrder.order_number, status, {
       customer_name: updatedOrder.customer_name,
@@ -221,6 +357,7 @@ async function updateOrderStatus(req, res, next) {
       state: updatedOrder.wilaya || "",
       tracking_number: updatedOrder.tracking_number || "",
       shipping_company: updatedOrder.shipping_company || "",
+      items: formatNotificationItems(orderItems),
     });
     
     res.json(updatedOrder);

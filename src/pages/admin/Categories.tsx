@@ -77,43 +77,45 @@ const Categories = () => {
         </div>
       )}
 
-      <div className="bg-card rounded-lg shadow-card border border-border overflow-hidden">
-        <div className="divide-y divide-border">
+      <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden animate-slide-in">
+        <div className="divide-y divide-slate-50">
           {categories.map((cat) => (
-            <div key={cat.id} className="px-5 py-3.5 hover:bg-muted/40 transition-colors">
+            <div key={cat.id} className="px-5 py-4 hover:bg-slate-50/50 transition-colors">
               <div className="flex items-center gap-4">
-                <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+                <GripVertical className="w-4 h-4 text-slate-300 cursor-grab hover:text-primary transition-colors" />
                 
                 {/* Category image thumbnail */}
                 {cat.image_url ? (
-                  <img src={cat.image_url} alt={cat.name} className="w-10 h-10 rounded-lg object-cover border border-border" />
+                  <img src={cat.image_url} alt={cat.name} className="w-12 h-12 rounded-[14px] object-cover border border-slate-100 shadow-sm" />
                 ) : (
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                    <FolderOpen className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-12 h-12 rounded-[14px] bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm">
+                    <FolderOpen className="w-5 h-5 text-slate-400" />
                   </div>
                 )}
 
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{cat.name}</p>
+                  <p className="text-[15px] font-bold text-sidebar-heading">{cat.name}</p>
                   {cat.image_url && (
-                    <p className="text-xs text-muted-foreground truncate max-w-[200px]" dir="ltr">{cat.image_url}</p>
+                    <p className="text-[11px] font-medium text-slate-400 truncate max-w-[200px]" dir="ltr">{cat.image_url}</p>
                   )}
                 </div>
 
-                <button
-                  onClick={() => setEditingImage(editingImage === cat.id ? null : cat.id)}
-                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                  title="تغيير الصورة"
-                >
-                  <Image className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setEditingImage(editingImage === cat.id ? null : cat.id)}
+                    className="p-1.5 rounded-lg hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors"
+                    title="تغيير الصورة"
+                  >
+                    <Image className="w-4 h-4" />
+                  </button>
 
-                <button
-                  onClick={() => deleteCategory.mutate(cat.id)}
-                  className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  <button
+                    onClick={() => deleteCategory.mutate(cat.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {editingImage === cat.id && (

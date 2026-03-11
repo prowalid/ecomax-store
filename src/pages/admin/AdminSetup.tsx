@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldCheck, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 
+type SetupStatusResponse = { hasAdmin: boolean };
+
 export default function AdminSetup() {
   const navigate = useNavigate();
   const [hasAdmin, setHasAdmin] = useState<boolean | null>(null);
@@ -18,7 +20,7 @@ export default function AdminSetup() {
   useEffect(() => {
     // Check if an admin already exists using the dedicated endpoint
     api.get('/auth/setup-status')
-      .then((res: any) => {
+      .then((res: SetupStatusResponse) => {
         setHasAdmin(res.hasAdmin);
       })
       .catch((err) => {
@@ -55,16 +57,17 @@ export default function AdminSetup() {
       });
 
       // 2. Save session
-      setSession(response.token, response.user);
+      setSession(response.user);
 
       toast.success("تم إنشاء حساب المدير بنجاح!");
       navigate("/admin", { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Setup error:", err);
-      if (err.message?.includes("already exists")) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("already exists")) {
         toast.error("هذا البريد مسجل مسبقاً");
       } else {
-        toast.error(err.message || "حدث خطأ أثناء الإعداد");
+        toast.error(message || "حدث خطأ أثناء الإعداد");
       }
     } finally {
       setLoading(false);

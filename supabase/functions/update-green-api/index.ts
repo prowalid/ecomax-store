@@ -7,6 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type StoreSettingsValue = Record<string, unknown>;
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,7 +50,7 @@ serve(async (req: Request) => {
       .eq("key", "whatsapp_notifications")
       .single();
 
-    const currentValue = (existing?.value as Record<string, any>) || {};
+    const currentValue = (existing?.value as StoreSettingsValue) || {};
     const updatedValue = { ...currentValue, api_configured: true };
 
     const { error: dbError } = await supabase

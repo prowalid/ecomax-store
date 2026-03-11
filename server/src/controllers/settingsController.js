@@ -1,16 +1,29 @@
 const pool = require('../config/db');
 
+const PUBLIC_SETTINGS_KEYS = new Set(['appearance', 'general', 'shipping', 'marketing']);
+const PUBLIC_MARKETING_FIELDS = new Set(['pixel_id', 'pixel_configured', 'enabled_events', 'facebook_pixel_id']);
+
+function getPublicMarketingSettings(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).filter(([key]) => PUBLIC_MARKETING_FIELDS.has(key))
+  );
+}
+
 // GET /api/settings/:key
 async function getSettings(req, res, next) {
   const { key } = req.params;
   
-  // Security Hardening (Codex BE-SEC-01)
-  // Prevent public visitors from scraping API keys
-  const sensitiveKeys = ['notifications', 'integrations', 'payment'];
-  if (sensitiveKeys.includes(key)) {
-    if (!req.user) {
-      return res.status(403).json({ error: 'Access forbidden: sensitive configuration' });
-    }
+  // Only explicitly-whitelisted keys are public. Everything else requires auth.
+  if (!PUBLIC_SETTINGS_KEYS.has(key) && !req.user) {
+    return res.status(403).json({ error: 'Access forbidden: sensitive configuration' });
+  }
+
+  if (!/^[a-z0-9_]+$/i.test(key)) {
+    return res.status(400).json({ error: 'Invalid settings key' });
   }
 
   try {
@@ -19,6 +32,10 @@ async function getSettings(req, res, next) {
     if (rows.length === 0) {
       // Return empty if not found; seeds usually pre-populate it though
       return res.json({ value: {} });
+    }
+
+    if (key === 'marketing' && !req.user) {
+      return res.json({ value: getPublicMarketingSettings(rows[0].value) });
     }
 
     res.json(rows[0]);

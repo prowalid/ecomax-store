@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // Message templates
-const TEMPLATES: Record<string, (data: Record<string, any>) => string> = {
+const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
   order_confirmed: (d) =>
     `✅ *تأكيد الطلب #${d.order_id}*\n\nمرحباً ${d.customer_name}،\nتم تأكيد طلبك بنجاح.\n\n📦 المنتجات: ${d.items || "—"}\n💰 المبلغ: ${d.total || "—"} د.ج\n\nشكراً لثقتك بنا! 🙏`,
 
@@ -63,7 +63,7 @@ serve(async (req: Request) => {
     }
 
     // Normalize phone: ensure it starts with country code, no +
-    let chatId = phone.replace(/[\s\-\+\(\)]/g, "");
+    let chatId = phone.replace(/[\s\-+()]/g, "");
     if (chatId.startsWith("0")) {
       chatId = "213" + chatId.substring(1); // Algeria country code
     }

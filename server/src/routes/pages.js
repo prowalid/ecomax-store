@@ -9,6 +9,8 @@ const {
   deletePage 
 } = require('../controllers/pagesController');
 const authMiddleware = require('../middleware/auth');
+const { validateBody } = require('../middleware/validate');
+const { createPageSchema, updatePageSchema } = require('../validators/pageSchemas');
 
 // Public endpoints for the storefront
 router.get('/published/:placement', getPublishedPages);
@@ -18,8 +20,8 @@ router.get('/slug/:slug', getPageBySlug);
 router.use(authMiddleware);
 
 router.get('/', getAllPages);
-router.post('/', createPage);
-router.patch('/:id', updatePage);
+router.post('/', validateBody(createPageSchema), createPage);
+router.patch('/:id', validateBody(updatePageSchema), updatePage);
 router.delete('/:id', deletePage);
 
 module.exports = router;

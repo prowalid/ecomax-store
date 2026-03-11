@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   X,
   User,
@@ -20,6 +20,8 @@ import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useTracking } from "@/hooks/useTracking";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { saveTrackingProfile } from "@/lib/trackingProfile";
+import OrderSuccessMessage from "@/components/store/OrderSuccessMessage";
 
 interface WilayaShipping {
   id: number;
@@ -51,10 +53,10 @@ interface QuickOrderModalProps {
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
 const inputClass =
-  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold";
+  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold";
 
 const selectClass =
-  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold appearance-none cursor-pointer";
+  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer";
 
 const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const [name, setName] = useState("");
@@ -64,6 +66,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const [quantity, setQuantity] = useState(product.quantity || 1);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
   const [submitted, setSubmitted] = useState(false);
+  const [submittedOrderNumber, setSubmittedOrderNumber] = useState<number | null>(null);
   const [couponCode, setCouponCode] = useState("");
 
   const createOrder = useCreateOrder();
@@ -71,6 +74,7 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
   const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
   const { track } = useTracking();
+  const leadTrackedRef = useRef(false);
 
   // Merge shipping settings prices with ALGERIA_WILAYAS defaults
   const wilayasWithPrices = useMemo(() => {
@@ -106,8 +110,45 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
   }, [selectedWilaya, deliveryType]);
 
   const subtotal = product.price * quantity;
-  const discountAmount = calculateDiscount(subtotal, product.price, quantity);
+  const discountAmount = calculateDiscount(subtotal, { unitPrice: product.price, quantity });
   const total = subtotal - discountAmount + shippingCost;
+
+  useEffect(() => {
+    const hasLeadData =
+      name.trim().length >= 2 &&
+      /^0[5-7][0-9]{8}$/.test(phone.trim()) &&
+      !!wilaya &&
+      !!commune;
+
+    if (!hasLeadData || leadTrackedRef.current) {
+      return;
+    }
+
+    saveTrackingProfile({
+      name,
+      phone,
+      state: wilaya,
+      city: commune,
+    });
+
+    track(
+      "Lead",
+      {
+        firstName: name,
+        phone,
+        state: wilaya,
+        city: commune,
+      },
+      {
+        content_name: product.name,
+        content_ids: [product.id],
+        content_type: "product",
+        value: total,
+        currency: "DZD",
+      }
+    );
+    leadTrackedRef.current = true;
+  }, [name, phone, wilaya, commune, product.id, product.name, total, track]);
 
   const handleApplyCoupon = async () => {
     await validateCode(couponCode, { productId: product.id, quantity });
@@ -156,7 +197,13 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         ],
       },
       {
-        onSuccess: async () => {
+        onSuccess: async (order: { order_number?: number }) => {
+          saveTrackingProfile({
+            name: name.trim(),
+            phone: phone.trim(),
+            state: wilaya,
+            city: commune,
+          });
           if (discount) {
             await incrementUsage();
           }
@@ -165,16 +212,20 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
             {
               phone: phone,
               firstName: name,
-              city: wilaya,
+              city: commune,
+              state: wilaya,
             },
             {
               value: total,
               currency: "DZD",
               content_ids: [product.id],
               content_name: product.name,
+              content_type: "product",
+              contents: [{ id: product.id, quantity, item_price: product.price }],
               num_items: quantity,
             }
           );
+          setSubmittedOrderNumber(order?.order_number ?? null);
           setSubmitted(true);
         },
       }
@@ -196,19 +247,15 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
         </div>
 
         {submitted ? (
-          <div className="p-8 text-center">
-            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">تم إرسال طلبك بنجاح!</h3>
-            <p className="text-sm text-gray-500 mb-6">سنتصل بك لتأكيد الطلب في أقرب وقت</p>
-            <button
-              onClick={onClose}
-              className="w-full h-11 rounded-xl bg-store-primary text-white font-bold hover:bg-red-700 transition-colors"
-            >
-              إغلاق
-            </button>
+          <div className="p-6">
+            <OrderSuccessMessage
+              orderNumber={submittedOrderNumber}
+              actionLabel="العودة إلى المتجر"
+              onAction={onClose}
+            />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <form onSubmit={handleSubmit} className="p-5 space-y-4" autoComplete="on">
             <p className="text-center text-sm text-gray-500">املأ النموذج وسنتصل بك لتأكيد الطلب</p>
 
             {/* Product display */}
@@ -256,6 +303,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                name="customer_name"
+                autoComplete="name"
                 placeholder="الاسم الكامل *"
                 required
                 className={inputClass}
@@ -271,6 +320,9 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                name="customer_phone"
+                autoComplete="tel-national"
+                inputMode="tel"
                 placeholder="رقم الهاتف *"
                 required
                 dir="ltr"
@@ -286,6 +338,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               <select
                 value={wilaya}
                 onChange={(e) => setWilaya(e.target.value)}
+                name="wilaya"
+                autoComplete="address-level1"
                 required
                 className={selectClass}
               >
@@ -309,6 +363,8 @@ const QuickOrderModal = ({ open, onClose, product }: QuickOrderModalProps) => {
               <select
                 value={commune}
                 onChange={(e) => setCommune(e.target.value)}
+                name="commune"
+                autoComplete="address-level2"
                 required
                 disabled={!wilaya}
                 className={selectClass + (!wilaya ? " opacity-50 cursor-not-allowed" : "")}

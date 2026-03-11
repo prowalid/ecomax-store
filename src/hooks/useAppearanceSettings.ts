@@ -1,8 +1,14 @@
 import { useStoreSettings } from "./useStoreSettings";
 
+export interface AppearanceSlide {
+  image_url: string;
+  href?: string;
+}
+
 export interface AppearanceSettings {
   logo_url: string;
   footer_logo_url: string;
+  favicon_url: string;
   store_name: string;
   // Colors
   accent_color: string;
@@ -22,8 +28,7 @@ export interface AppearanceSettings {
   heading_font: string;
   body_font: string;
   // Slides
-  slides: string[];
-  mobile_slides: string[];
+  slides: AppearanceSlide[];
   offers_banner_url: string;
   // Category default images
   category_images: string[];
@@ -32,6 +37,7 @@ export interface AppearanceSettings {
 export const defaultAppearance: AppearanceSettings = {
   logo_url: "",
   footer_logo_url: "",
+  favicon_url: "",
   store_name: "ECOMAX",
   accent_color: "#dc3545",
   top_bar_bg: "#dc3545",
@@ -49,12 +55,8 @@ export const defaultAppearance: AppearanceSettings = {
   heading_font: "Cairo",
   body_font: "Cairo",
   slides: [
-    "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=1600",
-    "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=1600",
-  ],
-  mobile_slides: [
-    "https://images.unsplash.com/photo-1607083206869-4c7672072395?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=800",
+    { image_url: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=1600" },
+    { image_url: "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=1600" },
   ],
   offers_banner_url: "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200",
   category_images: [
@@ -64,6 +66,35 @@ export const defaultAppearance: AppearanceSettings = {
   ],
 };
 
+function normalizeSlides(value: unknown): AppearanceSlide[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      if (typeof entry === "string") {
+        return { image_url: entry, href: "" };
+      }
+      if (entry && typeof entry === "object" && "image_url" in entry && typeof entry.image_url === "string") {
+        return {
+          image_url: entry.image_url,
+          href: typeof (entry as { href?: unknown }).href === "string" ? (entry as { href?: string }).href : "",
+        };
+      }
+      return null;
+    })
+    .filter((entry): entry is AppearanceSlide => Boolean(entry?.image_url));
+}
+
 export function useAppearanceSettings() {
-  return useStoreSettings<AppearanceSettings>("appearance", defaultAppearance);
+  const store = useStoreSettings<AppearanceSettings>("appearance", defaultAppearance);
+
+  return {
+    ...store,
+    settings: {
+      ...store.settings,
+      slides: normalizeSlides(store.settings.slides),
+    },
+  };
 }

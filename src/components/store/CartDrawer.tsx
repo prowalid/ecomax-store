@@ -17,7 +17,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md p-0 flex flex-col" dir="rtl">
+      <SheetContent side="left" showCloseButton={false} className="w-full sm:max-w-md p-0 flex flex-col" dir="rtl">
         <SheetHeader className="p-4 border-b bg-white">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-xl font-bold flex items-center gap-2">
@@ -59,10 +59,11 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
           <>
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <div
                     key={item.id}
-                    className="bg-white border border-gray-100 rounded-xl p-3 flex gap-3 shadow-sm"
+                    className="bg-white border border-gray-100 rounded-xl p-3 flex gap-3 shadow-sm animate-in fade-in slide-in-from-right-4 transition-all duration-300"
+                    style={{ animationFillMode: "both", animationDelay: `${index * 75}ms` }}
                   >
                     {/* Image */}
                     <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
@@ -128,14 +129,24 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
                 <span className="text-xl font-black text-store-primary">{formatPrice(totalPrice)}</span>
               </div>
 
-              <SheetClose asChild>
-                <Link
-                  to="/checkout"
-                  className="block w-full bg-store-primary text-white text-center py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md"
-                >
-                  إتمام الطلب
-                </Link>
-              </SheetClose>
+              <div className="grid grid-cols-2 gap-3">
+                <SheetClose asChild>
+                  <button
+                    className="w-full bg-gray-100 text-gray-700 text-center py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                  >
+                    متابعة التسوق
+                  </button>
+                </SheetClose>
+                
+                <SheetClose asChild>
+                  <Link
+                    to="/checkout"
+                    className="block w-full bg-store-primary text-white text-center py-3 rounded-xl font-bold hover:brightness-110 hover:shadow-lg transition-all"
+                  >
+                    إتمام الطلب
+                  </Link>
+                </SheetClose>
+              </div>
             </div>
           </>
         )}

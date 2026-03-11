@@ -1,8 +1,15 @@
 const pool = require('../config/db');
 
+function isValidSessionId(value) {
+  return typeof value === 'string' && /^[a-zA-Z0-9_-]{16,128}$/.test(value);
+}
+
 // GET /api/cart/:sessionId
 async function getCartItems(req, res, next) {
   const { sessionId } = req.params;
+  if (!isValidSessionId(sessionId)) {
+    return res.status(400).json({ error: 'Invalid session ID' });
+  }
   try {
     const { rows } = await pool.query('SELECT * FROM cart_items WHERE session_id = $1 ORDER BY created_at ASC', [sessionId]);
     res.json(rows);
@@ -16,6 +23,9 @@ async function getCartItems(req, res, next) {
 async function addOrUpdateCartItem(req, res, next) {
   try {
     const { session_id, product_id, product_name, product_price, product_image_url, quantity } = req.body;
+    if (!isValidSessionId(session_id)) {
+      return res.status(400).json({ error: 'Invalid session ID' });
+    }
     
     // Check if item exists in this session
     const { rows: existingRows } = await pool.query(`
@@ -56,21 +66,27 @@ async function addOrUpdateCartItem(req, res, next) {
 // Request body: { quantity }
 async function updateCartItemQuantity(req, res, next) {
   const { itemId } = req.params;
-  const { quantity } = req.body;
+  const { quantity, session_id } = req.body;
+  if (!isValidSessionId(session_id)) {
+    return res.status(400).json({ error: 'Invalid session ID' });
+  }
 
   try {
     if (quantity <= 0) {
       // Delete if quantity 0
-      await pool.query('DELETE FROM cart_items WHERE id = $1', [itemId]);
+      const { rowCount } = await pool.query('DELETE FROM cart_items WHERE id = $1 AND session_id = $2', [itemId, session_id]);
+      if (rowCount === 0) {
+        return res.status(404).json({ error: 'Cart item not found' });
+      }
       return res.status(204).send();
     }
 
     const { rows } = await pool.query(`
       UPDATE cart_items 
       SET quantity = $1 
-      WHERE id = $2 
+      WHERE id = $2 AND session_id = $3
       RETURNING *
-    `, [quantity, itemId]);
+    `, [quantity, itemId, session_id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Cart item not found' });
@@ -85,8 +101,12 @@ async function updateCartItemQuantity(req, res, next) {
 // DELETE /api/cart/:itemId
 async function deleteCartItem(req, res, next) {
   const { itemId } = req.params;
+  const { session_id } = req.body;
+  if (!isValidSessionId(session_id)) {
+    return res.status(400).json({ error: 'Invalid session ID' });
+  }
   try {
-    const { rowCount } = await pool.query('DELETE FROM cart_items WHERE id = $1', [itemId]);
+    const { rowCount } = await pool.query('DELETE FROM cart_items WHERE id = $1 AND session_id = $2', [itemId, session_id]);
     
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Cart item not found' });
@@ -101,6 +121,9 @@ async function deleteCartItem(req, res, next) {
 // DELETE /api/cart/session/:sessionId
 async function clearCart(req, res, next) {
   const { sessionId } = req.params;
+  if (!isValidSessionId(sessionId)) {
+    return res.status(400).json({ error: 'Invalid session ID' });
+  }
   try {
     await pool.query('DELETE FROM cart_items WHERE session_id = $1', [sessionId]);
     res.status(204).send();

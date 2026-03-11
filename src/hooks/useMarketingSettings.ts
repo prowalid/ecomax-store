@@ -4,15 +4,19 @@ import { toast } from "sonner";
 
 export interface MarketingSettings {
   pixel_id: string;
+  capi_token: string;
   pixel_configured: boolean;
   webhook_url: string;
+  webhook_secret: string;
   enabled_events: Record<string, boolean>;
 }
 
 const DEFAULT: MarketingSettings = {
   pixel_id: "",
+  capi_token: "",
   pixel_configured: false,
   webhook_url: "",
+  webhook_secret: "",
   enabled_events: {
     PageView: true,
     ViewContent: true,
@@ -23,6 +27,8 @@ const DEFAULT: MarketingSettings = {
   },
 };
 
+type MarketingSettingsPayload = Partial<MarketingSettings>;
+
 export function useMarketingSettings() {
   const [settings, setSettings] = useState<MarketingSettings>(DEFAULT);
   const [loading, setLoading] = useState(true);
@@ -32,12 +38,14 @@ export function useMarketingSettings() {
     try {
       const data = await api.get('/settings/marketing');
       if (data && data.value) {
-        const val = data.value as any;
+        const val = data.value as MarketingSettingsPayload;
         setSettings({
-          pixel_id: val.pixel_id ?? "",
+          pixel_id: (val.pixel_id as string | undefined) ?? (val.facebook_pixel_id as string | undefined) ?? "",
+          capi_token: (val.capi_token as string | undefined) ?? (val.access_token as string | undefined) ?? "",
           pixel_configured: val.pixel_configured ?? false,
           webhook_url: val.webhook_url ?? "",
-          enabled_events: val.enabled_events ?? DEFAULT.enabled_events,
+          webhook_secret: (val.webhook_secret as string | undefined) ?? "",
+          enabled_events: { ...DEFAULT.enabled_events, ...(val.enabled_events ?? {}) },
         });
       }
     } catch (err) {

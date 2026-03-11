@@ -6,7 +6,8 @@ interface GeneralSettings {
   phone: string;
   email: string;
   currency: string;
-  custom_domain: string;
+  meta_title: string;
+  meta_description: string;
 }
 
 const Settings = () => {
@@ -15,7 +16,8 @@ const Settings = () => {
     phone: "",
     email: "",
     currency: "DZD",
-    custom_domain: "",
+    meta_title: "",
+    meta_description: "",
   });
 
   if (loading) {
@@ -27,84 +29,100 @@ const Settings = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">الإعدادات</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">إعدادات المتجر العامة</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-sidebar-heading">الإعدادات</h1>
+          <p className="text-[13px] text-slate-500 mt-1 font-medium">إعدادات المتجر العامة</p>
+        </div>
+        <button
+          onClick={() => saveSettings(settings)}
+          disabled={saving}
+          className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          حفظ الإعدادات
+        </button>
       </div>
 
-      <div className="max-w-2xl space-y-4">
-        <div className="bg-card rounded-lg shadow-card border border-border p-5 space-y-4 animate-slide-in">
-          <h3 className="text-base font-semibold text-foreground">معلومات المتجر</h3>
+      <div className="w-full space-y-6">
+        {/* Main Settings Card */}
+        <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-7 space-y-6">
+          <h3 className="text-[16px] font-bold text-sidebar-heading border-b border-slate-100 pb-4">معلومات المتجر الأساسية</h3>
           
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">اسم المتجر</label>
+            <label className="block text-[13px] font-semibold text-slate-500 mb-2">اسم المتجر</label>
             <input
               type="text"
               value={settings.store_name}
               onChange={(e) => setSettings({ ...settings, store_name: e.target.value })}
-              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+              className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">رقم الهاتف</label>
+              <label className="block text-[13px] font-semibold text-slate-500 mb-2">رقم الهاتف</label>
               <input
                 type="tel"
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
                 placeholder="0555 123 456"
-                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+                className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 dir="ltr"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">البريد الإلكتروني</label>
+              <label className="block text-[13px] font-semibold text-slate-500 mb-2">البريد الإلكتروني</label>
               <input
                 type="email"
                 value={settings.email}
                 onChange={(e) => setSettings({ ...settings, email: e.target.value })}
                 placeholder="admin@store.com"
-                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+                className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 dir="ltr"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">العملة</label>
+            <label className="block text-[13px] font-semibold text-slate-500 mb-2">العملة</label>
             <select
               value={settings.currency}
               onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+              className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             >
               <option value="DZD">دينار جزائري (د.ج)</option>
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">النطاق المخصص (الدومين)</label>
-            <input
-              type="text"
-              value={settings.custom_domain}
-              onChange={(e) => setSettings({ ...settings, custom_domain: e.target.value })}
-              placeholder="www.mystore.com"
-              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
-              dir="ltr"
-            />
-          </div>
-        </div>
+          <div className="pt-2 border-t border-slate-100">
+            <h4 className="text-[14px] font-bold text-sidebar-heading mb-4">الهوية الوصفية و SEO</h4>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-500 mb-2">عنوان المتجر في المتصفح ونتائج البحث</label>
+                <input
+                  type="text"
+                  value={settings.meta_title}
+                  onChange={(e) => setSettings({ ...settings, meta_title: e.target.value })}
+                  placeholder="مثال: متجر الأحذية الرياضية في الجزائر"
+                  className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+                <p className="text-[11px] font-medium text-slate-400 mt-2">إذا تركته فارغاً سيُستخدم اسم المتجر تلقائياً.</p>
+              </div>
 
-        <div className="flex justify-end">
-          <button
-            onClick={() => saveSettings(settings)}
-            disabled={saving}
-            className="h-9 px-6 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            حفظ الإعدادات
-          </button>
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-500 mb-2">وصف المتجر</label>
+                <textarea
+                  value={settings.meta_description}
+                  onChange={(e) => setSettings({ ...settings, meta_description: e.target.value })}
+                  placeholder="وصف مختصر وواضح للمتجر يظهر في محركات البحث وعند مشاركة الصفحة."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-y"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

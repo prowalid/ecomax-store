@@ -1,29 +1,81 @@
 import { useState } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { useCustomers } from "@/hooks/useCustomers";
+import { exportCsv } from "@/lib/exportCsv";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminDataState from "@/components/admin/AdminDataState";
 
 const Customers = () => {
-  const { data: customers = [], isLoading } = useCustomers();
+  const { data: customers = [], isLoading, isError, error, refetch, isFetching } = useCustomers();
   const [search, setSearch] = useState("");
 
-  const filtered = customers.filter(
-    (c) => c.name.includes(search) || c.phone.includes(search) || (c.wilaya || "").includes(search)
-  );
+  const normalizedSearch = search.trim().toLowerCase();
+  const filtered = customers.filter((customer) => {
+    const name = customer.name ?? "";
+    const phone = customer.phone ?? "";
+    const wilaya = customer.wilaya ?? "";
+
+    if (!normalizedSearch) {
+      return true;
+    }
+
+    return [name, phone, wilaya].some((value) => value.toLowerCase().includes(normalizedSearch));
+  });
+
+  const handleExportCSV = () => {
+    if (filtered.length === 0) {
+      alert("لا يوجد زبائن لتصديرهم");
+      return;
+    }
+
+    exportCsv({
+      filename: `زبائن_${new Date().toISOString().split("T")[0]}.csv`,
+      headers: ["معرف الزبون", "الاسم", "الهاتف", "الولاية", "البلدية", "تاريخ الإضافة"],
+      rows: filtered.map((customer) => [
+        customer.id,
+        customer.name || "",
+        customer.phone || "",
+        customer.wilaya || "",
+        customer.commune || "",
+        new Date(customer.created_at).toLocaleDateString("en-GB"),
+      ]),
+    });
+  };
 
   if (isLoading) {
+    return <AdminDataState type="loading" title="جاري تحميل الزبائن" description="يتم جلب قائمة الزبائن وبياناتهم الأساسية." />;
+  }
+
+  if (isError) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <AdminDataState
+        type="error"
+        title="تعذر تحميل الزبائن"
+        description={error instanceof Error ? error.message : "تعذر تحميل الزبائن"}
+        actionLabel="إعادة المحاولة"
+        actionDisabled={isFetching}
+        onAction={() => {
+          void refetch();
+        }}
+      />
     );
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">الزبائن</h1>
-        <span className="text-sm text-muted-foreground">{customers.length} زبون</span>
-      </div>
+      <AdminPageHeader
+        title="الزبائن"
+        description="ابحث بسرعة في قاعدة الزبائن وصدّر البيانات الأساسية عند الحاجة."
+        meta={`${customers.length} زبون`}
+        actions={(
+          <button
+            onClick={handleExportCSV}
+            className="h-10 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground shadow-button transition-opacity hover:opacity-95"
+          >
+            تصدير CSV
+          </button>
+        )}
+      />
 
       <div className="relative max-w-sm">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -36,31 +88,41 @@ const Customers = () => {
         />
       </div>
 
-      <div className="bg-card rounded-lg shadow-card border border-border overflow-hidden">
-        <table className="w-full">
+      <div className="overflow-hidden rounded-[20px] border border-slate-100 bg-white shadow-sm animate-slide-in">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-right" dir="rtl">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الزبون</th>
-              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الهاتف</th>
-              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الولاية</th>
-              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">البلدية</th>
-              <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">تاريخ الإضافة</th>
+            <tr className="border-b border-slate-50 bg-slate-50/30">
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">معرف الزبون</th>
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الاسم</th>
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الهاتف</th>
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الموقع</th>
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">تاريخ الإضافة</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((c) => (
-              <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
-                <td className="px-5 py-3 text-sm font-medium text-foreground">{c.name}</td>
-                <td className="px-5 py-3 text-sm text-muted-foreground" dir="ltr">{c.phone}</td>
-                <td className="px-5 py-3 text-sm text-muted-foreground">{c.wilaya || "—"}</td>
-                <td className="px-5 py-3 text-sm text-muted-foreground">{c.commune || "—"}</td>
-                <td className="px-5 py-3 text-sm text-muted-foreground">
-                  {new Date(c.created_at).toLocaleDateString("ar-DZ")}
+            {filtered.map((customer) => (
+              <tr key={customer.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                <td className="px-4 py-4 text-[13px] font-medium text-slate-400" dir="ltr">
+                  #{customer.id.split("-")[0]}
+                </td>
+                <td className="px-4 py-4 text-[14px] font-bold text-sidebar-heading">
+                  {customer.name || "بدون اسم"}
+                </td>
+                <td className="px-4 py-4 text-[14px] font-semibold text-slate-500" dir="ltr">
+                  {customer.phone || "—"}
+                </td>
+                <td className="px-4 py-4 text-[13px] text-slate-500 font-medium">
+                  {customer.wilaya ? `${customer.wilaya} - ${customer.commune || ""}` : "—"}
+                </td>
+                <td className="px-4 py-4 text-[13px] text-slate-500 font-medium">
+                  {new Date(customer.created_at).toLocaleDateString("en-GB")}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
         {filtered.length === 0 && (
           <div className="text-center py-12 text-muted-foreground text-sm">
             {customers.length === 0 ? "لا يوجد زبائن بعد" : "لا يوجد زبائن مطابقين"}

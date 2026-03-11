@@ -3,6 +3,8 @@ import { Bell, Send, CheckCircle2, XCircle, MessageCircle, Phone, Settings2, Fil
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useNotificationSettings } from "@/hooks/useNotificationSettings";
+import AdminIntegrationStatusNote from "@/components/admin/AdminIntegrationStatusNote";
+import AdminSecureField from "@/components/admin/AdminSecureField";
 
 const NOTIFICATION_TYPES = [
   { key: "order_confirmed", label: "تأكيد الطلب", desc: "إشعار للزبون عند تأكيد طلبه", icon: "✅", target: "customer" },
@@ -65,9 +67,10 @@ const Notifications = () => {
         // Make sure to display the error we sent from node backend
         toast.error(data?.error || "بيانات API غير صالحة");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setApiStatus({ connected: false });
-      toast.error(err.message || "خطأ في الاتصال");
+      const message = err instanceof Error ? err.message : "خطأ في الاتصال";
+      toast.error(message);
     } finally {
       setApiValidating(false);
     }
@@ -108,8 +111,9 @@ const Notifications = () => {
         setTestResult({ success: false, message: `❌ ${data?.error || "خطأ غير معروف"}` });
         toast.error(data?.error || "فشل الإرسال");
       }
-    } catch (err: any) {
-      setTestResult({ success: false, message: `خطأ: ${err.message}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "خطأ غير معروف";
+      setTestResult({ success: false, message: `خطأ: ${message}` });
       toast.error("خطأ في الاتصال");
     } finally {
       setTestLoading(false);
@@ -136,7 +140,7 @@ const Notifications = () => {
             إشعارات واتساب تلقائية عند تغيير حالة الطلبات
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {settings.api_configured ? (
             <span className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               <Wifi className="w-3.5 h-3.5" /> متصل
@@ -146,8 +150,24 @@ const Notifications = () => {
               <WifiOff className="w-3.5 h-3.5" /> غير متصل
             </span>
           )}
+          <button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            حفظ الإعدادات
+          </button>
         </div>
       </div>
+
+      <AdminIntegrationStatusNote
+        configured={settings.api_configured}
+        configuredTitle="إعداد Green API محفوظ ومفعل"
+        configuredDescription="بيانات الاتصال الحالية محفوظة بأمان داخل النظام. لن نعرضها هنا بشكل صريح، ويمكنك إدخال بيانات جديدة فقط إذا أردت استبدال الإعداد الحالي."
+        pendingTitle="Green API غير مهيأ بعد"
+        pendingDescription="أدخل Instance ID وAPI Token ثم نفّذ التحقق والحفظ لتفعيل إشعارات واتساب."
+      />
 
       {/* Green API Config */}
       <div className="bg-card rounded-lg shadow-card border border-border p-5">
@@ -157,37 +177,33 @@ const Notifications = () => {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">إعداد Green API</h3>
-            <p className="text-xs text-muted-foreground">
-              {settings.api_configured
-                ? "API متصل — يمكنك تحديث البيانات بإدخال بيانات جديدة"
-                : "أدخل بيانات Green API لتفعيل إشعارات واتساب"}
-            </p>
+            <p className="text-xs text-muted-foreground">نفس منطق العرض الآمن الموحّد مع صفحة التسويق</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Instance ID</label>
-            <input
-              type="text"
-              value={instanceId}
-              onChange={(e) => setInstanceId(e.target.value)}
-              placeholder={settings.api_configured ? "•••• (محفوظ)" : "1101234567"}
-              className={inputClass}
-              dir="ltr"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">API Token</label>
-            <input
-              type="password"
-              value={apiToken}
-              onChange={(e) => setApiToken(e.target.value)}
-              placeholder={settings.api_configured ? "•••• (محفوظ)" : "abc123def456..."}
-              className={inputClass}
-              dir="ltr"
-            />
-          </div>
+          <AdminSecureField
+            title="Instance ID"
+            description="المعرّف التشغيلي الخاص بوصلة Green API."
+            configured={settings.api_configured}
+            type="text"
+            value={instanceId}
+            onChange={(e) => setInstanceId(e.target.value)}
+            placeholder={settings.api_configured ? "قيمة محفوظة — أدخل Instance ID جديداً للاستبدال" : "1101234567"}
+            dir="ltr"
+            helperText="إذا كان الاتصال مفعلًا بالفعل، يمكنك ترك هذا الحقل فارغًا حتى تقرر تحديث القيمة."
+          />
+          <AdminSecureField
+            title="API Token"
+            description="الرمز السري المستخدم لإرسال رسائل واتساب."
+            configured={settings.api_configured}
+            type="password"
+            value={apiToken}
+            onChange={(e) => setApiToken(e.target.value)}
+            placeholder={settings.api_configured ? "قيمة محفوظة — أدخل Token جديداً للاستبدال" : "abc123def456..."}
+            dir="ltr"
+            helperText="لن نعرض الرمز الحالي. أدخل قيمة جديدة فقط عند الحاجة إلى تحديث الاتصال."
+          />
         </div>
 
         <div className="flex items-center gap-3 mt-4">
@@ -373,17 +389,6 @@ const Notifications = () => {
         </div>
       )}
 
-      {/* Save */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSaveSettings}
-          disabled={saving}
-          className="h-9 px-6 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          حفظ الإعدادات
-        </button>
-      </div>
     </div>
   );
 };

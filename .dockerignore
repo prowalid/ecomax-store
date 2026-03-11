@@ -1,0 +1,10 @@
+node_modules
+server/node_modules
+dist
+server/logs
+server/backups
+.git
+.DS_Store
+*.log
+.env
+server/.env

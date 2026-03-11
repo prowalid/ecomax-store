@@ -15,6 +15,24 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- ─── Auth Sessions ───
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  refresh_token_hash TEXT NOT NULL,
+  user_agent TEXT,
+  ip_address TEXT,
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ DEFAULT NULL,
+  revoked_reason TEXT DEFAULT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_used_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions (user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_active ON auth_sessions (expires_at, revoked_at);
+
 -- ─── Store Settings ───
 CREATE TABLE IF NOT EXISTS store_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -179,9 +197,9 @@ CREATE TABLE IF NOT EXISTS discounts (
 INSERT INTO store_settings (key, value) VALUES
   ('whatsapp_notifications', '{"enabled_notifications": {"order_confirmed": true, "order_shipped": true, "order_delivered": false, "new_order_admin": true}, "admin_phone": "", "api_configured": false}'::jsonb),
   ('shipping', '{"wilayas": []}'::jsonb),
-  ('general', '{"store_name": "ECOMAX", "phone": "", "email": "", "currency": "DZD"}'::jsonb),
-  ('appearance', '{"logo_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}'::jsonb),
-  ('marketing', '{"facebook_pixel_id": "", "tiktok_pixel_id": "", "google_analytics_id": ""}'::jsonb)
+  ('general', '{"store_name": "ECOMAX", "phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": ""}'::jsonb),
+  ('appearance', '{"logo_url": "", "footer_logo_url": "", "favicon_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}'::jsonb),
+  ('marketing', '{"pixel_id": "", "capi_token": "", "pixel_configured": false, "webhook_url": "", "enabled_events": {"PageView": true, "ViewContent": true, "AddToCart": true, "InitiateCheckout": true, "Purchase": true, "Lead": true}}'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
 -- Default categories

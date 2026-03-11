@@ -1,0 +1,13 @@
+client-domain.com {
+  encode gzip zstd
+
+  @api path /api/* /uploads/*
+  handle @api {
+    reverse_proxy 127.0.0.1:3001
+  }
+
+  root * /var/www/express-trade-kit/current/dist
+  try_files {path} /index.html
+  file_server
+}
+

@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local environment files
+.env
+.env.golden
+server/.env
+
+# Local runtime artifacts
+server/old_logs.txt

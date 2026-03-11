@@ -13,19 +13,52 @@ const cartRoutes = require('./routes/cart');
 const settingsRoutes = require('./routes/settings');
 const uploadRoutes = require('./routes/upload');
 const integrationsRoutes = require('./routes/integrations');
+const analyticsRoutes = require('./routes/analytics');
 const path = require('path');
+const helmet = require('helmet');
 const pool = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
+const morgan = require('morgan');
+const logger = require('./utils/logger');
+const { ensureAuthSessionsTable } = require('./utils/authSessions');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const trustProxy = process.env.TRUST_PROXY;
+
+if (trustProxy) {
+  app.set('trust proxy', trustProxy === 'true' ? 1 : trustProxy);
+}
 
 // ─── Middleware ───
-app.use(cors());
-app.use(express.json());
+const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+// ─── Security Headers (Helmet) ───
+app.use(helmet({
+  contentSecurityPolicy: false,   // Disable CSP for now (SPA serves its own scripts)
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" } // Allow images to load cross-origin
+}));
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || corsOrigins.length === 0 || corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('CORS not allowed for this origin'));
+  },
+  credentials: true,
+}));
+app.use(express.json({ limit: '1mb' }));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
+// HTTP Request logging with Morgan
+app.use(morgan('combined', { stream: logger.stream }));
 
 // ─── Routes ───
 app.use('/api/auth', authRoutes);
@@ -39,6 +72,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/integrations', integrationsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {
@@ -58,8 +92,17 @@ app.get('/api/health', async (req, res) => {
 app.use(errorHandler);
 
 // ─── Start ───
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 Express Trade Kit API running on http://0.0.0.0:${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health`);
-  console.log(`   Auth:   http://localhost:${PORT}/api/auth\n`);
+async function startServer() {
+  await ensureAuthSessionsTable();
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 Express Trade Kit API running on http://0.0.0.0:${PORT}`);
+    console.log(`   Health: http://localhost:${PORT}/api/health`);
+    console.log(`   Auth:   http://localhost:${PORT}/api/auth\n`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error('❌ Failed to start server:', err);
+  process.exit(1);
 });

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldCheck, Mail, Lock } from "lucide-react";
@@ -11,7 +11,26 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { setSession } = useAuth();
+  const { user, isAdmin, isLoading: authLoading, setSession } = useAuth();
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (user && isAdmin) {
+      navigate("/admin", { replace: true });
+    }
+  }, [authLoading, user, isAdmin, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (user && isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,13 +48,14 @@ export default function AdminLogin() {
         return;
       }
 
-      setSession(response.token, response.user);
+      setSession(response.user);
       
       toast.success("تم تسجيل الدخول بنجاح");
       navigate("/admin", { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login error:", err);
-      toast.error(err.message || "البريد أو كلمة المرور غير صحيح");
+      const message = err instanceof Error ? err.message : "البريد أو كلمة المرور غير صحيح";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

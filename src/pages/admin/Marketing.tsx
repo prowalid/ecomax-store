@@ -1,9 +1,11 @@
 import { Save, CheckCircle2, XCircle, Info, Send, Shield, Eye, ShoppingCart, CreditCard, Loader2, Wifi, WifiOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { generateEventId, getFbp, getFbc } from "@/lib/facebook-pixel";
 import { toast } from "sonner";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
+import AdminIntegrationStatusNote from "@/components/admin/AdminIntegrationStatusNote";
+import AdminSecureField from "@/components/admin/AdminSecureField";
 
 const STANDARD_EVENTS = [
   { name: "PageView", icon: <Eye className="w-4 h-4" />, desc: "عرض صفحة" },
@@ -29,10 +31,18 @@ const REQUIRED_PARAMS = [
 
 const Marketing = () => {
   const { settings, setSettings, loading, saving, saveSettings } = useMarketingSettings();
-  const [accessToken, setAccessToken] = useState("");
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [selectedTestEvent, setSelectedTestEvent] = useState("PageView");
+  const [webhookTestLoading, setWebhookTestLoading] = useState(false);
+  const [webhookTestResult, setWebhookTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [pixelIdDraft, setPixelIdDraft] = useState("");
+  const [capiTokenDraft, setCapiTokenDraft] = useState("");
+
+  useEffect(() => {
+    setPixelIdDraft("");
+    setCapiTokenDraft("");
+  }, [settings.pixel_id, settings.capi_token, settings.pixel_configured]);
 
   const handleTestEvent = async () => {
     setTestLoading(true);
@@ -85,8 +95,9 @@ const Marketing = () => {
         setTestResult({ success: false, message: `❌ ${data?.error || "خطأ غير معروف"}` });
         toast.error(data?.error || "فشل الإرسال");
       }
-    } catch (err: any) {
-      setTestResult({ success: false, message: `خطأ: ${err.message}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "خطأ غير معروف";
+      setTestResult({ success: false, message: `خطأ: ${message}` });
       toast.error("خطأ في الاتصال");
     } finally {
       setTestLoading(false);
@@ -96,9 +107,45 @@ const Marketing = () => {
   const handleSaveAll = async () => {
     const updated = {
       ...settings,
-      pixel_configured: !!settings.pixel_id,
+      pixel_id: pixelIdDraft.trim() || settings.pixel_id,
+      capi_token: capiTokenDraft.trim() || settings.capi_token,
+      pixel_configured: !!(pixelIdDraft.trim() || settings.pixel_id),
     };
     await saveSettings(updated);
+    setPixelIdDraft("");
+    setCapiTokenDraft("");
+  };
+
+  const handleTestWebhook = async () => {
+    setWebhookTestLoading(true);
+    setWebhookTestResult(null);
+
+    try {
+      const data = await api.post('/integrations/test-webhook', {});
+      if (data?.success) {
+        setWebhookTestResult({
+          success: true,
+          message: "تم إرسال webhook تجريبي بنجاح إلى الرابط المحفوظ.",
+        });
+        toast.success("تم إرسال webhook تجريبي");
+        return;
+      }
+
+      setWebhookTestResult({
+        success: false,
+        message: data?.error || "فشل إرسال webhook التجريبي",
+      });
+      toast.error(data?.error || "فشل إرسال webhook التجريبي");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "فشل اختبار webhook";
+      setWebhookTestResult({
+        success: false,
+        message,
+      });
+      toast.error(message);
+    } finally {
+      setWebhookTestLoading(false);
+    }
   };
 
   const toggleEvent = (name: string) => {
@@ -128,7 +175,7 @@ const Marketing = () => {
             Facebook Pixel + Conversions API — تتبع متقدم مع مطابقة بيانات المستخدم
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {settings.pixel_configured ? (
             <span className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               <Wifi className="w-3.5 h-3.5" /> Pixel متصل
@@ -138,49 +185,50 @@ const Marketing = () => {
               <WifiOff className="w-3.5 h-3.5" /> غير مفعّل
             </span>
           )}
+          <button
+            onClick={handleSaveAll}
+            disabled={saving}
+            className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            حفظ الإعدادات
+          </button>
         </div>
       </div>
 
+      <AdminIntegrationStatusNote
+        configured={settings.pixel_configured}
+        configuredTitle="الإعداد محفوظ ومفعل"
+        configuredDescription="القيم الحالية محفوظة بأمان داخل النظام. لن نعرضها هنا بشكل صريح، ويمكنك إدخال قيمة جديدة فقط إذا أردت استبدال الإعداد الحالي."
+        pendingTitle="يلزم إدخال بيانات Facebook"
+        pendingDescription="أدخل Pixel ID وAccess Token مرة واحدة لتفعيل التتبع المتقدم عبر المتصفح والخادم."
+      />
+
       {/* Config Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card rounded-lg shadow-card border border-border p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-lg">📊</div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Pixel ID</h3>
-              <p className="text-xs text-muted-foreground">
-                {settings.pixel_configured ? "محفوظ كـ Secret — يمكنك تحديثه" : "تتبع أحداث المتصفح"}
-              </p>
-            </div>
-          </div>
-          <input
-            type="text"
-            value={settings.pixel_id}
-            onChange={(e) => setSettings((prev) => ({ ...prev, pixel_id: e.target.value.trim() }))}
-            placeholder={settings.pixel_configured ? settings.pixel_id || "123456789012345" : "123456789012345"}
-            className={inputClass}
-            dir="ltr"
-          />
-          <p className="text-xs text-muted-foreground mt-2">يُحفظ في إعدادات المتجر ويُفعّل تلقائياً في الموقع</p>
-        </div>
+        <AdminSecureField
+          title="Pixel ID"
+          description="معرّف تتبع أحداث المتصفح للمتجر."
+          configured={settings.pixel_configured}
+          type="text"
+          value={pixelIdDraft}
+          onChange={(e) => setPixelIdDraft(e.target.value.trim())}
+          placeholder={settings.pixel_configured ? "قيمة محفوظة — أدخل Pixel ID جديداً للاستبدال" : "123456789012345"}
+          dir="ltr"
+          helperText="إذا تركت الحقل فارغًا، سيتم الاحتفاظ بالقيمة المحفوظة الحالية كما هي."
+        />
 
-        <div className="bg-card rounded-lg shadow-card border border-border p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-lg">🔑</div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Access Token</h3>
-              <p className="text-xs text-muted-foreground">CAPI Server-Side</p>
-            </div>
-          </div>
-          <input
-            type="password"
-            value={accessToken}
-            onChange={(e) => setAccessToken(e.target.value)}
-            placeholder={settings.pixel_configured ? "•••• (محفوظ)" : "EAAxxxxxxx..."}
-            className={inputClass}
-            dir="ltr"
-          />
-        </div>
+        <AdminSecureField
+          title="Access Token"
+          description="رمز CAPI المستخدم للإرسال من الخادم."
+          configured={settings.pixel_configured}
+          type="password"
+          value={capiTokenDraft}
+          onChange={(e) => setCapiTokenDraft(e.target.value.trim())}
+          placeholder={settings.pixel_configured ? "قيمة محفوظة — أدخل Token جديداً للاستبدال" : "EAAxxxxxxx..."}
+          dir="ltr"
+          helperText="لن يتم عرض الرمز الحالي. أدخل قيمة جديدة فقط إذا كنت تريد تحديث الاتصال."
+        />
       </div>
 
       {/* Standard Events with Toggles */}
@@ -311,19 +359,39 @@ const Marketing = () => {
           className={inputClass}
           dir="ltr"
         />
+        <input
+          type="password"
+          value={settings.webhook_secret}
+          onChange={(e) => setSettings((prev) => ({ ...prev, webhook_secret: e.target.value }))}
+          placeholder="Webhook secret (اختياري)"
+          className={inputClass + " mt-3"}
+          dir="ltr"
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleTestWebhook}
+            disabled={webhookTestLoading || !settings.webhook_url.trim()}
+            className="h-9 px-4 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
+          >
+            {webhookTestLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            اختبار Webhook
+          </button>
+          <p className="text-xs text-muted-foreground">
+            يرسل أحداث `order.created` و`order.status_updated` مع بيانات الطلب والزبون والمنتجات.
+          </p>
+        </div>
+        {webhookTestResult && (
+          <div className={`mt-3 p-3 rounded-lg flex items-start gap-2 text-sm ${webhookTestResult.success ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+            {webhookTestResult.success ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+            <p className="text-xs leading-relaxed">{webhookTestResult.message}</p>
+          </div>
+        )}
+        <div className="mt-3 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+          <p><code>Headers</code>: <code>X-ETK-Event</code>, <code>X-ETK-Event-Id</code>, <code>X-ETK-Event-Time</code></p>
+          <p><code>Signature</code>: <code>X-ETK-Signature</code> عند تعبئة السر</p>
+        </div>
       </div>
 
-      {/* Save */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSaveAll}
-          disabled={saving}
-          className="h-9 px-6 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          حفظ جميع الإعدادات
-        </button>
-      </div>
     </div>
   );
 };

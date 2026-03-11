@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { sendOrderStatusNotification } from "@/lib/whatsapp";
 
 export type OrderStatus = "new" | "attempt" | "no_answer" | "confirmed" | "cancelled" | "ready" | "shipped" | "delivered" | "returned";
 export type DeliveryType = "home" | "desk";
@@ -19,6 +18,8 @@ export interface Order {
   status: OrderStatus;
   subtotal: number;
   shipping_cost: number;
+  discount_amount: number;
+  discount_code: string | null;
   total: number;
   tracking_number: string | null;
   shipping_company: string | null;
@@ -48,10 +49,10 @@ export function useOrders() {
   });
 }
 
-export function useOrderItems(orderId: string | null) {
+export function useOrderItems(orderId: string | null, enabled = true) {
   return useQuery({
     queryKey: ["order_items", orderId],
-    enabled: !!orderId,
+    enabled: !!orderId && enabled,
     queryFn: async () => {
       const data = await api.get(`/orders/${orderId}/items`);
       return data as OrderItem[];

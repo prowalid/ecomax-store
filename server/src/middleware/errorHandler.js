@@ -18,6 +18,13 @@ exports.errorHandler = (err, req, res, next) => {
     });
   }
 
+  if (err.status && Number.isInteger(err.status)) {
+    return res.status(err.status).json({
+      error: err.status >= 500 ? "Internal Server Error" : "Bad Request",
+      message: err.message || "Request failed"
+    });
+  }
+
   return res.status(500).json({
     error: "Internal Server Error",
     message: process.env.NODE_ENV === "production" ? "Something went wrong" : err.message

@@ -1,10 +1,18 @@
-import { Search, Bell, LogOut } from "lucide-react";
+import { ExternalLink, LogOut, Menu, Store } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { getAdminPageMeta } from "./adminNavigation";
 
-const AdminHeader = () => {
+interface AdminHeaderProps {
+  onOpenNavigation: () => void;
+}
+
+const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const pageMeta = getAdminPageMeta(location.pathname);
 
   const handleLogout = async () => {
     await signOut();
@@ -12,41 +20,60 @@ const AdminHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-card border-b border-border h-14 flex items-center px-6 gap-4">
-      {/* Search */}
-      <div className="flex-1 max-w-md">
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="بحث..."
-            className="w-full h-9 pr-9 pl-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
-          />
+    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-background/85 backdrop-blur-md">
+      <div className="flex min-h-20 items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button
+            variant="outline"
+            size="icon"
+            className="lg:hidden"
+            onClick={onOpenNavigation}
+            aria-label="فتح قائمة التنقل"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white text-primary shadow-sm sm:flex">
+            <Store className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-black tracking-tight text-sidebar-heading sm:text-2xl">
+              {pageMeta.title}
+            </h1>
+            <p className="mt-1 hidden text-sm text-slate-500 md:block">{pageMeta.subtitle}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        {/* Notifications */}
-        <button className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-          <Bell className="w-[18px] h-[18px]" strokeWidth={1.75} />
-          <span className="absolute top-1.5 left-1.5 w-2 h-2 bg-critical rounded-full" />
-        </button>
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden h-10 items-center gap-2 rounded-full border border-slate-200 px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-primary sm:inline-flex"
+            title="فتح المتجر في تبويب جديد"
+          >
+            <span>عرض المتجر</span>
+            <ExternalLink className="h-4 w-4" />
+          </a>
+          {user && (
+            <div className="hidden text-right px-2 sm:block" dir="rtl">
+              <p className="w-[150px] truncate text-[13px] font-bold leading-tight text-sidebar-heading">
+                {user.email}
+              </p>
+              <p className="text-[10px] font-medium text-slate-500">جلسة آمنة فعالة</p>
+            </div>
+          )}
 
-        {/* User email */}
-        {user && (
-          <span className="text-xs text-muted-foreground hidden sm:block max-w-[160px] truncate" dir="ltr">
-            {user.email}
-          </span>
-        )}
-
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-          title="تسجيل الخروج"
-        >
-          <LogOut className="w-[18px] h-[18px]" strokeWidth={1.75} />
-        </button>
+          <button
+            onClick={handleLogout}
+            className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-white shadow-sm transition-colors hover:bg-destructive group"
+            title="تسجيل الخروج"
+          >
+            <span className="font-bold text-sm uppercase group-hover:hidden">
+              {user?.email?.charAt(0) || "A"}
+            </span>
+            <LogOut className="w-4 h-4 absolute inset-0 m-auto hidden group-hover:block" />
+          </button>
+        </div>
       </div>
     </header>
   );

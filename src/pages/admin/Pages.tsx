@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Plus, FileText, Trash2, Loader2, Edit2, X, Save, Eye, EyeOff, Layout, LayoutTemplate } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePages, useCreatePage, useUpdatePage, useDeletePage, type Page, type PageShowIn } from "@/hooks/usePages";
+import { toast } from "sonner";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminDataState from "@/components/admin/AdminDataState";
 
 const SHOW_IN_OPTIONS: { value: PageShowIn; label: string }[] = [
   { value: "none", label: "لا يظهر في القوائم" },
@@ -17,8 +20,17 @@ const SHOW_IN_LABELS: Record<PageShowIn, string> = {
   both: "الهيدر + الفوتر",
 };
 
+const sanitizeSlug = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
 const Pages = () => {
-  const { data: pages = [], isLoading } = usePages();
+  const { data: pages = [], isLoading, isError, error, refetch, isFetching } = usePages();
   const createPage = useCreatePage();
   const updatePage = useUpdatePage();
   const deletePage = useDeletePage();
@@ -40,7 +52,12 @@ const Pages = () => {
 
   const handleAdd = () => {
     if (!newTitle.trim()) return;
-    const slug = newSlug.trim() || newTitle.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const slug = sanitizeSlug(newSlug) || sanitizeSlug(newTitle);
+    if (!slug) {
+      toast.error("أدخل رابط الصفحة بالأحرف الإنجليزية الصغيرة مثل: about-us");
+      return;
+    }
+
     createPage.mutate(
       { title: newTitle.trim(), slug, show_in: newShowIn },
       {
@@ -65,11 +82,17 @@ const Pages = () => {
 
   const saveEditor = () => {
     if (!editingPage || !editTitle.trim()) return;
+    const slug = sanitizeSlug(editSlug) || sanitizeSlug(editTitle);
+    if (!slug) {
+      toast.error("أدخل رابطاً صالحاً للصفحة قبل الحفظ");
+      return;
+    }
+
     updatePage.mutate(
       {
         id: editingPage.id,
         title: editTitle.trim(),
-        slug: editSlug.trim(),
+        slug,
         content: editContent,
         show_in: editShowIn,
         published: editPublished,
@@ -83,25 +106,40 @@ const Pages = () => {
   };
 
   if (isLoading) {
+    return <AdminDataState type="loading" title="جاري تحميل الصفحات" description="يتم استرجاع صفحات المتجر وربطها بمناطق العرض." />;
+  }
+
+  if (isError) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <AdminDataState
+        type="error"
+        title="تعذر تحميل الصفحات"
+        description={error instanceof Error ? error.message : "تعذر تحميل الصفحات"}
+        actionLabel="إعادة المحاولة"
+        actionDisabled={isFetching}
+        onAction={() => {
+          void refetch();
+        }}
+      />
     );
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">صفحات المتجر</h1>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          إنشاء صفحة
-        </button>
-      </div>
+      <AdminPageHeader
+        title="صفحات المتجر"
+        description="أنشئ صفحات محتوى واربطها مباشرة بالهيدر أو الفوتر دون سلوكيات منفصلة."
+        meta={`${pages.length} صفحة`}
+        actions={(
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground shadow-button transition-opacity hover:opacity-95"
+          >
+            <Plus className="w-4 h-4" />
+            إنشاء صفحة
+          </button>
+        )}
+      />
 
       {/* Add form */}
       {showAdd && (
@@ -153,41 +191,42 @@ const Pages = () => {
       )}
 
       {/* Pages List */}
-      <div className="bg-card rounded-lg shadow-card border border-border overflow-hidden">
-        <table className="w-full">
+      <div className="overflow-hidden rounded-[20px] border border-slate-100 bg-white shadow-sm animate-slide-in">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-right" dir="rtl">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">الصفحة</th>
-              <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">المسار</th>
-              <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">المكان</th>
-              <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">الحالة</th>
-              <th className="w-28 px-4 py-3"></th>
+            <tr className="border-b border-slate-50 bg-slate-50/30">
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الصفحة</th>
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans hidden md:table-cell">المسار</th>
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">المكان</th>
+              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الحالة</th>
+              <th className="w-28 px-4 py-4"></th>
             </tr>
           </thead>
           <tbody>
             {pages.map((page) => (
-              <tr key={page.id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
-                <td className="px-4 py-3">
+              <tr key={page.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group">
+                <td className="px-4 py-4">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium text-foreground">{page.title}</span>
+                    <FileText className="w-4 h-4 text-slate-400 shrink-0 group-hover:text-primary transition-colors" />
+                    <span className="text-[14px] font-bold text-sidebar-heading group-hover:text-primary transition-colors">{page.title}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <code className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded" dir="ltr">
+                <td className="px-4 py-4 hidden md:table-cell">
+                  <code className="text-[13px] text-slate-500 font-medium bg-slate-50 px-2 py-0.5 rounded border border-slate-100" dir="ltr">
                     /page/{page.slug}
                   </code>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-4">
                   <div className="flex items-center gap-1">
                     {(page.show_in === "header" || page.show_in === "both") && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-none shadow-none">
                         <Layout className="w-3 h-3 ml-1" />
                         هيدر
                       </Badge>
                     )}
                     {(page.show_in === "footer" || page.show_in === "both") && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-none shadow-none">
                         <LayoutTemplate className="w-3 h-3 ml-1" />
                         فوتر
                       </Badge>
@@ -197,25 +236,25 @@ const Pages = () => {
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-4">
                   <button onClick={() => togglePublish(page.id, page.published)}>
-                    <Badge variant={page.published ? "success" : "muted"} className="cursor-pointer">
+                    <Badge variant={page.published ? "success" : "muted"} className="cursor-pointer rounded-full px-3 py-1 font-bold shadow-none border-none text-[11px]">
                       {page.published ? "منشورة" : "مسودة"}
                     </Badge>
                   </button>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-4">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => openEditor(page)}
-                      className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors"
                       title="تعديل"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(page.id)}
-                      className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                       title="حذف"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -226,6 +265,7 @@ const Pages = () => {
             ))}
           </tbody>
         </table>
+        </div>
         {pages.length === 0 && (
           <div className="text-center py-12 text-muted-foreground text-sm">
             لا توجد صفحات بعد — أنشئ أول صفحة

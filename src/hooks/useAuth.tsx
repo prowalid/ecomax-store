@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { api } from "@/lib/api";
+import { safeRemoveLocalStorageItem } from "@/lib/safeStorage";
 
 type AuthUser = { id: string; email: string; role: string; created_at: string };
 
@@ -8,7 +9,7 @@ interface AuthContextType {
   session: { access_token: string } | null;
   isAdmin: boolean;
   isLoading: boolean;
-  setSession: (token: string, userData: AuthUser) => void;
+  setSession: (userData: AuthUser) => void;
   signOut: () => Promise<void>;
 }
 
@@ -29,17 +30,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Expose this method so Login/Setup components can update the context
-  const setSession = (token: string, userData: AuthUser) => {
-    localStorage.setItem("auth_token", token);
-    setSessionState({ access_token: token });
+  const clearLegacyToken = () => {
+    safeRemoveLocalStorageItem("auth_token");
+  };
+
+  const setSession = (userData: AuthUser) => {
+    clearLegacyToken();
+    setSessionState({ access_token: "cookie-session" });
     setUser(userData);
     setIsAdmin(userData.role === "admin");
     setIsLoading(false);
   };
 
   const signOut = async () => {
-    localStorage.removeItem("auth_token");
+    try {
+      await api.post("/auth/logout", {});
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    clearLegacyToken();
     setUser(null);
     setSessionState(null);
     setIsAdmin(false);
@@ -48,20 +57,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const token = localStorage.getItem("auth_token");
-        if (!token) throw new Error("No token");
-
         const { user: userData } = await api.get("/auth/me");
         if (userData) {
-          setSessionState({ access_token: token });
+          clearLegacyToken();
+          setSessionState({ access_token: "cookie-session" });
           setUser(userData);
           setIsAdmin(userData.role === "admin");
         } else {
           throw new Error("Invalid user");
         }
       } catch (err) {
-        // Token is invalid, expired, or doesn't exist
-        localStorage.removeItem("auth_token");
+        clearLegacyToken();
         setUser(null);
         setSessionState(null);
         setIsAdmin(false);

@@ -1,14 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useCallback, useMemo } from "react";
+import { safeGetLocalStorageItem, safeSetLocalStorageItem } from "@/lib/safeStorage";
 
 const SESSION_KEY = "cart_session_id";
 
+function generateSessionId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function getSessionId(): string {
-  let sessionId = localStorage.getItem(SESSION_KEY);
+  let sessionId = safeGetLocalStorageItem(SESSION_KEY);
   if (!sessionId) {
-    sessionId = crypto.randomUUID();
-    localStorage.setItem(SESSION_KEY, sessionId);
+    sessionId = generateSessionId();
+    safeSetLocalStorageItem(SESSION_KEY, sessionId);
   }
   return sessionId;
 }
@@ -31,7 +40,11 @@ export function useCart() {
     queryKey: ["cart", sessionId],
     queryFn: async () => {
       const data = await api.get(`/cart/${sessionId}`);
-      return data as CartItem[];
+      return (data as CartItem[]).map((item) => ({
+        ...item,
+        product_price: Number(item.product_price),
+        quantity: Number(item.quantity),
+      }));
     },
   });
 
@@ -53,14 +66,14 @@ export function useCart() {
 
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
-      await api.patch(`/cart/${itemId}`, { quantity });
+      await api.patch(`/cart/${itemId}`, { quantity, session_id: sessionId });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });
 
   const removeItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
-      await api.delete(`/cart/${itemId}`);
+      await api.delete(`/cart/${itemId}`, { body: JSON.stringify({ session_id: sessionId }) });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });
@@ -93,7 +106,13 @@ export function useCart() {
     [removeItemMutation]
   );
 
+  const removeItemAsync = useCallback(
+    (itemId: string) => removeItemMutation.mutateAsync(itemId),
+    [removeItemMutation]
+  );
+
   const clearCart = useCallback(() => clearCartMutation.mutate(), [clearCartMutation]);
+  const clearCartAsync = useCallback(() => clearCartMutation.mutateAsync(), [clearCartMutation]);
 
   const totalCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
   const totalPrice = useMemo(
@@ -107,7 +126,9 @@ export function useCart() {
     addItem,
     updateQuantity,
     removeItem,
+    removeItemAsync,
     clearCart,
+    clearCartAsync,
     totalCount,
     totalPrice,
     sessionId,

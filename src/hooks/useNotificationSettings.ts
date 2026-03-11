@@ -19,6 +19,8 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   api_configured: false,
 };
 
+type NotificationSettingsPayload = Partial<NotificationSettings>;
+
 export function useNotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ export function useNotificationSettings() {
       const data = await api.get('/settings/whatsapp_notifications');
 
       if (data && data.value) {
-        const val = data.value as any;
+        const val = data.value as NotificationSettingsPayload;
         setSettings({
           enabled_notifications: val.enabled_notifications || DEFAULT_SETTINGS.enabled_notifications,
           admin_phone: val.admin_phone || "",
@@ -54,7 +56,7 @@ export function useNotificationSettings() {
 
       setSettings(newSettings);
       toast.success("تم حفظ الإعدادات بنجاح");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("فشل حفظ الإعدادات");
       console.error(err);
     } finally {

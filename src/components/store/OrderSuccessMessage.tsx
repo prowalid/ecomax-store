@@ -1,0 +1,62 @@
+import { Link } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
+
+interface OrderSuccessMessageProps {
+  orderNumber?: number | null;
+  title?: string;
+  description?: string;
+  actionLabel: string;
+  actionTo?: string;
+  onAction?: () => void;
+  compact?: boolean;
+}
+
+export default function OrderSuccessMessage({
+  orderNumber,
+  title = "شكراً، تم إرسال طلبك بنجاح",
+  description = "سنتواصل معك قريباً لتأكيد الطلب ومتابعة التوصيل.",
+  actionLabel,
+  actionTo,
+  onAction,
+  compact = false,
+}: OrderSuccessMessageProps) {
+  return (
+    <div
+      className={`mx-auto rounded-3xl border border-green-200 bg-white text-center shadow-[0_20px_60px_rgba(16,185,129,0.08)] ${
+        compact ? "p-6" : "max-w-2xl p-8"
+      }`}
+      dir="rtl"
+    >
+      <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-green-500" />
+      <h2 className="text-2xl font-black text-gray-900">{title}</h2>
+      {orderNumber ? (
+        <p className="mt-3 text-sm text-gray-600">
+          رقم الطلب: <span className="font-black text-store-primary">#{orderNumber}</span>
+        </p>
+      ) : null}
+      <p className="mt-2 text-sm text-gray-500">{description}</p>
+      <div className="mt-6">
+        {actionTo ? (
+          <Link
+            to={actionTo}
+            className={`inline-flex items-center justify-center rounded-xl bg-store-primary px-6 font-bold text-white transition-colors hover:bg-red-700 ${
+              compact ? "h-10 text-sm" : "h-11"
+            }`}
+          >
+            {actionLabel}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={onAction}
+            className={`inline-flex items-center justify-center rounded-xl bg-store-primary px-6 font-bold text-white transition-colors hover:bg-red-700 ${
+              compact ? "h-10 text-sm" : "h-11"
+            }`}
+          >
+            {actionLabel}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
