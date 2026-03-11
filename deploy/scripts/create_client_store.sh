@@ -11,8 +11,8 @@ Options:
   --domain          Client domain, e.g. client-a.com
   --base-dir        Base directory for client stacks (default: /opt/client-stores)
   --edge-dir        Edge proxy directory (default: /opt/edge-proxy)
-  --api-image       API image tag (default: ghcr.io/walid733/express-trade-kit-api:v1.0.1)
-  --web-image       Web image tag (default: ghcr.io/walid733/express-trade-kit-web:v1.0.1)
+  --api-image       API image tag (default: ghcr.io/walid733/express-trade-kit-api:v1.0.2)
+  --web-image       Web image tag (default: ghcr.io/walid733/express-trade-kit-web:v1.0.2)
   --db-password     Database password (auto-generated if omitted)
   --jwt-secret      JWT secret (auto-generated if omitted)
   --up              Start the client stack after generating files
@@ -27,8 +27,8 @@ CLIENT_SLUG=""
 APP_DOMAIN=""
 BASE_DIR="/opt/client-stores"
 EDGE_DIR="/opt/edge-proxy"
-API_IMAGE="ghcr.io/walid733/express-trade-kit-api:v1.0.1"
-WEB_IMAGE="ghcr.io/walid733/express-trade-kit-web:v1.0.1"
+API_IMAGE="ghcr.io/walid733/express-trade-kit-api:v1.0.2"
+WEB_IMAGE="ghcr.io/walid733/express-trade-kit-web:v1.0.2"
 POSTGRES_PASSWORD=""
 JWT_SECRET=""
 START_STACK="false"

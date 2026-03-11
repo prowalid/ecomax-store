@@ -1,13 +1,37 @@
 import { Outlet } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { settings: appearance } = useAppearanceSettings();
+  const { settings: generalSettings } = useStoreSettings("general", {
+    store_name: "ECOMAX",
+    meta_title: "",
+  });
+  const effectiveStoreName = generalSettings.store_name || "ECOMAX";
+
+  useEffect(() => {
+    document.title = `${effectiveStoreName} — لوحة التحكم`;
+  }, [effectiveStoreName]);
+
+  useEffect(() => {
+    const faviconHref = appearance.favicon_url?.trim();
+    let faviconTag = document.querySelector('link[rel="icon"]');
+    if (!faviconTag) {
+      faviconTag = document.createElement("link");
+      faviconTag.setAttribute("rel", "icon");
+      document.head.appendChild(faviconTag);
+    }
+
+    faviconTag.setAttribute("href", faviconHref || "/favicon.ico");
+  }, [appearance.favicon_url]);
 
   return (
     <div className="min-h-screen bg-background">

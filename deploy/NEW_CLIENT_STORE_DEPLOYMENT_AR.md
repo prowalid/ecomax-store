@@ -56,8 +56,8 @@ bash deploy/scripts/create_client_store.sh --slug store-client --domain store-cl
 bash deploy/scripts/create_client_store.sh \
   --slug store-client \
   --domain store-client.com \
-  --api-image ghcr.io/walid733/express-trade-kit-api:v1.0.1 \
-  --web-image ghcr.io/walid733/express-trade-kit-web:v1.0.1 \
+  --api-image ghcr.io/walid733/express-trade-kit-api:v1.0.2 \
+  --web-image ghcr.io/walid733/express-trade-kit-web:v1.0.2 \
   --up
 ```
 
@@ -115,10 +115,10 @@ docker compose -p store-client --env-file .env.registry up -d
 - لا تخلط ملفات عميل مع عميل آخر في نفس المجلد
 - الـ proxy المركزي فقط هو من يملك `80/443`
 - لا تستعمل `latest` للتسليم الرسمي
-- استعمل دائمًا وسمًا واضحًا مثل `v1.0.1`
+- استعمل دائمًا وسمًا واضحًا مثل `v1.0.2`
 - لا تنقل قاعدة بيانات عميل إلى عميل آخر
 - كل عميل يجب أن يبقى على بياناته وvolumes الخاصة به
 
 ## 10. النسخة الحالية المعتمدة
-- `ghcr.io/walid733/express-trade-kit-api:v1.0.1`
-- `ghcr.io/walid733/express-trade-kit-web:v1.0.1`
+- `ghcr.io/walid733/express-trade-kit-api:v1.0.2`
+- `ghcr.io/walid733/express-trade-kit-web:v1.0.2`

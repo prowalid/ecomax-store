@@ -37,8 +37,8 @@
 - صورة `web`
 
 أمثلة حالية:
-- `ghcr.io/walid733/express-trade-kit-api:v1.0.1`
-- `ghcr.io/walid733/express-trade-kit-web:v1.0.1`
+- `ghcr.io/walid733/express-trade-kit-api:v1.0.2`
+- `ghcr.io/walid733/express-trade-kit-web:v1.0.2`
 
 هذا ليس مكان التطوير، بل مكان الإصدارات الجاهزة.
 
@@ -318,8 +318,8 @@ Checklist سريعة:
 الحالة الحالية الآن:
 - GitHub يحتوي baseline متوافق مع `Golden Image V1`
 - GHCR يحتوي:
-- `ghcr.io/walid733/express-trade-kit-api:v1.0.1`
-- `ghcr.io/walid733/express-trade-kit-web:v1.0.1`
+- `ghcr.io/walid733/express-trade-kit-api:v1.0.2`
+- `ghcr.io/walid733/express-trade-kit-web:v1.0.2`
 - ملفات التشغيل والتوثيق موجودة داخل المستودع
 
 هذا يعني أنكم الآن قادرون على:
