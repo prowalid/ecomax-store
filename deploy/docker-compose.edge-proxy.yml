@@ -1,0 +1,22 @@
+services:
+  edge-proxy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - edge_caddy_data:/data
+      - edge_caddy_config:/config
+    networks:
+      - edge
+
+volumes:
+  edge_caddy_data:
+  edge_caddy_config:
+
+networks:
+  edge:
+    name: ${EDGE_NETWORK:-etk-edge}

@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: etk-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-expresstrade}
@@ -9,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./server/src/db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - ./init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-etk_user} -d ${POSTGRES_DB:-expresstrade}"]
       interval: 10s
@@ -18,7 +17,6 @@ services:
 
   api:
     image: ${ETK_API_IMAGE:?ETK_API_IMAGE is required}
-    container_name: etk-api
     restart: unless-stopped
     depends_on:
       db:
@@ -52,25 +50,27 @@ services:
 
   web:
     image: ${ETK_WEB_IMAGE:?ETK_WEB_IMAGE is required}
-    container_name: etk-web
     restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
     environment:
       APP_DOMAIN: ${APP_DOMAIN:-localhost}
-    ports:
-      - "80:80"
-      - "443:443"
     volumes:
-      - caddy_data:/data
-      - caddy_config:/config
       - api_uploads:/uploads:ro
+    networks:
+      default:
+      edge:
+        aliases:
+          - ${CLIENT_SLUG:?CLIENT_SLUG is required}-web
 
 volumes:
   postgres_data:
   api_logs:
   api_uploads:
   api_backups:
-  caddy_data:
-  caddy_config:
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:-etk-edge}

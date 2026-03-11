@@ -126,16 +126,18 @@ docker compose --env-file .env.golden -f docker-compose.golden-image.yml up -d -
 5. Complete first-run admin setup at `/admin/setup`
 
 ### 4.3 Registry-Based Golden Image Release
-For client-ready releases that should be installed on any server without rebuilding from source, use:
-- [docker-compose.golden-image.registry.yml](/root/express-trade-kit/docker-compose.golden-image.registry.yml)
-- [deploy/golden-image.registry.env.example](/root/express-trade-kit/deploy/golden-image.registry.env.example)
+For client-ready releases that should be installed on a shared production server without rebuilding from source, use:
 - [deploy/GOLDEN_IMAGE_V1_REGISTRY_RUNBOOK.md](/root/express-trade-kit/deploy/GOLDEN_IMAGE_V1_REGISTRY_RUNBOOK.md)
+- [deploy/MULTI_CLIENT_SAME_SERVER_RUNBOOK.md](/root/express-trade-kit/deploy/MULTI_CLIENT_SAME_SERVER_RUNBOOK.md)
+- [deploy/docker-compose.edge-proxy.yml](/root/express-trade-kit/deploy/docker-compose.edge-proxy.yml)
+- [deploy/docker-compose.client-stack.yml](/root/express-trade-kit/deploy/docker-compose.client-stack.yml)
+- [deploy/client-multi.env.template](/root/express-trade-kit/deploy/client-multi.env.template)
 
 This flow is the proper release path for:
 - building versioned Docker images
 - pushing them to a registry
-- pulling them on a client server
-- enabling SSL automatically on the client domain
+- provisioning isolated client stacks on the same server
+- enabling SSL automatically on each client domain
 
 ### 5. Automated Backups & System Maintenance
 For production data safety, schedule the provided db dumping script via CRON tasks.
