@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
 CREATE TABLE IF NOT EXISTS pages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
-  slug TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
   content TEXT DEFAULT '',
   published BOOLEAN NOT NULL DEFAULT false,
   show_in TEXT NOT NULL DEFAULT 'none' CHECK (show_in IN ('header', 'footer', 'both', 'none')),
@@ -199,14 +199,15 @@ INSERT INTO store_settings (key, value) VALUES
   ('shipping', '{"wilayas": []}'::jsonb),
   ('general', '{"store_name": "ECOMAX", "phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": ""}'::jsonb),
   ('appearance', '{"logo_url": "", "footer_logo_url": "", "favicon_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}'::jsonb),
-  ('marketing', '{"pixel_id": "", "capi_token": "", "pixel_configured": false, "webhook_url": "", "enabled_events": {"PageView": true, "ViewContent": true, "AddToCart": true, "InitiateCheckout": true, "Purchase": true, "Lead": true}}'::jsonb)
+  ('marketing', '{"pixel_id": "", "capi_token": "", "pixel_configured": false, "webhook_url": "", "enabled_events": {"PageView": true, "ViewContent": true, "AddToCart": true, "InitiateCheckout": true, "Purchase": true, "Lead": true}}'::jsonb),
+  ('category_image_defaults_seeded', '{"seeded": true}'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
 -- Default categories
-INSERT INTO categories (name, slug, sort_order) VALUES
-  ('أحذية', 'shoes', 1),
-  ('ساعات', 'watches', 2),
-  ('ملابس رجالية', 'men-clothing', 3),
+INSERT INTO categories (name, slug, sort_order, image_url) VALUES
+  ('أحذية', 'shoes', 1, 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200'),
+  ('ساعات', 'watches', 2, 'https://images.unsplash.com/photo-1556910103-1c02745a8720?auto=format&fit=crop&q=80&w=1200'),
+  ('ملابس رجالية', 'men-clothing', 3, 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&q=80&w=1200'),
   ('ملابس نسائية', 'women-clothing', 4),
   ('إكسسوارات', 'accessories', 5),
   ('إلكترونيات', 'electronics', 6)

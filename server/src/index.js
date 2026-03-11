@@ -21,6 +21,8 @@ const { errorHandler } = require('./middleware/errorHandler');
 const morgan = require('morgan');
 const logger = require('./utils/logger');
 const { ensureAuthSessionsTable } = require('./utils/authSessions');
+const { ensureDefaultCategoryImages } = require('./utils/categoryDefaults');
+const { ensurePagesSlugIntegrity } = require('./utils/pagesIntegrity');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -94,6 +96,8 @@ app.use(errorHandler);
 // ─── Start ───
 async function startServer() {
   await ensureAuthSessionsTable();
+  await ensureDefaultCategoryImages();
+  await ensurePagesSlugIntegrity();
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Express Trade Kit API running on http://0.0.0.0:${PORT}`);

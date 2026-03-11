@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { normalizeSlug } = require('../utils/slug');
 
 // GET /api/categories
 async function getCategories(req, res, next) {
@@ -14,16 +15,28 @@ async function getCategories(req, res, next) {
 async function createCategory(req, res, next) {
   try {
     const { name, slug, sort_order, image_url } = req.body;
+    const normalizedSlug = normalizeSlug(slug) || null;
     
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
+    }
+
+    if (normalizedSlug) {
+      const { rows: existing } = await pool.query(
+        'SELECT id FROM categories WHERE slug = $1 LIMIT 1',
+        [normalizedSlug]
+      );
+
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'Category slug already exists' });
+      }
     }
 
     const { rows } = await pool.query(`
       INSERT INTO categories (name, slug, sort_order, image_url)
       VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [name, slug || null, sort_order || 0, image_url || null]);
+    `, [name, normalizedSlug, sort_order || 0, image_url || null]);
     
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -34,13 +47,28 @@ async function createCategory(req, res, next) {
 // PATCH /api/categories/:id
 async function updateCategory(req, res, next) {
   const { id } = req.params;
-  const updates = req.body;
+  const updates = { ...req.body };
   
   if (Object.keys(updates).length === 0) {
     return res.status(400).json({ error: 'No fields to update' });
   }
 
   try {
+    if (updates.slug !== undefined) {
+      updates.slug = normalizeSlug(updates.slug) || null;
+
+      if (updates.slug) {
+        const { rows: existing } = await pool.query(
+          'SELECT id FROM categories WHERE slug = $1 AND id <> $2 LIMIT 1',
+          [updates.slug, id]
+        );
+
+        if (existing.length > 0) {
+          return res.status(409).json({ error: 'Category slug already exists' });
+        }
+      }
+    }
+
     const allowedFields = ['name', 'slug', 'sort_order', 'image_url'];
     const setClause = [];
     const values = [];

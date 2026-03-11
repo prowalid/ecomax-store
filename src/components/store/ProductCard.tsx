@@ -67,7 +67,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
     >
       <Link to={`/product/${id}`} className="block">
         {/* Image */}
-        <div className="relative overflow-hidden aspect-[4/4.65]" style={{ backgroundColor: tokens.surfaceSoft }}>
+        <div className="relative overflow-hidden aspect-[4/4.15] sm:aspect-[4/4.25]" style={{ backgroundColor: tokens.surfaceSoft }}>
           {hasDiscount && (
             <span
               className="absolute top-4 right-4 text-white text-xs font-black px-4 py-1.5 rounded-full z-10 backdrop-blur-sm"
@@ -107,16 +107,16 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
         </div>
 
         {/* Content */}
-        <div className="px-3 sm:px-4 pt-3 pb-1.5 text-center flex flex-col items-center">
+        <div className="flex flex-col items-center px-3 pt-2.5 pb-1 text-center sm:px-4">
           {category_name && (
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: tokens.textSoft }}>{category_name}</p>
+            <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: tokens.textSoft }}>{category_name}</p>
           )}
-          <h3 className="font-bold mb-1.5 line-clamp-2 min-h-[2.25rem] leading-snug transition-colors cursor-pointer text-[13px] sm:text-sm" style={{ color: tokens.textPrimary }}>
+          <h3 className="mb-1 line-clamp-2 min-h-[2.1rem] cursor-pointer text-[13px] font-bold leading-snug transition-colors sm:text-sm" style={{ color: tokens.textPrimary }}>
             {name}
           </h3>
 
           {/* Rate & Price Row */}
-          <div className="flex flex-col items-center justify-center space-y-1 w-full">
+          <div className="flex w-full flex-col items-center justify-center space-y-0.5">
             <div className="flex items-center space-x-1 space-x-reverse">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star key={star} size={10} className="text-yellow-400 fill-yellow-400" />
@@ -135,7 +135,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
       </Link>
 
       {/* Add to cart button */}
-      <div className="px-3 sm:px-4 pb-3.5 pt-1.5 shrink-0">
+      <div className="shrink-0 px-3 pb-3 pt-1 sm:px-4">
         {outOfStock ? (
           <button
             disabled

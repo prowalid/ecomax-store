@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, ChevronUp, X, Loader2 } from "lucide-react";
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { useCart } from "@/hooks/useCart";
@@ -21,6 +21,7 @@ const StoreLayout = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { totalCount } = useCart();
   const { settings: theme, loading } = useAppearanceSettings();
   const { settings: marketing } = useMarketingSettings();
@@ -108,13 +109,33 @@ const StoreLayout = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleSectionNavigation = useCallback(
+    (sectionId: "products" | "offers", closeMobileMenu = false) => {
+      if (closeMobileMenu) {
+        setMobileMenuOpen(false);
+      }
+
+      if (location.pathname === "/") {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.history.replaceState(null, "", `/#${sectionId}`);
+          return;
+        }
+      }
+
+      navigate(`/#${sectionId}`);
+    },
+    [location.pathname, navigate]
+  );
+
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   if (loading) {
     return (
@@ -217,8 +238,22 @@ const StoreLayout = () => {
           </div>
 
           <nav className="hidden md:flex flex-1 justify-center space-x-8 space-x-reverse font-bold">
-            <a href="/#products" className="hover:opacity-80 transition-opacity" style={{ color: theme.header_text }}>المنتجات</a>
-            <a href="/#offers" className="hover:opacity-80 transition-opacity" style={{ color: theme.header_text }}>العروض</a>
+            <button
+              type="button"
+              onClick={() => handleSectionNavigation("products")}
+              className="hover:opacity-80 transition-opacity"
+              style={{ color: theme.header_text }}
+            >
+              المنتجات
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSectionNavigation("offers")}
+              className="hover:opacity-80 transition-opacity"
+              style={{ color: theme.header_text }}
+            >
+              العروض
+            </button>
             {normalizedHeaderPages.map((page) => (
               <Link
                 key={page.id}
@@ -257,8 +292,22 @@ const StoreLayout = () => {
           }}
         >
           <div className="pt-2 pb-1 px-4">
-            <a href="/#products" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold transition-all" style={{ color: theme.header_text }}>المنتجات</a>
-            <a href="/#offers" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-sm font-semibold transition-all" style={{ color: theme.header_text }}>العروض</a>
+            <button
+              type="button"
+              onClick={() => handleSectionNavigation("products", true)}
+              className="block w-full px-4 py-3 text-right text-sm font-semibold transition-all"
+              style={{ color: theme.header_text }}
+            >
+              المنتجات
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSectionNavigation("offers", true)}
+              className="block w-full px-4 py-3 text-right text-sm font-semibold transition-all"
+              style={{ color: theme.header_text }}
+            >
+              العروض
+            </button>
             {normalizedHeaderPages.map((page) => (
               <Link
                 key={page.id}
@@ -301,8 +350,30 @@ const StoreLayout = () => {
             <div>
               <h4 className="text-lg font-bold mb-6 pb-2 inline-block" style={{ borderBottom: `1px solid ${theme.footer_text}33` }}>روابط سريعة</h4>
               <ul className="space-y-3 font-medium" style={{ color: theme.footer_text + 'aa' }}>
-                <li><a href="/#products" className="flex items-center transition-colors" style={{ color: theme.footer_text + 'aa' }} onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent} onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}><ChevronLeft size={16} className="ml-1" /> المنتجات</a></li>
-                <li><a href="/#offers" className="flex items-center transition-colors" style={{ color: theme.footer_text + 'aa' }} onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent} onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}><ChevronLeft size={16} className="ml-1" /> العروض</a></li>
+                <li>
+                  <button
+                    type="button"
+                    className="flex items-center transition-colors"
+                    style={{ color: theme.footer_text + 'aa' }}
+                    onClick={() => handleSectionNavigation("products")}
+                    onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent}
+                    onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}
+                  >
+                    <ChevronLeft size={16} className="ml-1" /> المنتجات
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className="flex items-center transition-colors"
+                    style={{ color: theme.footer_text + 'aa' }}
+                    onClick={() => handleSectionNavigation("offers")}
+                    onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent}
+                    onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}
+                  >
+                    <ChevronLeft size={16} className="ml-1" /> العروض
+                  </button>
+                </li>
                 {footerLinks.map((page) => (
                   <li key={page.slug}>
                     <Link

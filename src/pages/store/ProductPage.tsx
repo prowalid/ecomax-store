@@ -22,6 +22,7 @@ import ProductHero from "@/components/store/product-page/ProductHero";
 import ProductTrustBadges from "@/components/store/product-page/ProductTrustBadges";
 import { saveTrackingProfile } from "@/lib/trackingProfile";
 import { getStoreThemeTokens } from "@/lib/storeTheme";
+import { sanitizeProductDescription } from "@/lib/productDescription";
 
 interface WilayaShipping {
   id: number;
@@ -340,29 +341,33 @@ const ProductPage = () => {
     : product.image_url ? [product.image_url] : [];
 
   const inCart = items.some((item) => item.product_id === product.id);
+  const productDescriptionHtml = product.description ? sanitizeProductDescription(product.description) : "";
 
   return (
     <div className="font-[Cairo] pb-20 md:pb-0">
       {/* Breadcrumb */}
-      <div className="bg-gray-50/50 border-b border-gray-100 py-4 hidden md:block">
-        <div className="container mx-auto px-4 text-sm text-gray-500 flex items-center">
-          <Link to="/" className="hover:text-store-primary">
+      <div
+        className="hidden border-b py-4 md:block"
+        style={{ backgroundColor: tokens.surfaceSoft, borderColor: tokens.border }}
+      >
+        <div className="container mx-auto flex items-center px-4 text-sm" style={{ color: tokens.textMuted }}>
+          <Link to="/" className="transition-colors" style={{ color: tokens.textMuted }}>
             الرئيسية
           </Link>
-          <ChevronRight size={14} className="mx-2 text-gray-400" />
-          <Link to="/shop" className="hover:text-store-primary">
+          <ChevronRight size={14} className="mx-2" style={{ color: tokens.textSoft }} />
+          <Link to="/shop" className="transition-colors" style={{ color: tokens.textMuted }}>
             المتجر
           </Link>
-          <ChevronRight size={14} className="mx-2 text-gray-400" />
+          <ChevronRight size={14} className="mx-2" style={{ color: tokens.textSoft }} />
           {product.category_name && (
             <>
-              <Link to={`/shop?category=${product.category_id}`} className="hover:text-store-primary">
+              <Link to={`/shop?category=${product.category_id}`} className="transition-colors" style={{ color: tokens.textMuted }}>
                 {product.category_name}
               </Link>
-              <ChevronRight size={14} className="mx-2 text-gray-400" />
+              <ChevronRight size={14} className="mx-2" style={{ color: tokens.textSoft }} />
             </>
           )}
-          <span className="text-gray-800 font-semibold line-clamp-1">{product.name}</span>
+          <span className="line-clamp-1 font-semibold" style={{ color: tokens.textPrimary }}>{product.name}</span>
         </div>
       </div>
 
@@ -415,9 +420,11 @@ const ProductPage = () => {
         <section className="container mx-auto px-4 py-8">
           <div className="rounded-3xl shadow-sm p-6 md:p-10" style={{ backgroundColor: tokens.surface, border: `1px solid ${tokens.border}` }}>
             <h2 className="text-2xl font-bold mb-6 inline-block border-b-4 pb-2" style={{ color: tokens.textPrimary, borderColor: theme.accent_color }}>وصف المنتج</h2>
-            <div className="prose max-w-none font-medium leading-relaxed text-lg" style={{ color: tokens.textMuted }}>
-              <p className="whitespace-pre-line">{product.description}</p>
-            </div>
+            <div
+              className="prose max-w-none text-base md:text-lg leading-relaxed"
+              style={{ color: tokens.textMuted }}
+              dangerouslySetInnerHTML={{ __html: productDescriptionHtml }}
+            />
           </div>
         </section>
       )}

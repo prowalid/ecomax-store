@@ -20,7 +20,7 @@ export default function ProductTrustBadges() {
         {badges.map((badge) => (
           <div
             key={badge.title}
-            className="p-3 sm:p-6 rounded-2xl sm:rounded-3xl flex items-center text-right space-x-3 sm:space-x-4 space-x-reverse transition-all duration-300 group hover:-translate-y-1"
+            className="group flex items-center gap-3 rounded-2xl p-3 text-right transition-all duration-300 hover:-translate-y-1 sm:gap-4 sm:rounded-3xl sm:p-6"
             style={{ backgroundColor: tokens.surface, border: `1px solid ${tokens.border}` }}
           >
             <div className="transition-colors p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shrink-0" style={{ backgroundColor: tokens.surfaceSoft, color: theme.accent_color }}>

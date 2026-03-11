@@ -29,14 +29,6 @@ const StorePage = () => {
   const [failedSlideIndexes, setFailedSlideIndexes] = useState<number[]>([]);
   const activeSlides = (theme.slides || []).filter((slide): slide is AppearanceSlide => Boolean(slide?.image_url));
   const resolvedSlides = activeSlides.length > 0 ? activeSlides : defaultAppearance.slides;
-  
-  // Generic fallback images for categories without a specific image
-  const defaultCatImages = [
-    "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1556910103-1c02745a8720?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&q=80&w=600",
-  ];
-
   useEffect(() => {
     setFailedSlideIndexes([]);
   }, [theme.slides]);
@@ -57,6 +49,7 @@ const StorePage = () => {
   }, [resolvedSlides.length]);
 
   const activeProducts = products.filter((p) => p.status === "active");
+  const visibleCategories = categories.filter((category) => Boolean(category.image_url));
   const filteredProducts = selectedCategory
     ? activeProducts.filter((p) => p.category_id === selectedCategory)
     : activeProducts;
@@ -103,6 +96,11 @@ const StorePage = () => {
         document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
       }, 50);
     }
+  };
+
+  const scrollToOffers = () => {
+    document.getElementById("offers")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.replaceState(null, "", "/#offers");
   };
 
   if (isLoading) {
@@ -215,7 +213,7 @@ const StorePage = () => {
           ].map((badge, idx) => (
             <div
               key={idx}
-              className="p-3 sm:p-6 rounded-2xl sm:rounded-3xl flex items-center text-right space-x-3 sm:space-x-4 space-x-reverse transition-all duration-300 group hover:-translate-y-1"
+              className="group flex items-center gap-3 rounded-2xl p-3 text-right transition-all duration-300 hover:-translate-y-1 sm:gap-4 sm:rounded-3xl sm:p-6"
               style={{ backgroundColor: tokens.surface, border: `1px solid ${tokens.border}` }}
             >
               <div className="transition-colors p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shrink-0" style={{ backgroundColor: tokens.surfaceSoft, color: theme.accent_color }}>
@@ -244,7 +242,7 @@ const StorePage = () => {
         </div>
 
         {/* Category Filter Tabs */}
-        {categories.length > 0 && (
+        {visibleCategories.length > 0 && (
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             <button
               onClick={() => applyCategoryFilter(null)}
@@ -255,7 +253,7 @@ const StorePage = () => {
             >
               الكل
             </button>
-            {categories.map((cat) => (
+            {visibleCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => applyCategoryFilter(cat.id)}
@@ -296,7 +294,7 @@ const StorePage = () => {
       </section>
 
       {/* Categories */}
-      {categories.length > 0 && (
+      {visibleCategories.length > 0 && (
         <section className="py-10 sm:py-12 border-t overflow-x-clip" style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}>
           <div className="container mx-auto px-4">
             <div className="text-center mb-10 flex flex-col items-center">
@@ -310,9 +308,14 @@ const StorePage = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
-              {categories.map((cat, idx) => (
-                <button key={cat.id} onClick={() => applyCategoryFilter(cat.id, true)} className="relative rounded-2xl overflow-hidden h-56 sm:h-64 group cursor-pointer shadow-sm block w-full text-right">
-                  <img src={cat.image_url || defaultCatImages[idx] || defaultCatImages[0]} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
+              {visibleCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => applyCategoryFilter(cat.id, true)}
+                  className="group relative h-56 sm:h-64 w-full overflow-hidden rounded-2xl border text-right shadow-sm transition-transform duration-300 hover:-translate-y-1"
+                  style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}
+                >
+                  <img src={cat.image_url || ""} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-colors duration-500"></div>
                   <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-6 flex justify-between items-end gap-3">
                     <h3 className="text-white text-xl sm:text-2xl font-bold leading-tight">{cat.name}</h3>
@@ -333,9 +336,14 @@ const StorePage = () => {
                   <Tag size={16} className="ml-2" /> عروض حصرية
                 </div>
                 <h3 className="text-white text-2xl sm:text-4xl font-black mb-4 leading-tight">تخفيضات تصل لـ 50%</h3>
-                <a href="/#offers" className="bg-white px-6 sm:px-8 py-3 rounded-full font-bold hover:shadow-lg transition-shadow inline-flex items-center" style={{ color: theme.accent_color }}>
+                <button
+                  type="button"
+                  onClick={scrollToOffers}
+                  className="bg-white px-6 sm:px-8 py-3 rounded-full font-bold hover:shadow-lg transition-shadow inline-flex items-center"
+                  style={{ color: theme.accent_color }}
+                >
                   اكتشف العروض <ArrowLeft size={18} className="mr-2" />
-                </a>
+                </button>
               </div>
             </div>
           </div>

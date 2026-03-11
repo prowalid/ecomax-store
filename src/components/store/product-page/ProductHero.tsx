@@ -186,15 +186,6 @@ export default function ProductHero({
             )}
           </div>
 
-          {product.description && (
-            <div className="mb-8">
-              <h3 className="font-bold text-lg mb-3 flex items-center border-b border-gray-100 pb-2">
-                <Package size={20} className="ml-2 text-gray-500" /> وصف المنتج:
-              </h3>
-              <p className="text-gray-600 font-medium leading-relaxed whitespace-pre-line">{product.description}</p>
-            </div>
-          )}
-
           <div
             id="order-form"
             className="bg-white border-2 border-store-primary/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 mt-auto relative overflow-hidden"

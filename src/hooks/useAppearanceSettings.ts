@@ -30,8 +30,6 @@ export interface AppearanceSettings {
   // Slides
   slides: AppearanceSlide[];
   offers_banner_url: string;
-  // Category default images
-  category_images: string[];
 }
 
 export const defaultAppearance: AppearanceSettings = {
@@ -59,11 +57,6 @@ export const defaultAppearance: AppearanceSettings = {
     { image_url: "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=1600" },
   ],
   offers_banner_url: "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200",
-  category_images: [
-    "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1556910103-1c02745a8720?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&q=80&w=600",
-  ],
 };
 
 function normalizeSlides(value: unknown): AppearanceSlide[] {

@@ -161,10 +161,13 @@ export default function ProductFormModal({
             <Textarea
               value={form.description}
               onChange={(e) => onFieldChange("description", e.target.value)}
-              placeholder="وصف المنتج..."
-              rows={3}
+              placeholder={"يمكنك كتابة نص عادي أو HTML بسيط مثل:\n<p>وصف المنتج</p>\n<ul><li>ميزة 1</li><li>ميزة 2</li></ul>"}
+              rows={5}
               className="resize-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
             />
+            <p className="text-[11px] text-muted-foreground">
+              مدعوم: <span dir="ltr">p, br, strong, b, em, ul, ol, li</span> والنص العادي أيضًا.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

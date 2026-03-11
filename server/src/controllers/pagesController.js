@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { normalizeSlug } = require('../utils/slug');
 
 // GET /api/pages
 // Used by admin to fetch all pages
@@ -32,7 +33,7 @@ async function getPublishedPages(req, res, next) {
 // GET /api/pages/slug/:slug
 // Used by storefront to view a specific page
 async function getPageBySlug(req, res, next) {
-  const { slug } = req.params;
+  const slug = normalizeSlug(req.params.slug);
   try {
     const { rows } = await pool.query(`
       SELECT * FROM pages 
@@ -54,16 +55,26 @@ async function getPageBySlug(req, res, next) {
 async function createPage(req, res, next) {
   try {
     const { title, slug, content, published, show_in } = req.body;
+    const normalizedSlug = normalizeSlug(slug);
     
-    if (!title || !slug) {
+    if (!title || !normalizedSlug) {
       return res.status(400).json({ error: 'Title and slug are required' });
+    }
+
+    const { rows: existing } = await pool.query(
+      'SELECT id FROM pages WHERE slug = $1 LIMIT 1',
+      [normalizedSlug]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Page slug already exists' });
     }
 
     const { rows } = await pool.query(`
       INSERT INTO pages (title, slug, content, published, show_in)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [title, slug, content || '', published || false, show_in || 'none']);
+    `, [title, normalizedSlug, content || '', published || false, show_in || 'none']);
     
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -74,13 +85,29 @@ async function createPage(req, res, next) {
 // PATCH /api/pages/:id
 async function updatePage(req, res, next) {
   const { id } = req.params;
-  const updates = req.body;
+  const updates = { ...req.body };
   
   if (Object.keys(updates).length === 0) {
     return res.status(400).json({ error: 'No fields to update' });
   }
 
   try {
+    if (updates.slug !== undefined) {
+      updates.slug = normalizeSlug(updates.slug);
+      if (!updates.slug) {
+        return res.status(400).json({ error: 'Slug is required' });
+      }
+
+      const { rows: existing } = await pool.query(
+        'SELECT id FROM pages WHERE slug = $1 AND id <> $2 LIMIT 1',
+        [updates.slug, id]
+      );
+
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'Page slug already exists' });
+      }
+    }
+
     const allowedFields = ['title', 'slug', 'content', 'published', 'show_in'];
     const setClause = [];
     const values = [];

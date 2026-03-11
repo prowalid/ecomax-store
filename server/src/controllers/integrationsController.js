@@ -123,15 +123,15 @@ async function sendOrderWebhook(eventType, payload) {
 function buildOrderWebhookPayload(eventType, order, items, metadata = {}) {
   const normalizedItems = Array.isArray(items)
     ? items.map((item) => ({
-        product_id: item.product_id || null,
-        product_name: item.product_name,
+        product: item.product_name,
         quantity: Number(item.quantity) || 0,
-        unit_price: Number(item.unit_price) || 0,
-        total: Number(item.total) || 0,
+        price: Number(item.unit_price) || 0,
       }))
     : [];
 
   const totalItemsQuantity = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
+  const productSummary = normalizedItems.map((item) => item.product).filter(Boolean).join('، ') || null;
+  const orderDate = order.created_at || order.updated_at || null;
 
   return {
     event: {
@@ -142,37 +142,19 @@ function buildOrderWebhookPayload(eventType, order, items, metadata = {}) {
       occurred_at: new Date().toISOString(),
     },
     order: {
-      id: order.id,
-      order_number: order.order_number,
-      status: order.status,
-      customer_id: order.customer_id || null,
+      date: orderDate,
+      order_id: order.order_number,
       customer_name: order.customer_name,
       customer_phone: order.customer_phone,
       wilaya: order.wilaya || null,
       commune: order.commune || null,
-      address: order.address || null,
       delivery_type: order.delivery_type || null,
-      subtotal: Number(order.subtotal) || 0,
-      shipping_cost: Number(order.shipping_cost) || 0,
-      discount_code: order.discount_code || null,
-      discount_amount: Number(order.discount_amount) || 0,
+      product: productSummary,
+      quantity: totalItemsQuantity,
+      price: Number(order.subtotal) || 0,
+      shipping: Number(order.shipping_cost) || 0,
       total: Number(order.total) || 0,
-      shipping_company: order.shipping_company || null,
-      tracking_number: order.tracking_number || null,
-      call_attempts: Number(order.call_attempts) || 0,
-      note: order.note || null,
-      created_at: order.created_at || null,
-      updated_at: order.updated_at || null,
-      items_count: normalizedItems.length,
-      total_quantity: totalItemsQuantity,
-    },
-    customer: {
-      id: order.customer_id || null,
-      name: order.customer_name,
-      phone: order.customer_phone,
-      wilaya: order.wilaya || null,
-      commune: order.commune || null,
-      address: order.address || null,
+      status: order.status,
     },
     items: normalizedItems,
     metadata,
