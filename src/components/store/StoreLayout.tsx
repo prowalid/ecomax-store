@@ -102,7 +102,7 @@ const StoreLayout = () => {
       faviconTag.setAttribute("rel", "icon");
       document.head.appendChild(faviconTag);
     }
-    faviconTag.setAttribute("href", faviconHref || "/favicon.ico");
+    faviconTag.setAttribute("href", faviconHref || "/images/logo-cart.svg");
   }, [theme.favicon_url]);
 
   const scrollToTop = useCallback(() => {

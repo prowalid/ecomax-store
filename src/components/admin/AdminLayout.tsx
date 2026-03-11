@@ -30,7 +30,7 @@ const AdminLayout = () => {
       document.head.appendChild(faviconTag);
     }
 
-    faviconTag.setAttribute("href", faviconHref || "/favicon.ico");
+    faviconTag.setAttribute("href", faviconHref || "/images/logo-cart.svg");
   }, [appearance.favicon_url]);
 
   return (
