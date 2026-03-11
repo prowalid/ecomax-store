@@ -54,10 +54,9 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    environment:
-      APP_DOMAIN: ${APP_DOMAIN:-localhost}
     volumes:
       - api_uploads:/uploads:ro
+      - ./Caddyfile.client:/etc/caddy/Caddyfile:ro
     networks:
       default:
       edge:
@@ -66,9 +65,17 @@ services:
 
 volumes:
   postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:?POSTGRES_VOLUME_NAME is required}
+    external: true
   api_logs:
+    name: ${API_LOGS_VOLUME_NAME:?API_LOGS_VOLUME_NAME is required}
+    external: true
   api_uploads:
+    name: ${API_UPLOADS_VOLUME_NAME:?API_UPLOADS_VOLUME_NAME is required}
+    external: true
   api_backups:
+    name: ${API_BACKUPS_VOLUME_NAME:?API_BACKUPS_VOLUME_NAME is required}
+    external: true
 
 networks:
   edge:

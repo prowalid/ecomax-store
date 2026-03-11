@@ -2,6 +2,9 @@ services:
   edge-proxy:
     image: caddy:2.8-alpine
     restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     ports:
       - "80:80"
       - "443:443"
@@ -19,4 +22,5 @@ volumes:
 
 networks:
   edge:
+    external: true
     name: ${EDGE_NETWORK:-etk-edge}

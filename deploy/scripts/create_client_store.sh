@@ -68,12 +68,17 @@ mkdir -p "${EDGE_DIR}/sites"
 cp "${REPO_ROOT}/deploy/docker-compose.client-stack.yml" "${CLIENT_DIR}/docker-compose.yml"
 cp "${REPO_ROOT}/deploy/client-multi.env.template" "${CLIENT_DIR}/.env.registry"
 cp "${REPO_ROOT}/server/src/db/init.sql" "${CLIENT_DIR}/init.sql"
+cp "${REPO_ROOT}/deploy/Caddyfile.client-internal" "${CLIENT_DIR}/Caddyfile.client"
 
 sed -i \
   -e "s/^CLIENT_SLUG=.*/CLIENT_SLUG=${CLIENT_SLUG}/" \
   -e "s/^APP_DOMAIN=.*/APP_DOMAIN=${APP_DOMAIN}/" \
   -e "s|^CORS_ORIGINS=.*|CORS_ORIGINS=https://${APP_DOMAIN}|" \
   -e "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${POSTGRES_PASSWORD}/" \
+  -e "s/^POSTGRES_VOLUME_NAME=.*/POSTGRES_VOLUME_NAME=${CLIENT_SLUG}_postgres_data/" \
+  -e "s/^API_LOGS_VOLUME_NAME=.*/API_LOGS_VOLUME_NAME=${CLIENT_SLUG}_api_logs/" \
+  -e "s/^API_UPLOADS_VOLUME_NAME=.*/API_UPLOADS_VOLUME_NAME=${CLIENT_SLUG}_api_uploads/" \
+  -e "s/^API_BACKUPS_VOLUME_NAME=.*/API_BACKUPS_VOLUME_NAME=${CLIENT_SLUG}_api_backups/" \
   -e "s/^JWT_SECRET=.*/JWT_SECRET=${JWT_SECRET}/" \
   -e "s|^ETK_API_IMAGE=.*|ETK_API_IMAGE=${API_IMAGE}|" \
   -e "s|^ETK_WEB_IMAGE=.*|ETK_WEB_IMAGE=${WEB_IMAGE}|" \
@@ -88,6 +93,10 @@ ${APP_DOMAIN} {
 EOF
 
 docker network inspect "${EDGE_NETWORK}" >/dev/null 2>&1 || docker network create "${EDGE_NETWORK}"
+docker volume inspect "${CLIENT_SLUG}_postgres_data" >/dev/null 2>&1 || docker volume create "${CLIENT_SLUG}_postgres_data" >/dev/null
+docker volume inspect "${CLIENT_SLUG}_api_logs" >/dev/null 2>&1 || docker volume create "${CLIENT_SLUG}_api_logs" >/dev/null
+docker volume inspect "${CLIENT_SLUG}_api_uploads" >/dev/null 2>&1 || docker volume create "${CLIENT_SLUG}_api_uploads" >/dev/null
+docker volume inspect "${CLIENT_SLUG}_api_backups" >/dev/null 2>&1 || docker volume create "${CLIENT_SLUG}_api_backups" >/dev/null
 
 if [[ -f "${EDGE_DIR}/docker-compose.yml" ]]; then
   (
