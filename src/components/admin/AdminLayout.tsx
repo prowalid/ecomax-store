@@ -78,7 +78,7 @@ const AdminLayout = () => {
     meta_title: "",
   });
   const effectiveBrandTitle = generalSettings.meta_title?.trim() || generalSettings.store_name?.trim() || "ECOMAX";
-  const adminAppearance = loading ? defaultAppearance : appearance;
+  const adminAppearance = appearance || defaultAppearance;
 
   const adminThemeVars = useMemo(() => {
     const accent = adminAppearance.accent_color;

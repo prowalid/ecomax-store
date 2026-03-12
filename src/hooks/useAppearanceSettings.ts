@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useStoreSettings } from "./useStoreSettings";
 
 export interface AppearanceSlide {
@@ -59,6 +59,22 @@ export const defaultAppearance: AppearanceSettings = {
   ],
   offers_banner_url: "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200",
 };
+const APPEARANCE_CACHE_KEY = "etk:appearance-settings-cache";
+
+function getCachedAppearance(): AppearanceSettings {
+  if (typeof window === "undefined") {
+    return defaultAppearance;
+  }
+
+  try {
+    const raw = localStorage.getItem(APPEARANCE_CACHE_KEY);
+    if (!raw) return defaultAppearance;
+    const parsed = JSON.parse(raw) as Partial<AppearanceSettings>;
+    return { ...defaultAppearance, ...parsed };
+  } catch {
+    return defaultAppearance;
+  }
+}
 
 function normalizeSlides(value: unknown): AppearanceSlide[] {
   if (!Array.isArray(value)) {
@@ -82,7 +98,7 @@ function normalizeSlides(value: unknown): AppearanceSlide[] {
 }
 
 export function useAppearanceSettings() {
-  const store = useStoreSettings<AppearanceSettings>("appearance", defaultAppearance);
+  const store = useStoreSettings<AppearanceSettings>("appearance", getCachedAppearance());
   const normalizedSettings = useMemo(
     () => ({
       ...store.settings,
@@ -90,6 +106,16 @@ export function useAppearanceSettings() {
     }),
     [store.settings]
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      localStorage.setItem(APPEARANCE_CACHE_KEY, JSON.stringify(normalizedSettings));
+    } catch {
+      // Ignore storage write failures; app continues with API values.
+    }
+  }, [normalizedSettings]);
 
   return {
     ...store,

@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS discounts (
 INSERT INTO store_settings (key, value) VALUES
   ('whatsapp_notifications', '{"enabled_notifications": {"order_confirmed": true, "order_shipped": true, "order_delivered": false, "new_order_admin": true}, "admin_phone": "", "api_configured": false}'::jsonb),
   ('shipping', '{"wilayas": []}'::jsonb),
-  ('general', '{"store_name": "ECOMAX", "phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": ""}'::jsonb),
+  ('general', '{"store_name": "ECOMAX", "phone": "", "whatsapp_phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": ""}'::jsonb),
   ('appearance', '{"logo_url": "", "footer_logo_url": "", "favicon_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}'::jsonb),
   ('marketing', '{"pixel_id": "", "capi_token": "", "pixel_configured": false, "webhook_url": "", "enabled_events": {"PageView": true, "ViewContent": true, "AddToCart": true, "InitiateCheckout": true, "Purchase": true, "Lead": true}}'::jsonb),
   ('category_image_defaults_seeded', '{"seeded": true}'::jsonb)

@@ -8,6 +8,7 @@ import { useMarketingSettings } from "@/hooks/useMarketingSettings";
 import { usePublishedPages } from "@/hooks/usePages";
 import { initPixel, trackEvent } from "@/lib/facebook-pixel";
 import { normalizePageSlug } from "@/lib/storePages";
+import { normalizeWhatsAppPhone } from "@/lib/whatsapp";
 import CartDrawer from "./CartDrawer";
 
 const hexToRgb = (hex: string) => {
@@ -27,7 +28,7 @@ const StoreLayout = () => {
   const { settings: marketing } = useMarketingSettings();
   const { data: headerPages = [] } = usePublishedPages("header");
   const { data: footerPages = [] } = usePublishedPages("footer");
-  const { settings: generalSettings, loading: generalLoading } = useStoreSettings("general", { phone: "", email: "", store_name: "ECOMAX", currency: "DZD", meta_title: "", meta_description: "" });
+  const { settings: generalSettings, loading: generalLoading } = useStoreSettings("general", { phone: "", whatsapp_phone: "", email: "", store_name: "ECOMAX", currency: "DZD", meta_title: "", meta_description: "" });
   const effectiveStoreName = generalSettings.store_name || theme.store_name || "ECOMAX";
   const effectiveMetaTitle = generalSettings.meta_title?.trim() || `${effectiveStoreName} — متجر إلكتروني`;
   const effectiveMetaDescription =
@@ -36,6 +37,8 @@ const StoreLayout = () => {
   const normalizedHeaderPages = headerPages.map((page) => ({ ...page, slug: normalizePageSlug(page.slug) }));
   const normalizedFooterPages = footerPages.map((page) => ({ ...page, slug: normalizePageSlug(page.slug) }));
   const footerLinks = normalizedFooterPages;
+  const whatsappDigits = normalizeWhatsAppPhone(generalSettings.whatsapp_phone || "");
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
 
   useEffect(() => {
     if (marketing.pixel_id) {
@@ -502,6 +505,22 @@ const StoreLayout = () => {
       >
         <ChevronUp size={22} />
       </button>
+
+      {whatsappUrl && (
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="مراسلة عبر واتساب"
+          className="fixed bottom-20 md:bottom-6 right-6 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl"
+          style={{ backgroundColor: "#25D366", color: "#ffffff" }}
+        >
+          <svg viewBox="0 0 32 32" className="w-6 h-6 fill-current" aria-hidden="true">
+            <path d="M19.11 17.24c-.3-.15-1.75-.86-2.02-.95-.27-.1-.47-.15-.67.15-.2.3-.77.95-.95 1.14-.17.2-.35.22-.65.07-.3-.15-1.28-.47-2.43-1.5-.9-.8-1.5-1.78-1.67-2.08-.17-.3-.02-.46.13-.61.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.02-1.05 2.48s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.1 4.48 3 1.3 3 0 3.54-.03.54-.03 1.75-.72 2-1.42.25-.7.25-1.3.17-1.42-.08-.12-.27-.2-.57-.35z" />
+            <path d="M26.7 5.28A13.2 13.2 0 0 0 5.86 21.22L4 28l6.94-1.82A13.2 13.2 0 1 0 26.7 5.28zm-10.5 21a10.7 10.7 0 0 1-5.45-1.49l-.39-.23-4.12 1.08 1.1-4-.25-.41A10.68 10.68 0 1 1 16.2 26.3z" />
+          </svg>
+        </a>
+      )}
     </div>
   );
 };

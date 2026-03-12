@@ -2,6 +2,60 @@ const pool = require('../config/db');
 
 const PUBLIC_SETTINGS_KEYS = new Set(['appearance', 'general', 'shipping', 'marketing']);
 const PUBLIC_MARKETING_FIELDS = new Set(['pixel_id', 'pixel_configured', 'enabled_events', 'facebook_pixel_id']);
+const WHATSAPP_ALLOWED_PATTERN = /^[0-9+\-\s()]+$/;
+
+function normalizeWhatsAppPhone(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return null;
+
+  let digits = raw.replace(/[^\d+]/g, '').replace(/\+/g, '');
+  if (!digits) return null;
+
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.startsWith('0') && digits.length === 10) {
+    digits = `213${digits.slice(1)}`;
+  } else if (digits.length === 9 && !digits.startsWith('213')) {
+    digits = `213${digits}`;
+  }
+
+  if (!/^\d{8,15}$/.test(digits)) {
+    return null;
+  }
+
+  return digits;
+}
+
+function sanitizeGeneralSettingsValue(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { ok: false, error: 'Invalid general settings payload' };
+  }
+
+  const nextValue = { ...value };
+
+  if (Object.prototype.hasOwnProperty.call(nextValue, 'whatsapp_phone')) {
+    const raw = String(nextValue.whatsapp_phone || '').trim();
+    if (!raw) {
+      nextValue.whatsapp_phone = '';
+      return { ok: true, value: nextValue };
+    }
+
+    if (!WHATSAPP_ALLOWED_PATTERN.test(raw)) {
+      return { ok: false, error: 'Invalid WhatsApp phone format' };
+    }
+
+    const normalized = normalizeWhatsAppPhone(raw);
+    if (!normalized) {
+      return { ok: false, error: 'Invalid WhatsApp phone format' };
+    }
+
+    nextValue.whatsapp_phone = `+${normalized}`;
+  }
+
+  return { ok: true, value: nextValue };
+}
 
 function getPublicMarketingSettings(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -48,10 +102,18 @@ async function getSettings(req, res, next) {
 // Upserts the JSONB value
 async function saveSettings(req, res, next) {
   const { key } = req.params;
-  const { value } = req.body;
+  let { value } = req.body;
   
   if (value === undefined) {
     return res.status(400).json({ error: 'Value is required' });
+  }
+
+  if (key === 'general') {
+    const sanitized = sanitizeGeneralSettingsValue(value);
+    if (!sanitized.ok) {
+      return res.status(400).json({ error: sanitized.error });
+    }
+    value = sanitized.value;
   }
 
   try {

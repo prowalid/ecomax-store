@@ -1,9 +1,12 @@
 import { Save, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { formatWhatsAppForStorage, normalizeWhatsAppPhone } from "@/lib/whatsapp";
 
 interface GeneralSettings {
   store_name: string;
   phone: string;
+  whatsapp_phone: string;
   email: string;
   currency: string;
   meta_title: string;
@@ -14,15 +17,31 @@ const Settings = () => {
   const { settings, setSettings, loading, saving, saveSettings } = useStoreSettings<GeneralSettings>("general", {
     store_name: "ECOMAX",
     phone: "",
+    whatsapp_phone: "",
     email: "",
     currency: "DZD",
     meta_title: "",
     meta_description: "",
   });
+  const rawWhatsapp = settings.whatsapp_phone || "";
+  const normalizedWhatsapp = normalizeWhatsAppPhone(rawWhatsapp);
+  const hasWhatsappInput = rawWhatsapp.trim().length > 0;
+  const whatsappHasError = hasWhatsappInput && !normalizedWhatsapp;
 
   const handleSave = async () => {
+    if (whatsappHasError) {
+      toast.error("رقم واتساب غير صالح. أدخله بصيغة صحيحة مثل: 0555123456 أو +213555123456");
+      return;
+    }
+
+    const payload: GeneralSettings = {
+      ...settings,
+      whatsapp_phone: formatWhatsAppForStorage(rawWhatsapp),
+    };
+
     try {
-      await saveSettings(settings);
+      await saveSettings(payload);
+      setSettings(payload);
       const effectiveBrandTitle = settings.meta_title?.trim() || settings.store_name?.trim() || "ECOMAX";
       const storeTitle = settings.meta_title?.trim() || `${effectiveBrandTitle} — متجر إلكتروني`;
       const adminTitle = `${effectiveBrandTitle} — لوحة التحكم`;
@@ -86,6 +105,25 @@ const Settings = () => {
                 dir="ltr"
               />
             </div>
+            <div>
+              <label className="block text-[13px] font-semibold text-slate-500 mb-2">رقم واتساب للزر العائم</label>
+              <input
+                type="tel"
+                value={settings.whatsapp_phone}
+                onChange={(e) => setSettings({ ...settings, whatsapp_phone: e.target.value })}
+                placeholder="0555 123 456 أو +213555123456"
+                className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                dir="ltr"
+              />
+              <p className={`text-[11px] font-medium mt-2 ${whatsappHasError ? "text-red-500" : "text-slate-400"}`}>
+                {whatsappHasError
+                  ? "الرقم غير صالح. استخدم أرقام فقط مع + اختياري."
+                  : "إذا تُرك الحقل فارغاً لن يظهر زر واتساب في المتجر."}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5">
             <div>
               <label className="block text-[13px] font-semibold text-slate-500 mb-2">البريد الإلكتروني</label>
               <input
