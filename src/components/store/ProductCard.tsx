@@ -53,6 +53,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
     toast.success("تمت الإضافة للسلة", {
       icon: <Check className="text-green-500" />,
     });
+    window.dispatchEvent(new Event("open-cart"));
   };
 
   return (
@@ -153,14 +154,28 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
              <Check size={18} className="ml-1.5 text-green-500" /> تمت الإضافة
            </button>
         ) : (
-          <button
-            onClick={handleAddToCart}
-            disabled={isAdding || outOfStock}
-            className="w-full py-2.5 rounded-xl text-[13px] sm:text-sm font-bold flex justify-center items-center transition-all duration-300 disabled:opacity-50 active:translate-y-0"
-            style={{ backgroundColor: theme.button_color, color: theme.button_text, boxShadow: `0 4px 12px ${hexToRgba(theme.button_color, buttonIsDark ? 0.32 : 0.22)}` }}
-          >
-            <ShoppingBag size={18} className="ml-1.5" /> أضف إلى السلة
-          </button>
+          <div className="flex gap-2">
+            <Link
+              to={`/product/${id}`}
+              className="flex-1 py-2 rounded-xl text-[13px] sm:text-sm font-bold flex justify-center items-center transition-all duration-300 active:translate-y-0 text-center shadow-sm hover:opacity-90"
+              style={{
+                backgroundColor: theme.button_color,
+                color: theme.button_text,
+              }}
+            >
+              اطلب الآن
+            </Link>
+
+            <button
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              aria-label="أضف إلى السلة"
+              className="w-10 sm:w-12 py-2 rounded-xl flex justify-center items-center transition-all duration-300 hover:opacity-80 disabled:opacity-50 shrink-0 shadow-sm"
+              style={{ backgroundColor: tokens.surfaceSoft, color: theme.accent_color, border: `1px solid ${tokens.border}` }}
+            >
+              <ShoppingBag size={18} />
+            </button>
+          </div>
         )}
       </div>
     </div>

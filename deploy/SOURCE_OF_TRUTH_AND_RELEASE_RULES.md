@@ -67,3 +67,40 @@ repo -> test -> commit -> push -> build image -> push GHCR -> deploy
 - متاجر العملاء نسخ تشغيلية من هذا الناتج.
 
 أي وكيل يخلط بين هذه الثلاثة يخرج عن مسار العمل الصحيح.
+
+## 9. بروتوكول إلزامي: اختبار `stepdz` ثم تثبيت رسمي
+
+### A) مسار الاختبار فقط على `stepdz`
+
+1. تعديل الملفات داخل repo فقط.
+2. بناء `web` أو `api` محليًا على السيرفر.
+3. تطبيقها على `stepdz` للتحقق.
+4. **ممنوع** اعتبار هذه المرحلة release رسمية.
+
+### B) مسار التثبيت الرسمي (بعد موافقة صريحة من المالك)
+
+1. `commit` + `push` إلى GitHub.
+2. بناء صور بإصدار جديد فقط (مثل `v1.0.6`).
+3. `push` الصور إلى GHCR.
+4. تحديث `.env.registry` للعميل إلى الإصدار الجديد.
+5. `docker compose up -d`.
+
+## 10. ممنوعات تشغيلية
+
+- ممنوع إعادة بناء صورة اختبار محليًا بنفس tag رسمي منشور سابقًا في GHCR.
+- ممنوع قول "تم التثبيت" قبل:
+  - `push` إلى GitHub
+  - و`push` إلى GHCR
+  - وتحقق أن العميل يعمل على الإصدار الجديد فعليًا.
+- ممنوع الاعتماد على `/opt/client-stores/*` كمصدر للتطوير.
+
+## 11. أوامر التحقق الإلزامية قبل إعلان الإنجاز
+
+```bash
+git status
+git rev-parse --short HEAD
+docker compose -p stepdz --env-file /opt/client-stores/stepdz/.env.registry -f /opt/client-stores/stepdz/docker-compose.yml ps
+grep -E '^ETK_(API|WEB)_IMAGE=' /opt/client-stores/stepdz/.env.registry
+```
+
+إذا لم تطابق النتائج الإصدار المعلن، فالعمل غير منجز.

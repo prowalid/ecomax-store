@@ -302,6 +302,7 @@ const ProductPage = () => {
     toast.success(`تمت إضافة ${qty} قطعة للسلة`, {
       icon: <Check className="text-green-500" />,
     });
+    window.dispatchEvent(new Event("open-cart"));
     track("AddToCart", {}, {
       content_name: product.name,
       content_ids: [product.id],

@@ -11,6 +11,14 @@
 اقرأ هذا أولًا:
 - [deploy/SOURCE_OF_TRUTH_AND_RELEASE_RULES.md](/root/express-trade-kit/deploy/SOURCE_OF_TRUTH_AND_RELEASE_RULES.md)
 
+## بروتوكول العمل الإلزامي
+
+1. تعديل داخل repo.
+2. اختبار على `stepdz` فقط.
+3. بعد الموافقة: `commit -> push -> GHCR release -> deploy`.
+
+لا يجوز القفز مباشرة إلى GHCR قبل إتمام خطوة الاختبار والموافقة.
+
 ## تشغيل التطوير محليًا
 
 المتطلبات:

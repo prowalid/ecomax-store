@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, ChevronUp, X, Loader2 } from "lucide-react";
+import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, ChevronUp, X, Loader2, Home, LayoutGrid } from "lucide-react";
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
@@ -61,6 +61,12 @@ const StoreLayout = () => {
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleOpenCart = () => setCartOpen(true);
+    window.addEventListener("open-cart", handleOpenCart);
+    return () => window.removeEventListener("open-cart", handleOpenCart);
   }, []);
 
   // Dynamic page title for SEO
@@ -354,7 +360,7 @@ const StoreLayout = () => {
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
 
       {/* Main Content */}
-      <main className="pt-[106px] md:pt-0 overflow-x-clip">
+      <main className="pt-[106px] md:pt-0 pb-16 md:pb-0 overflow-x-clip min-h-[80vh]">
         <Outlet />
       </main>
 
@@ -444,11 +450,52 @@ const StoreLayout = () => {
         </div>
       </footer>
 
+      {/* Mobile Bottom Navigation Bar */}
+      <div 
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 flex items-center justify-around h-16 pb-safe border-t shadow-[0_-5px_15px_rgba(0,0,0,0.05)]"
+        style={{ backgroundColor: theme.header_bg, borderTopColor: theme.header_text + '22' }}
+      >
+        <button 
+          onClick={() => { scrollToTop(); navigate('/'); }} 
+          className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
+          style={{ color: location.pathname === '/' ? theme.accent_color : theme.header_text + 'cc' }}
+        >
+          <Home size={20} className={location.pathname === '/' ? 'fill-current' : ''} />
+          <span className="text-[10px] font-bold">الرئيسية</span>
+        </button>
+        <button 
+          onClick={() => handleSectionNavigation("products")} 
+          className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
+          style={{ color: theme.header_text + 'cc' }}
+        >
+          <LayoutGrid size={20} />
+          <span className="text-[10px] font-bold">المنتجات</span>
+        </button>
+        <button 
+          onClick={() => setCartOpen(true)} 
+          className="flex flex-col items-center justify-center flex-1 h-full gap-1 relative transition-colors"
+          style={{ color: cartOpen ? theme.accent_color : theme.header_text + 'cc' }}
+        >
+          <div className="relative">
+            <ShoppingBag size={20} className={cartOpen ? 'fill-current' : ''} />
+            {totalCount > 0 && (
+              <span 
+                className="absolute -top-1.5 -right-2 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full border border-white"
+                style={{ backgroundColor: theme.accent_color }}
+              >
+                {totalCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-bold">السلة</span>
+        </button>
+      </div>
+
       {/* Scroll to Top FAB */}
       <button
         onClick={scrollToTop}
         aria-label="العودة للأعلى"
-        className={`fixed bottom-6 left-6 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl ${
+        className={`fixed bottom-20 md:bottom-6 left-6 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl ${
           showScrollTop ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0 pointer-events-none'
         }`}
         style={{ backgroundColor: theme.accent_color, color: '#fff' }}
