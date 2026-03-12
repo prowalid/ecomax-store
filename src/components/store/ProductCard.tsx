@@ -50,9 +50,6 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
       value: Number(price),
       currency: "DZD",
     });
-    toast.success("تمت الإضافة للسلة", {
-      icon: <Check className="text-green-500" />,
-    });
     window.dispatchEvent(new Event("open-cart"));
   };
 

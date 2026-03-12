@@ -259,6 +259,49 @@ ETK_API_IMAGE=ghcr.io/walid733/express-trade-kit-api:v1.1.0
 ETK_WEB_IMAGE=ghcr.io/walid733/express-trade-kit-web:v1.1.0
 ```
 
+## 9.1 دليل تشغيل السكربتين (المسار الصارم)
+
+### 10.1 اختبار التعديلات على `stepdz` فقط
+
+من داخل repo:
+
+```bash
+bash deploy/scripts/test_stepdz.sh
+```
+
+اختيارات مفيدة:
+
+```bash
+bash deploy/scripts/test_stepdz.sh --skip-api-build
+bash deploy/scripts/test_stepdz.sh --skip-web-build
+```
+
+النتيجة المتوقعة:
+- تتغير قيم `ETK_API_IMAGE` و`ETK_WEB_IMAGE` في `/opt/client-stores/stepdz/.env.registry` إلى `stepdz-test`.
+- تتم إعادة إنشاء الحاويات الخاصة بـ `stepdz`.
+- لا يوجد أي `push` إلى GHCR.
+
+### 10.2 التثبيت الرسمي بعد موافقة المالك
+
+1) تأكد أن الكود النهائي مرفوع إلى GitHub.
+2) ثم نفذ:
+
+```bash
+bash deploy/scripts/release_version.sh --version v1.0.7
+```
+
+النتيجة المتوقعة:
+- صور `api/web` تُبنى وتُرفع إلى GHCR بالإصدار المحدد + `latest`.
+- `stepdz` يتحول من `stepdz-test` إلى الإصدار الرسمي `v1.0.7`.
+
+### 10.3 التحقق الإجباري النهائي
+
+```bash
+git status
+docker compose -p stepdz --env-file /opt/client-stores/stepdz/.env.registry -f /opt/client-stores/stepdz/docker-compose.yml ps
+grep -E '^ETK_(API|WEB)_IMAGE=' /opt/client-stores/stepdz/.env.registry
+```
+
 إذا كان الهدف تشغيل عدة عملاء على نفس السيرفر:
 - استعمل:
   - [deploy/docker-compose.edge-proxy.yml](/root/express-trade-kit/deploy/docker-compose.edge-proxy.yml)

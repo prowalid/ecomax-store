@@ -299,9 +299,6 @@ const ProductPage = () => {
       product_image_url: product.image_url,
       quantity: qty,
     });
-    toast.success(`تمت إضافة ${qty} قطعة للسلة`, {
-      icon: <Check className="text-green-500" />,
-    });
     window.dispatchEvent(new Event("open-cart"));
     track("AddToCart", {}, {
       content_name: product.name,

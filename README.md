@@ -11,6 +11,18 @@
 اقرأ هذا أولًا:
 - [deploy/SOURCE_OF_TRUTH_AND_RELEASE_RULES.md](/root/express-trade-kit/deploy/SOURCE_OF_TRUTH_AND_RELEASE_RULES.md)
 
+## دخول وكيل جديد (إلزامي)
+
+قبل أي تعديل:
+```bash
+git status
+git branch --show-current
+```
+
+ثم اختر مسارًا واحدًا فقط:
+- اختبار: `bash deploy/scripts/test_stepdz.sh`
+- إصدار رسمي: `bash deploy/scripts/release_version.sh --version vX.Y.Z`
+
 ## بروتوكول العمل الإلزامي
 
 1. تعديل داخل repo.
@@ -18,6 +30,12 @@
 3. بعد الموافقة: `commit -> push -> GHCR release -> deploy`.
 
 لا يجوز القفز مباشرة إلى GHCR قبل إتمام خطوة الاختبار والموافقة.
+
+أوامر التشغيل المعتمدة:
+```bash
+bash deploy/scripts/test_stepdz.sh
+bash deploy/scripts/release_version.sh --version vX.Y.Z
+```
 
 ## تشغيل التطوير محليًا
 
@@ -81,10 +99,10 @@ bash deploy/scripts/create_client_store.sh --slug client-a --domain client-a.com
 
 ## بناء release جديدة
 
-من داخل المشروع:
+المسار الرسمي فقط:
+
 ```bash
-docker build -f server/Dockerfile -t ghcr.io/walid733/express-trade-kit-api:v1.0.2 ./server
-docker build -f Dockerfile.web -t ghcr.io/walid733/express-trade-kit-web:v1.0.2 .
+bash deploy/scripts/release_version.sh --version vX.Y.Z
 ```
 
-ثم ارفع الصور إلى `GHCR` وحدث `.env.registry` للعميل إلى الوسم الجديد.
+ممنوع استخدام build/push اليدوي في المسار الرسمي.

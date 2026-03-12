@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Phone, Truck, User, ShoppingBag, ChevronLeft, ChevronRight,
-  ShieldCheck, Headphones, RotateCcw, Globe, Star, Flame, Tag, ArrowLeft, Grid, Loader2, Check
+  ShieldCheck, Headphones, RotateCcw, Globe, Star, Flame, Tag, ArrowLeft, Grid, Loader2
 } from "lucide-react";
-import { toast } from "sonner";
 import { useProducts, type Product } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useCart } from "@/hooks/useCart";
@@ -49,7 +48,8 @@ const StorePage = () => {
   }, [resolvedSlides.length]);
 
   const activeProducts = products.filter((p) => p.status === "active");
-  const visibleCategories = categories.filter((category) => Boolean(category.image_url));
+  const storefrontCategories = categories.filter((category) => Boolean(category?.id));
+  const featuredCategories = storefrontCategories.filter((category) => Boolean(category?.image_url));
   const filteredProducts = selectedCategory
     ? activeProducts.filter((p) => p.category_id === selectedCategory)
     : activeProducts;
@@ -81,7 +81,6 @@ const StorePage = () => {
       value: Number(product.price),
       currency: "DZD",
     });
-    toast.success("تمت الإضافة للسلة", { icon: <Check className="text-green-500" /> });
   };
 
   const applyCategoryFilter = (categoryId: string | null, shouldScroll = false) => {
@@ -97,6 +96,17 @@ const StorePage = () => {
       }, 50);
     }
   };
+
+  useEffect(() => {
+    if (!selectedCategory) {
+      return;
+    }
+
+    const categoryExists = storefrontCategories.some((category) => category.id === selectedCategory);
+    if (!categoryExists) {
+      setSearchParams({}, { replace: true, preventScrollReset: true });
+    }
+  }, [selectedCategory, storefrontCategories, setSearchParams]);
 
   const scrollToOffers = () => {
     document.getElementById("offers")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -242,7 +252,7 @@ const StorePage = () => {
         </div>
 
         {/* Category Filter Tabs */}
-        {visibleCategories.length > 0 && (
+        {storefrontCategories.length > 0 && (
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             <button
               onClick={() => applyCategoryFilter(null)}
@@ -253,7 +263,7 @@ const StorePage = () => {
             >
               الكل
             </button>
-            {visibleCategories.map((cat) => (
+            {storefrontCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => applyCategoryFilter(cat.id)}
@@ -293,62 +303,64 @@ const StorePage = () => {
         )}
       </section>
 
-      {/* Categories */}
-      {visibleCategories.length > 0 && (
-        <section className="py-10 sm:py-12 border-t overflow-x-clip" style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}>
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-10 flex flex-col items-center">
-              <div className="text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md mb-4 inline-flex items-center" style={{ backgroundColor: theme.accent_color, boxShadow: `0 4px 6px ${theme.accent_color}33` }}>
-                <Grid size={16} className="ml-2" /> التصنيفات
-              </div>
-              <div className="relative inline-block">
-                <h2 className="text-2xl sm:text-3xl font-bold z-10 relative" style={{ color: tokens.textPrimary }}>منتجات مختارة</h2>
-                <div className="absolute -bottom-2 left-0 right-0 h-1.5 opacity-60 rounded-full w-full" style={{ backgroundColor: theme.accent_color }}></div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
-              {visibleCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => applyCategoryFilter(cat.id, true)}
-                  className="group relative h-56 sm:h-64 w-full overflow-hidden rounded-2xl border text-right shadow-sm transition-transform duration-300 hover:-translate-y-1"
-                  style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}
-                >
-                  <img src={cat.image_url || ""} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-colors duration-500"></div>
-                  <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-6 flex justify-between items-end gap-3">
-                    <h3 className="text-white text-xl sm:text-2xl font-bold leading-tight">{cat.name}</h3>
-                    <div className="bg-white/20 p-2 rounded-full text-white backdrop-blur-sm transition-all duration-300 shrink-0">
-                      <ArrowLeft size={20} />
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Featured Banner */}
-            <div className="relative rounded-2xl overflow-hidden h-64 sm:h-80 group cursor-pointer shadow-md mt-6">
-              <img src={theme.offers_banner_url || "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200"} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
-              <div className="absolute inset-0 transition-colors duration-500" style={{ background: `linear-gradient(to top right, ${theme.accent_color}e6, ${theme.accent_color}66)` }}></div>
-              <div className="absolute inset-0 flex flex-col justify-center items-start p-5 sm:p-10">
-                <div className="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold mb-4 inline-flex items-center border border-white/30">
-                  <Tag size={16} className="ml-2" /> عروض حصرية
+      {/* Categories + Featured Banner */}
+      <section className="py-10 sm:py-12 border-t overflow-x-clip" style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}>
+        <div className="container mx-auto px-4">
+          {featuredCategories.length > 0 && (
+            <>
+              <div className="text-center mb-10 flex flex-col items-center">
+                <div className="text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md mb-4 inline-flex items-center" style={{ backgroundColor: theme.accent_color, boxShadow: `0 4px 6px ${theme.accent_color}33` }}>
+                  <Grid size={16} className="ml-2" /> التصنيفات
                 </div>
-                <h3 className="text-white text-2xl sm:text-4xl font-black mb-4 leading-tight">تخفيضات تصل لـ 50%</h3>
-                <button
-                  type="button"
-                  onClick={scrollToOffers}
-                  className="bg-white px-6 sm:px-8 py-3 rounded-full font-bold hover:shadow-lg transition-shadow inline-flex items-center"
-                  style={{ color: theme.accent_color }}
-                >
-                  اكتشف العروض <ArrowLeft size={18} className="mr-2" />
-                </button>
+                <div className="relative inline-block">
+                  <h2 className="text-2xl sm:text-3xl font-bold z-10 relative" style={{ color: tokens.textPrimary }}>منتجات مختارة</h2>
+                  <div className="absolute -bottom-2 left-0 right-0 h-1.5 opacity-60 rounded-full w-full" style={{ backgroundColor: theme.accent_color }}></div>
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
+                {featuredCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => applyCategoryFilter(cat.id, true)}
+                    className="group relative h-56 sm:h-64 w-full overflow-hidden rounded-2xl border text-right shadow-sm transition-transform duration-300 hover:-translate-y-1"
+                    style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}
+                  >
+                    <img src={cat.image_url || ""} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-colors duration-500"></div>
+                    <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-6 flex justify-between items-end gap-3">
+                      <h3 className="text-white text-xl sm:text-2xl font-bold leading-tight">{cat.name}</h3>
+                      <div className="bg-white/20 p-2 rounded-full text-white backdrop-blur-sm transition-all duration-300 shrink-0">
+                        <ArrowLeft size={20} />
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Featured Banner */}
+          <div className="relative rounded-2xl overflow-hidden h-64 sm:h-80 group cursor-pointer shadow-md mt-6">
+            <img src={theme.offers_banner_url || "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200"} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />
+            <div className="absolute inset-0 transition-colors duration-500" style={{ background: `linear-gradient(to top right, ${theme.accent_color}e6, ${theme.accent_color}66)` }}></div>
+            <div className="absolute inset-0 flex flex-col justify-center items-start p-5 sm:p-10">
+              <div className="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold mb-4 inline-flex items-center border border-white/30">
+                <Tag size={16} className="ml-2" /> عروض حصرية
+              </div>
+              <h3 className="text-white text-2xl sm:text-4xl font-black mb-4 leading-tight">تخفيضات تصل لـ 50%</h3>
+              <button
+                type="button"
+                onClick={scrollToOffers}
+                className="bg-white px-6 sm:px-8 py-3 rounded-full font-bold hover:shadow-lg transition-shadow inline-flex items-center"
+                style={{ color: theme.accent_color }}
+              >
+                اكتشف العروض <ArrowLeft size={18} className="mr-2" />
+              </button>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Sale Products / Offers */}
       {saleProducts.length > 0 && (
