@@ -2,15 +2,55 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <title id="app-title">ECOMAX - متجر إلكتروني</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/images/logo-cart.svg" />
+    <link id="app-favicon" rel="icon" type="image/svg+xml" href="/images/logo-cart.svg" />
+    <script>
+      (function () {
+        try {
+          var fallbackTitle = "ECOMAX - متجر إلكتروني";
+          var savedFavicon = localStorage.getItem("etk:favicon-url");
+          var isAdminPath = window.location.pathname.indexOf("/admin") === 0;
+          var savedStoreTitle = localStorage.getItem("etk:store-title");
+          var savedAdminTitle = localStorage.getItem("etk:admin-title");
+          var savedTitle = isAdminPath ? savedAdminTitle : savedStoreTitle;
+
+          if (isAdminPath && savedTitle && savedTitle.indexOf("متجركم") !== -1) {
+            savedTitle = "";
+            localStorage.removeItem("etk:admin-title");
+          }
+
+          if (isAdminPath && !savedTitle && savedStoreTitle) {
+            var baseStoreTitle = savedStoreTitle.replace(/\s+[—-]\s+متجر إلكتروني\s*$/u, "").trim();
+            if (baseStoreTitle) {
+              savedTitle = baseStoreTitle + " — لوحة التحكم";
+              localStorage.setItem("etk:admin-title", savedTitle);
+            }
+          }
+
+          var resolvedTitle = savedTitle || fallbackTitle;
+          var titleTag = document.getElementById("app-title");
+          if (titleTag) {
+            titleTag.textContent = resolvedTitle;
+          }
+          document.title = resolvedTitle;
+
+          if (!savedFavicon) return;
+          var favicon = document.getElementById("app-favicon");
+          if (favicon) {
+            favicon.setAttribute("href", savedFavicon);
+          }
+        } catch (error) {
+          console.warn("favicon bootstrap skipped", error);
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
-    <title>ECOMAX - متجر إلكتروني</title>
     <meta name="description" content="منصة تجارة إلكترونية احترافية مخصصة للسوق الجزائري." />
     <meta name="author" content="Express Trade Kit" />
 

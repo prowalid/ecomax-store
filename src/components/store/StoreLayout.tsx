@@ -27,7 +27,7 @@ const StoreLayout = () => {
   const { settings: marketing } = useMarketingSettings();
   const { data: headerPages = [] } = usePublishedPages("header");
   const { data: footerPages = [] } = usePublishedPages("footer");
-  const { settings: generalSettings } = useStoreSettings("general", { phone: "", email: "", store_name: "ECOMAX", currency: "DZD", meta_title: "", meta_description: "" });
+  const { settings: generalSettings, loading: generalLoading } = useStoreSettings("general", { phone: "", email: "", store_name: "ECOMAX", currency: "DZD", meta_title: "", meta_description: "" });
   const effectiveStoreName = generalSettings.store_name || theme.store_name || "ECOMAX";
   const effectiveMetaTitle = generalSettings.meta_title?.trim() || `${effectiveStoreName} — متجر إلكتروني`;
   const effectiveMetaDescription =
@@ -65,8 +65,17 @@ const StoreLayout = () => {
 
   // Dynamic page title for SEO
   useEffect(() => {
+    if (generalLoading) {
+      return;
+    }
+
     document.title = effectiveMetaTitle;
-  }, [effectiveMetaTitle]);
+    try {
+      localStorage.setItem("etk:store-title", effectiveMetaTitle);
+    } catch {
+      // Ignore storage failures; title still updates in the current tab.
+    }
+  }, [effectiveMetaTitle, generalLoading]);
 
   useEffect(() => {
     let descriptionTag = document.querySelector('meta[name="description"]');
@@ -95,15 +104,33 @@ const StoreLayout = () => {
   }, [effectiveMetaDescription, effectiveMetaTitle]);
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+
     const faviconHref = theme.favicon_url?.trim();
-    let faviconTag = document.querySelector('link[rel="icon"]');
+    let faviconTag = document.getElementById("app-favicon");
     if (!faviconTag) {
       faviconTag = document.createElement("link");
+      faviconTag.setAttribute("id", "app-favicon");
       faviconTag.setAttribute("rel", "icon");
+      faviconTag.setAttribute("type", "image/svg+xml");
       document.head.appendChild(faviconTag);
     }
-    faviconTag.setAttribute("href", faviconHref || "/images/logo-cart.svg");
-  }, [theme.favicon_url]);
+
+    const resolvedFavicon = faviconHref || "/images/logo-cart.svg";
+    faviconTag.setAttribute("href", resolvedFavicon);
+
+    try {
+      if (faviconHref) {
+        localStorage.setItem("etk:favicon-url", faviconHref);
+      } else {
+        localStorage.removeItem("etk:favicon-url");
+      }
+    } catch {
+      // Ignore storage failures; favicon fallback still works.
+    }
+  }, [loading, theme.favicon_url]);
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });

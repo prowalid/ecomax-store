@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useStoreSettings } from "./useStoreSettings";
 
 export interface AppearanceSlide {
@@ -82,12 +83,16 @@ function normalizeSlides(value: unknown): AppearanceSlide[] {
 
 export function useAppearanceSettings() {
   const store = useStoreSettings<AppearanceSettings>("appearance", defaultAppearance);
+  const normalizedSettings = useMemo(
+    () => ({
+      ...store.settings,
+      slides: normalizeSlides(store.settings.slides),
+    }),
+    [store.settings]
+  );
 
   return {
     ...store,
-    settings: {
-      ...store.settings,
-      slides: normalizeSlides(store.settings.slides),
-    },
+    settings: normalizedSettings,
   };
 }

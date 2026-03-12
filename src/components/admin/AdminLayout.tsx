@@ -10,28 +10,55 @@ import { useStoreSettings } from "@/hooks/useStoreSettings";
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { settings: appearance } = useAppearanceSettings();
-  const { settings: generalSettings } = useStoreSettings("general", {
+  const { settings: appearance, loading } = useAppearanceSettings();
+  const { settings: generalSettings, loading: generalLoading } = useStoreSettings("general", {
     store_name: "ECOMAX",
     meta_title: "",
   });
-  const effectiveStoreName = generalSettings.store_name || "ECOMAX";
+  const effectiveBrandTitle = generalSettings.meta_title?.trim() || generalSettings.store_name?.trim() || "ECOMAX";
 
   useEffect(() => {
-    document.title = `${effectiveStoreName} — لوحة التحكم`;
-  }, [effectiveStoreName]);
+    if (generalLoading) {
+      return;
+    }
+
+    const adminTitle = `${effectiveBrandTitle} — لوحة التحكم`;
+    document.title = adminTitle;
+    try {
+      localStorage.setItem("etk:admin-title", adminTitle);
+    } catch {
+      // Ignore storage failures; title still updates in the current tab.
+    }
+  }, [effectiveBrandTitle, generalLoading]);
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+
     const faviconHref = appearance.favicon_url?.trim();
-    let faviconTag = document.querySelector('link[rel="icon"]');
+    let faviconTag = document.getElementById("app-favicon");
     if (!faviconTag) {
       faviconTag = document.createElement("link");
+      faviconTag.setAttribute("id", "app-favicon");
       faviconTag.setAttribute("rel", "icon");
+      faviconTag.setAttribute("type", "image/svg+xml");
       document.head.appendChild(faviconTag);
     }
 
-    faviconTag.setAttribute("href", faviconHref || "/images/logo-cart.svg");
-  }, [appearance.favicon_url]);
+    const resolvedFavicon = faviconHref || "/images/logo-cart.svg";
+    faviconTag.setAttribute("href", resolvedFavicon);
+
+    try {
+      if (faviconHref) {
+        localStorage.setItem("etk:favicon-url", faviconHref);
+      } else {
+        localStorage.removeItem("etk:favicon-url");
+      }
+    } catch {
+      // Ignore storage failures; favicon fallback still works.
+    }
+  }, [loading, appearance.favicon_url]);
 
   return (
     <div className="min-h-screen bg-background">

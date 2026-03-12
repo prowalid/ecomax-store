@@ -20,6 +20,20 @@ const Settings = () => {
     meta_description: "",
   });
 
+  const handleSave = async () => {
+    try {
+      await saveSettings(settings);
+      const effectiveBrandTitle = settings.meta_title?.trim() || settings.store_name?.trim() || "ECOMAX";
+      const storeTitle = settings.meta_title?.trim() || `${effectiveBrandTitle} — متجر إلكتروني`;
+      const adminTitle = `${effectiveBrandTitle} — لوحة التحكم`;
+
+      localStorage.setItem("etk:store-title", storeTitle);
+      localStorage.setItem("etk:admin-title", adminTitle);
+    } catch {
+      // Error toast is already handled in the hook.
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -36,7 +50,7 @@ const Settings = () => {
           <p className="text-[13px] text-slate-500 mt-1 font-medium">إعدادات المتجر العامة</p>
         </div>
         <button
-          onClick={() => saveSettings(settings)}
+          onClick={handleSave}
           disabled={saving}
           className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
         >
