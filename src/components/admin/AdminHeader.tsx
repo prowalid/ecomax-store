@@ -20,7 +20,7 @@ const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
       <div className="flex min-h-20 items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <Button
@@ -32,23 +32,23 @@ const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white text-primary shadow-sm sm:flex">
+          <div className="hidden h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-primary shadow-sm sm:flex">
             <Store className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h1 className="truncate text-xl font-black tracking-tight text-sidebar-heading sm:text-2xl">
               {pageMeta.title}
             </h1>
-            <p className="mt-1 hidden text-sm text-slate-500 md:block">{pageMeta.subtitle}</p>
+            <p className="mt-1 hidden text-sm text-muted-foreground md:block">{pageMeta.subtitle}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-card p-2 shadow-sm">
           <a
             href="/"
             target="_blank"
             rel="noreferrer"
-            className="hidden h-10 items-center gap-2 rounded-full border border-slate-200 px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-primary sm:inline-flex"
+            className="hidden h-10 items-center gap-2 rounded-full border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-primary sm:inline-flex"
             title="فتح المتجر في تبويب جديد"
           >
             <span>عرض المتجر</span>
@@ -59,7 +59,7 @@ const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
               <p className="w-[150px] truncate text-[13px] font-bold leading-tight text-sidebar-heading">
                 {user.email}
               </p>
-              <p className="text-[10px] font-medium text-slate-500">جلسة آمنة فعالة</p>
+              <p className="text-[10px] font-medium text-muted-foreground">جلسة آمنة فعالة</p>
             </div>
           )}
 

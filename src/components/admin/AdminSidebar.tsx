@@ -21,7 +21,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobile = false, onNavigate }: Admin
       className={cn(
         "bg-sidebar flex flex-col transition-all duration-300 border-l-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] scrollbar-thin overflow-y-auto",
         mobile
-          ? "h-full w-full rounded-none bg-white shadow-none"
+          ? "h-full w-full rounded-none bg-sidebar shadow-none"
           : "fixed right-0 top-0 z-50 h-screen",
         !mobile && (collapsed ? "w-[80px]" : "w-[260px]")
       )}
@@ -48,7 +48,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobile = false, onNavigate }: Admin
       </div>
 
       <div className={cn("mb-4 px-6", collapsed && !mobile && "hidden", mobile && "px-1")}>
-         <div className="h-[1px] w-full bg-slate-100/50"></div>
+         <div className="h-[1px] w-full bg-sidebar-border/60"></div>
       </div>
 
       {/* Navigation */}
@@ -78,7 +78,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobile = false, onNavigate }: Admin
                         collapsed && !mobile ? "justify-center rounded-xl mx-auto w-12 h-12" : "px-4 rounded-[14px]",
                         isActive
                           ? "bg-primary text-white font-medium shadow-md shadow-primary/20"
-                          : "text-sidebar-fg hover:bg-slate-50 hover:text-primary font-medium"
+                          : "text-sidebar-fg hover:bg-sidebar-hover hover:text-primary font-medium"
                       )}
                       title={collapsed && !mobile ? item.label : undefined}
                     >
@@ -94,10 +94,10 @@ const AdminSidebar = ({ collapsed, onToggle, mobile = false, onNavigate }: Admin
       </nav>
 
       {/* Collapse toggle */}
-      <div className={cn("shrink-0 bg-white border-t border-slate-50", mobile ? "hidden" : "sticky bottom-0 p-4")}>
+      <div className={cn("shrink-0 bg-sidebar border-t border-sidebar-border/70", mobile ? "hidden" : "sticky bottom-0 p-4")}>
         <button
           onClick={onToggle}
-          className="flex items-center justify-center w-full h-11 rounded-[14px] text-sidebar-fg hover:bg-slate-50 hover:text-primary transition-colors"
+          className="flex items-center justify-center w-full h-11 rounded-[14px] text-sidebar-fg hover:bg-sidebar-hover hover:text-primary transition-colors"
         >
           <ChevronLeft
             className={cn(

@@ -23,6 +23,9 @@ git branch --show-current
 - اختبار: `bash deploy/scripts/test_stepdz.sh`
 - إصدار رسمي: `bash deploy/scripts/release_version.sh --version vX.Y.Z`
 
+قاعدة ثابتة:
+- `api` و`web` يجب أن يكونا على نفس القناة ونفس الإصدار داخل نفس البيئة.
+
 ## بروتوكول العمل الإلزامي
 
 1. تعديل داخل repo.

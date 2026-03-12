@@ -9,6 +9,7 @@ Usage:
 Options:
   --skip-web-build     Do not rebuild web image.
   --skip-api-build     Do not rebuild api image.
+  --allow-mixed        Allow mixed channels between API and WEB (default: disabled).
   --client-dir PATH    Client stack directory (default: /opt/client-stores/stepdz)
   --project NAME       Docker compose project name (default: stepdz)
   -h, --help           Show help.
@@ -23,6 +24,7 @@ EOF
 
 BUILD_WEB="true"
 BUILD_API="true"
+ALLOW_MIXED="false"
 CLIENT_DIR="/opt/client-stores/stepdz"
 PROJECT_NAME="stepdz"
 
@@ -30,6 +32,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-web-build) BUILD_WEB="false"; shift ;;
     --skip-api-build) BUILD_API="false"; shift ;;
+    --allow-mixed) ALLOW_MIXED="true"; shift ;;
     --client-dir) CLIENT_DIR="$2"; shift 2 ;;
     --project) PROJECT_NAME="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -83,6 +86,34 @@ fi
 
 if [[ "${BUILD_WEB}" == "true" ]]; then
   TARGET_WEB_IMAGE="${WEB_TEST_IMAGE}"
+fi
+
+is_test_channel() {
+  [[ "$1" == *":stepdz-test" ]]
+}
+
+is_release_channel() {
+  [[ "$1" =~ :v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+if [[ "${ALLOW_MIXED}" != "true" ]]; then
+  API_IS_TEST="false"
+  WEB_IS_TEST="false"
+  API_IS_RELEASE="false"
+  WEB_IS_RELEASE="false"
+
+  is_test_channel "${TARGET_API_IMAGE}" && API_IS_TEST="true"
+  is_test_channel "${TARGET_WEB_IMAGE}" && WEB_IS_TEST="true"
+  is_release_channel "${TARGET_API_IMAGE}" && API_IS_RELEASE="true"
+  is_release_channel "${TARGET_WEB_IMAGE}" && WEB_IS_RELEASE="true"
+
+  if [[ "${API_IS_TEST}" != "${WEB_IS_TEST}" ]] || [[ "${API_IS_RELEASE}" != "${WEB_IS_RELEASE}" ]]; then
+    echo "Refusing mixed channels:" >&2
+    echo "  ETK_API_IMAGE=${TARGET_API_IMAGE}" >&2
+    echo "  ETK_WEB_IMAGE=${TARGET_WEB_IMAGE}" >&2
+    echo "Use unified tags or pass --allow-mixed explicitly." >&2
+    exit 1
+  fi
 fi
 
 sed -i \

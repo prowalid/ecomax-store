@@ -7,6 +7,7 @@ import OrdersTable from "@/components/admin/orders/OrdersTable";
 import { orderStatusConfig } from "@/components/admin/orders/constants";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
+import { X, Loader2 } from "lucide-react";
 
 const Orders = () => {
   const { data: orders = [], isLoading } = useOrders();
@@ -15,6 +16,7 @@ const Orders = () => {
   const [activeFilter, setActiveFilter] = useState<OrderStatus | "all">("all");
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
 
   const filtered = orders.filter((o) => {
     const matchSearch = o.customer_name.includes(search) || String(o.order_number).includes(search) || o.customer_phone.includes(search);
@@ -26,6 +28,30 @@ const Orders = () => {
     const order = orders.find((o) => o.id === id);
     if (order) {
       updateStatus.mutate({ id, status: newStatus, order });
+    }
+  };
+
+  const handleBulkStatusChange = async (newStatus: OrderStatus) => {
+    if (!window.confirm(`هل أنت متأكد من تغيير حالة ${selectedOrders.length} طلبات إلى "${orderStatusConfig[newStatus].label}"؟`)) {
+      return;
+    }
+    
+    setIsUpdatingBulk(true);
+    try {
+      for (const id of selectedOrders) {
+        const order = orders.find((o) => o.id === id);
+        if (order) {
+          await updateStatus.mutateAsync({ id, status: newStatus, order });
+          // small delay to prevent overwhelming the server's event loop and db pool
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+      
+      setSelectedOrders([]);
+    } catch (error) {
+      console.error("Bulk update error:", error);
+    } finally {
+      setIsUpdatingBulk(false);
     }
   };
 
@@ -158,6 +184,33 @@ const Orders = () => {
         onFilterChange={setActiveFilter}
         onSearchChange={setSearch}
       />
+
+      {/* Bulk actions inline banner */}
+      {selectedOrders.length > 0 && (
+        <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-2.5 animate-slide-in border border-border">
+          <span className="text-sm text-foreground font-medium">{selectedOrders.length} طلبات محددة</span>
+          <div className="flex items-center gap-2 mr-auto" dir="ltr">
+            {isUpdatingBulk && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground mr-2" />}
+            <select
+              disabled={isUpdatingBulk}
+              onChange={(e) => {
+                const val = e.target.value as OrderStatus;
+                if (val) handleBulkStatusChange(val);
+                e.target.value = "";
+              }}
+              className="flex-1 h-8 px-2 text-xs rounded-md border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+              dir="rtl"
+            >
+              <option value="">تغيير الحالة إلى...</option>
+              {Object.entries(orderStatusConfig).map(([key, config]) => (
+                <option key={key} value={key}>
+                  {config.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <OrdersTable
         orders={filtered}
