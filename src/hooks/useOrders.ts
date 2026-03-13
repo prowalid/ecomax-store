@@ -75,15 +75,15 @@ export function useUpdateOrderStatus() {
   });
 }
 
-export function useCreateYalidineShipment() {
+export function useCreateShippingShipment(providerLabel: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (orderId: string) => api.post(`/orders/${orderId}/shipping/yalidine`, {}),
+    mutationFn: async (orderId: string) => api.post(`/orders/${orderId}/shipping/provider`, {}),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
-      toast.success("تم رفع الطلب إلى Yalidine");
+      toast.success(`تم رفع الطلب إلى ${providerLabel}`);
     },
-    onError: (error: Error) => toast.error(error.message || "فشل رفع الطلب إلى Yalidine"),
+    onError: (error: Error) => toast.error(error.message || `فشل رفع الطلب إلى ${providerLabel}`),
   });
 }
 

@@ -17,8 +17,11 @@ interface OrdersTableProps {
   onToggleSelectAll: () => void;
   onToggleExpand: (id: string) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
-  onCreateYalidineShipment: (id: string) => void;
+  onCreateShipment: (id: string) => void;
   creatingShipmentId?: string | null;
+  activeShippingProvider: string;
+  activeShippingProviderLabel: string;
+  hasDirectShippingProvider: boolean;
 }
 
 export default function OrdersTable({
@@ -30,8 +33,11 @@ export default function OrdersTable({
   onToggleSelectAll,
   onToggleExpand,
   onStatusChange,
-  onCreateYalidineShipment,
+  onCreateShipment,
   creatingShipmentId,
+  activeShippingProvider,
+  activeShippingProviderLabel,
+  hasDirectShippingProvider,
 }: OrdersTableProps) {
   return (
     <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden animate-slide-in">
@@ -69,8 +75,11 @@ export default function OrdersTable({
                 onToggleExpand={() => onToggleExpand(order.id)}
                 onToggleSelect={() => onToggleSelect(order.id)}
                 onStatusChange={onStatusChange}
-                onCreateYalidineShipment={onCreateYalidineShipment}
+                onCreateShipment={onCreateShipment}
                 isCreatingShipment={creatingShipmentId === order.id}
+                activeShippingProvider={activeShippingProvider}
+                activeShippingProviderLabel={activeShippingProviderLabel}
+                hasDirectShippingProvider={hasDirectShippingProvider}
               />
             );
           })}
@@ -93,8 +102,11 @@ interface OrderTableRowProps {
   onToggleExpand: () => void;
   onToggleSelect: () => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
-  onCreateYalidineShipment: (id: string) => void;
+  onCreateShipment: (id: string) => void;
   isCreatingShipment: boolean;
+  activeShippingProvider: string;
+  activeShippingProviderLabel: string;
+  hasDirectShippingProvider: boolean;
 }
 
 function OrderTableRow({
@@ -104,12 +116,17 @@ function OrderTableRow({
   onToggleExpand,
   onToggleSelect,
   onStatusChange,
-  onCreateYalidineShipment,
+  onCreateShipment,
   isCreatingShipment,
+  activeShippingProvider,
+  activeShippingProviderLabel,
+  hasDirectShippingProvider,
 }: OrderTableRowProps) {
   const status = orderStatusConfig[order.status];
   const nextStatuses = orderStatusFlow[order.status];
   const { data: items = [], isLoading } = useOrderItems(order.id, isExpanded);
+
+  const shipmentAlreadyCreated = order.shipping_company === activeShippingProvider && !!order.tracking_number;
 
   return (
     <>
@@ -301,21 +318,23 @@ function OrderTableRow({
                     </div>
                   )}
 
-                  {nextStatuses.length > 0 && (
+                  {(nextStatuses.length > 0 || hasDirectShippingProvider) && (
                     <div className="rounded-2xl border border-slate-200 bg-white p-4">
                       <h3 className="mb-3 text-sm font-bold text-slate-900">إجراءات سريعة</h3>
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCreateYalidineShipment(order.id);
-                          }}
-                          disabled={isCreatingShipment || !!order.tracking_number}
-                          className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {isCreatingShipment ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Truck className="h-3.5 w-3.5" />}
-                          {order.tracking_number ? "مرفوع إلى Yalidine" : "رفع إلى Yalidine"}
-                        </button>
+                        {hasDirectShippingProvider ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCreateShipment(order.id);
+                            }}
+                            disabled={isCreatingShipment || shipmentAlreadyCreated}
+                            className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isCreatingShipment ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Truck className="h-3.5 w-3.5" />}
+                            {shipmentAlreadyCreated ? `مرفوع إلى ${activeShippingProviderLabel}` : `رفع إلى ${activeShippingProviderLabel}`}
+                          </button>
+                        ) : null}
                         {nextStatuses.map((status) => (
                           <button
                             key={status}

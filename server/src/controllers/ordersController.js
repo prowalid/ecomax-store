@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const format = require('pg-format');
 const { triggerOrderStatusNotification, sendOrderWebhook, buildOrderWebhookPayload } = require('./integrationsController');
 const { getShippingSettings } = require('../services/shipping/shippingSettings');
-const { createYalidineShipment } = require('../services/shipping/providers/yalidineProvider');
+const { createYalidineShipment, createGuepexShipment } = require('../services/shipping/providers/yalidineProvider');
 
 function normalizeSelectedOptions(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
@@ -314,21 +314,40 @@ async function updateOrderStatus(req, res, next) {
   }
 }
 
-// POST /api/orders/:id/shipping/yalidine
-async function createYalidineOrderShipment(req, res, next) {
+const SHIPPING_PROVIDER_HANDLERS = {
+  yalidine: {
+    label: 'Yalidine',
+    settingsKey: 'yalidine',
+    createShipment: createYalidineShipment,
+  },
+  guepex: {
+    label: 'Guepex',
+    settingsKey: 'guepex',
+    createShipment: createGuepexShipment,
+  },
+};
+
+// POST /api/orders/:id/shipping/provider
+async function createOrderShipment(req, res, next) {
   try {
     const { id } = req.params;
     const { order, items } = await getOrderWithItems(id);
+    const shippingSettings = await getShippingSettings();
+    const activeProvider = shippingSettings.provider?.active_provider;
+    const providerConfig = SHIPPING_PROVIDER_HANDLERS[activeProvider];
 
-    if (order.shipping_company === 'yalidine' && order.tracking_number) {
-      return res.status(409).json({ error: 'تم رفع هذا الطلب إلى Yalidine مسبقًا' });
+    if (!providerConfig) {
+      return res.status(400).json({ error: 'لا يوجد مزود شحن مباشر مفعل حاليًا' });
     }
 
-    const shippingSettings = await getShippingSettings();
-    const shipment = await createYalidineShipment({
+    if (order.shipping_company === providerConfig.settingsKey && order.tracking_number) {
+      return res.status(409).json({ error: `تم رفع هذا الطلب إلى ${providerConfig.label} مسبقًا` });
+    }
+
+    const shipment = await providerConfig.createShipment({
       order,
       items,
-      settings: shippingSettings.yalidine || {},
+      settings: shippingSettings[providerConfig.settingsKey] || {},
     });
 
     const { rows } = await pool.query(
@@ -340,12 +359,13 @@ async function createYalidineOrderShipment(req, res, next) {
         WHERE id = $3
         RETURNING *
       `,
-      ['yalidine', shipment.tracking_number, id]
+      [providerConfig.settingsKey, shipment.tracking_number, id]
     );
 
     res.json({
       success: true,
-      provider: 'yalidine',
+      provider: providerConfig.settingsKey,
+      provider_label: providerConfig.label,
       tracking_number: shipment.tracking_number,
       order: rows[0],
       shipment_response: shipment.response,
@@ -355,4 +375,4 @@ async function createYalidineOrderShipment(req, res, next) {
   }
 }
 
-module.exports = { getOrders, getOrderItems, createOrder, updateOrderStatus, createYalidineOrderShipment };
+module.exports = { getOrders, getOrderItems, createOrder, updateOrderStatus, createOrderShipment };

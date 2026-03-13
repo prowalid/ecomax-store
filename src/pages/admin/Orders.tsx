@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useCreateYalidineShipment, useOrders, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
+import { useMemo, useState } from "react";
+import { useCreateShippingShipment, useOrders, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { api } from "@/lib/api";
 import { exportCsv } from "@/lib/exportCsv";
 import OrdersFilters from "@/components/admin/orders/OrdersFilters";
@@ -13,7 +14,15 @@ import { formatSelectedOptions } from "@/lib/productOptions";
 const Orders = () => {
   const { data: orders = [], isLoading } = useOrders();
   const updateStatus = useUpdateOrderStatus();
-  const createYalidineShipment = useCreateYalidineShipment();
+  const { settings: shippingSettings } = useStoreSettings<{ provider?: { active_provider?: string } }>("shipping", { provider: { active_provider: "manual" } });
+  const activeShippingProvider = shippingSettings.provider?.active_provider || "manual";
+  const hasDirectShippingProvider = activeShippingProvider === "yalidine" || activeShippingProvider === "guepex";
+  const activeProviderLabel = useMemo(() => {
+    if (activeShippingProvider === "guepex") return "Guepex";
+    if (activeShippingProvider === "yalidine") return "Yalidine";
+    return "";
+  }, [activeShippingProvider]);
+  const createShippingShipment = useCreateShippingShipment(activeProviderLabel);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<OrderStatus | "all">("all");
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
@@ -47,8 +56,8 @@ const Orders = () => {
     }
   };
 
-  const handleCreateYalidineShipment = (id: string) => {
-    createYalidineShipment.mutate(id);
+  const handleCreateShipment = (id: string) => {
+    createShippingShipment.mutate(id);
   };
 
   const handleBulkStatusChange = async (newStatus: OrderStatus) => {
@@ -245,8 +254,11 @@ const Orders = () => {
         onToggleSelectAll={toggleSelectAll}
         onToggleExpand={(id) => setExpandedOrder(expandedOrder === id ? null : id)}
         onStatusChange={handleStatusChange}
-        onCreateYalidineShipment={handleCreateYalidineShipment}
-        creatingShipmentId={createYalidineShipment.isPending ? (createYalidineShipment.variables ?? null) : null}
+        onCreateShipment={handleCreateShipment}
+        creatingShipmentId={createShippingShipment.isPending ? (createShippingShipment.variables ?? null) : null}
+        activeShippingProvider={activeShippingProvider}
+        activeShippingProviderLabel={activeProviderLabel}
+        hasDirectShippingProvider={hasDirectShippingProvider}
       />
     </div>
   );

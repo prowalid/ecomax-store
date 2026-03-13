@@ -13,7 +13,7 @@ interface WilayaShipping {
   deskPrice: number;
 }
 
-interface YalidineSettings {
+interface CourierPartnerSettings {
   enabled: boolean;
   api_base_url: string;
   api_id: string;
@@ -31,12 +31,14 @@ interface ShippingSettings {
   provider: {
     active_provider: ShippingProviderKey;
   };
-  yalidine: YalidineSettings;
+  yalidine: CourierPartnerSettings;
+  guepex: CourierPartnerSettings;
 }
 
 type ShippingProviderKey =
   | "manual"
   | "yalidine"
+  | "guepex"
   | "zr_express"
   | "mdm_express"
   | "near_delivery"
@@ -59,6 +61,12 @@ const SHIPPING_PROVIDERS: Array<{
     label: "Yalidine",
     status: "live",
     description: "اربط متجرك مباشرة بحسابك في شركة Yalidine لرفع الطلبات وتوليد رقم التتبع بنقرة واحدة.",
+  },
+  {
+    key: "guepex",
+    label: "Guepex",
+    status: "live",
+    description: "اربط متجرك مباشرة بحسابك في شركة Guepex لرفع الطلبات وتوليد رقم التتبع بنقرة واحدة.",
   },
   {
     key: "zr_express",
@@ -103,6 +111,18 @@ const defaultShippingSettings: ShippingSettings = {
     stopdesk_id: "",
     default_product_name: "",
   },
+  guepex: {
+    enabled: false,
+    api_base_url: "https://api.guepex.app/v1",
+    api_id: "",
+    api_token: "",
+    shipper_name: "",
+    shipper_phone: "",
+    from_wilaya_name: "",
+    from_commune_name: "",
+    stopdesk_id: "",
+    default_product_name: "",
+  },
 };
 
 const Shipping = () => {
@@ -111,8 +131,10 @@ const Shipping = () => {
     ALGERIA_WILAYAS.map((w) => ({ id: w.id, name: w.name, homePrice: w.priceHome, deskPrice: w.priceDesk }))
   );
   const [providerSettings, setProviderSettings] = useState(defaultShippingSettings.provider);
-  const [yalidineSettings, setYalidineSettings] = useState<YalidineSettings>(defaultShippingSettings.yalidine);
+  const [yalidineSettings, setYalidineSettings] = useState<CourierPartnerSettings>(defaultShippingSettings.yalidine);
+  const [guepexSettings, setGuepexSettings] = useState<CourierPartnerSettings>(defaultShippingSettings.guepex);
   const [yalidineSecretsDraft, setYalidineSecretsDraft] = useState({ api_id: "", api_token: "" });
+  const [guepexSecretsDraft, setGuepexSecretsDraft] = useState({ api_id: "", api_token: "" });
   const [search, setSearch] = useState("");
   const [providerPanelOpen, setProviderPanelOpen] = useState(true);
 
@@ -139,7 +161,12 @@ const Shipping = () => {
       ...defaultShippingSettings.yalidine,
       ...(settings.yalidine || {}),
     });
+    setGuepexSettings({
+      ...defaultShippingSettings.guepex,
+      ...(settings.guepex || {}),
+    });
     setYalidineSecretsDraft({ api_id: "", api_token: "" });
+    setGuepexSecretsDraft({ api_id: "", api_token: "" });
   }, [settings]);
 
   const filtered = wilayas.filter(
@@ -154,10 +181,16 @@ const Shipping = () => {
     [settings.yalidine]
   );
 
+  const savedGuepexSettings = useMemo(
+    () => ({
+      ...defaultShippingSettings.guepex,
+      ...(settings.guepex || {}),
+    }),
+    [settings.guepex]
+  );
+
   const isYalidineConfigured = useMemo(() => {
     return Boolean(
-      savedYalidineSettings.enabled &&
-      savedYalidineSettings.api_base_url.trim() &&
       savedYalidineSettings.api_id.trim() &&
       savedYalidineSettings.api_token.trim() &&
       savedYalidineSettings.shipper_name.trim() &&
@@ -166,6 +199,16 @@ const Shipping = () => {
     );
   }, [savedYalidineSettings]);
 
+  const isGuepexConfigured = useMemo(() => {
+    return Boolean(
+      savedGuepexSettings.api_id.trim() &&
+      savedGuepexSettings.api_token.trim() &&
+      savedGuepexSettings.shipper_name.trim() &&
+      savedGuepexSettings.shipper_phone.trim() &&
+      savedGuepexSettings.from_wilaya_name.trim()
+    );
+  }, [savedGuepexSettings]);
+
   const activeProviderMeta = SHIPPING_PROVIDERS.find((provider) => provider.key === providerSettings.active_provider)
     || SHIPPING_PROVIDERS[0];
 
@@ -173,23 +216,44 @@ const Shipping = () => {
     setWilayas((prev) => prev.map((w) => (w.id === id ? { ...w, [field]: value } : w)));
   };
 
-  const updateYalidine = <K extends keyof YalidineSettings>(key: K, value: YalidineSettings[K]) => {
+  const updateYalidine = <K extends keyof CourierPartnerSettings>(key: K, value: CourierPartnerSettings[K]) => {
     setYalidineSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateGuepex = <K extends keyof CourierPartnerSettings>(key: K, value: CourierPartnerSettings[K]) => {
+    setGuepexSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = () => {
     const nextYalidineSettings = {
       ...yalidineSettings,
+      enabled: providerSettings.active_provider === "yalidine",
       api_id: yalidineSecretsDraft.api_id.trim() || savedYalidineSettings.api_id,
       api_token: yalidineSecretsDraft.api_token.trim() || savedYalidineSettings.api_token,
+    };
+    const nextGuepexSettings = {
+      ...guepexSettings,
+      enabled: providerSettings.active_provider === "guepex",
+      api_id: guepexSecretsDraft.api_id.trim() || savedGuepexSettings.api_id,
+      api_token: guepexSecretsDraft.api_token.trim() || savedGuepexSettings.api_token,
     };
 
     saveSettings({
       wilayas,
       provider: providerSettings,
       yalidine: nextYalidineSettings,
+      guepex: nextGuepexSettings,
     });
   };
+
+  const activeCourierProvider = providerSettings.active_provider === "guepex" ? "guepex" : "yalidine";
+  const activeCourierLabel = activeCourierProvider === "guepex" ? "Guepex" : "Yalidine";
+  const activeCourierSettings = activeCourierProvider === "guepex" ? guepexSettings : yalidineSettings;
+  const activeSavedCourierSettings = activeCourierProvider === "guepex" ? savedGuepexSettings : savedYalidineSettings;
+  const activeCourierSecretsDraft = activeCourierProvider === "guepex" ? guepexSecretsDraft : yalidineSecretsDraft;
+  const updateActiveCourier = activeCourierProvider === "guepex" ? updateGuepex : updateYalidine;
+  const setActiveCourierSecretsDraft = activeCourierProvider === "guepex" ? setGuepexSecretsDraft : setYalidineSecretsDraft;
+  const isActiveCourierConfigured = activeCourierProvider === "guepex" ? isGuepexConfigured : isYalidineConfigured;
 
   if (loading) {
     return (
@@ -204,7 +268,7 @@ const Shipping = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">الشحن</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">أسعار التوصيل المحلية وربط شركة Yalidine من نفس الصفحة.</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">أسعار التوصيل المحلية وربط شركات الشحن المباشرة من نفس الصفحة.</p>
         </div>
         <button
           onClick={handleSave}
@@ -239,6 +303,7 @@ const Shipping = () => {
                   const nextProvider = e.target.value as ShippingProviderKey;
                   setProviderSettings({ active_provider: nextProvider });
                   setYalidineSettings((prev) => ({ ...prev, enabled: nextProvider === "yalidine" }));
+                  setGuepexSettings((prev) => ({ ...prev, enabled: nextProvider === "guepex" }));
                 }}
                 className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
               >
@@ -271,6 +336,7 @@ const Shipping = () => {
                 onClick={() => {
                   setProviderSettings({ active_provider: provider.key });
                   setYalidineSettings((prev) => ({ ...prev, enabled: provider.key === "yalidine" }));
+                  setGuepexSettings((prev) => ({ ...prev, enabled: provider.key === "guepex" }));
                 }}
                 className={`rounded-[20px] border p-4 text-right transition-all ${
                   isActive
@@ -305,7 +371,7 @@ const Shipping = () => {
           </div>
         ) : null}
 
-        {providerSettings.active_provider !== "manual" && providerSettings.active_provider !== "yalidine" ? (
+        {providerSettings.active_provider !== "manual" && providerSettings.active_provider !== "yalidine" && providerSettings.active_provider !== "guepex" ? (
           <div className="mt-5 rounded-[20px] border border-amber-200 bg-amber-50/80 p-5">
             <h3 className="text-sm font-black text-slate-900">{activeProviderMeta.label}</h3>
             <p className="mt-1 text-xs leading-6 text-slate-600">
@@ -314,58 +380,48 @@ const Shipping = () => {
           </div>
         ) : null}
 
-        {providerSettings.active_provider === "yalidine" && providerPanelOpen ? (
+        {(providerSettings.active_provider === "yalidine" || providerSettings.active_provider === "guepex") && providerPanelOpen ? (
           <div className="mt-5 space-y-5">
             <AdminIntegrationStatusNote
-              configured={isYalidineConfigured}
-              configuredTitle="Yalidine جاهز للعمل"
-              configuredDescription="يمكنك الآن رفع الطلبات من صفحة الطلبات مباشرة إلى Yalidine عند الحاجة."
+              configured={isActiveCourierConfigured}
+              configuredTitle={`${activeCourierLabel} جاهز للعمل`}
+              configuredDescription={`يمكنك الآن رفع الطلبات من صفحة الطلبات مباشرة إلى ${activeCourierLabel} عند الحاجة.`}
               pendingTitle="أكمل بيانات الربط أولاً"
               pendingDescription="أدخل API ID وAPI Token وبيانات المرسل وولاية الإرسال، ثم احفظ الإعدادات قبل استعمال الرفع المباشر."
             />
 
             <div className="grid gap-4 lg:grid-cols-2">
               <AdminSecureField
-                title="رابط API"
-                description="اتركه كما هو غالباً. أبقيناه قابلاً للتعديل حتى لا نربط المشروع بفرضية واحدة."
-                value={yalidineSettings.api_base_url}
-                onChange={(e) => updateYalidine("api_base_url", e.target.value)}
-                placeholder="https://api.yalidine.app/v1"
-                dir="ltr"
-                configured={Boolean(yalidineSettings.api_base_url.trim())}
-              />
-
-              <AdminSecureField
                 title="API ID"
-                description="المعرّف الذي تمنحه لك Yalidine."
+                description={`المعرّف الذي تمنحه لك ${activeCourierLabel}.`}
                 type="text"
-                value={yalidineSecretsDraft.api_id}
-                onChange={(e) => setYalidineSecretsDraft((prev) => ({ ...prev, api_id: e.target.value }))}
-                placeholder={savedYalidineSettings.api_id ? "قيمة محفوظة — أدخل API ID جديدًا للاستبدال" : "Your Yalidine API ID"}
+                value={activeCourierSecretsDraft.api_id}
+                onChange={(e) => setActiveCourierSecretsDraft((prev) => ({ ...prev, api_id: e.target.value }))}
+                placeholder={activeSavedCourierSettings.api_id ? "قيمة محفوظة — أدخل API ID جديدًا للاستبدال" : `Your ${activeCourierLabel} API ID`}
                 dir="ltr"
-                configured={Boolean(savedYalidineSettings.api_id.trim())}
+                configured={Boolean(activeSavedCourierSettings.api_id.trim())}
                 helperText="إذا كانت القيمة محفوظة بالفعل فاترك الحقل فارغًا، واكتب داخله فقط عند الرغبة في استبدالها."
               />
 
               <AdminSecureField
                 title="API Token"
-                description="التوكن السري لرفع الطلبات إلى Yalidine."
+                description={`التوكن السري لرفع الطلبات إلى ${activeCourierLabel}.`}
                 type="password"
-                value={yalidineSecretsDraft.api_token}
-                onChange={(e) => setYalidineSecretsDraft((prev) => ({ ...prev, api_token: e.target.value }))}
-                placeholder={savedYalidineSettings.api_token ? "قيمة محفوظة — أدخل Token جديدًا للاستبدال" : "Your Yalidine API Token"}
+                value={activeCourierSecretsDraft.api_token}
+                onChange={(e) => setActiveCourierSecretsDraft((prev) => ({ ...prev, api_token: e.target.value }))}
+                placeholder={activeSavedCourierSettings.api_token ? "قيمة محفوظة — أدخل Token جديدًا للاستبدال" : `Your ${activeCourierLabel} API Token`}
                 dir="ltr"
-                configured={Boolean(savedYalidineSettings.api_token.trim())}
+                configured={Boolean(activeSavedCourierSettings.api_token.trim())}
                 helperText="لن نعرض التوكن الحالي. أدخل قيمة جديدة فقط إذا أردت استبداله ثم احفظ الإعدادات."
               />
 
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-slate-900">اسم المرسل</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">الاسم الذي سيذهب ضمن بيانات الشحنة من متجرك إلى Yalidine.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{`الاسم الذي سيذهب ضمن بيانات الشحنة من متجرك إلى ${activeCourierLabel}.`}</p>
                 <input
                   type="text"
-                  value={yalidineSettings.shipper_name}
-                  onChange={(e) => updateYalidine("shipper_name", e.target.value)}
+                  value={activeCourierSettings.shipper_name}
+                  onChange={(e) => updateActiveCourier("shipper_name", e.target.value)}
                   placeholder="اسم المرسل"
                   className="mt-4 h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-right text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />
@@ -373,11 +429,11 @@ const Shipping = () => {
 
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-slate-900">هاتف المرسل</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">رقم صاحب المتجر أو الخط المعتمد لتعامل Yalidine مع الشحنات.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{`رقم صاحب المتجر أو الخط المعتمد لتعامل ${activeCourierLabel} مع الشحنات.`}</p>
                 <input
                   type="tel"
-                  value={yalidineSettings.shipper_phone}
-                  onChange={(e) => updateYalidine("shipper_phone", e.target.value)}
+                  value={activeCourierSettings.shipper_phone}
+                  onChange={(e) => updateActiveCourier("shipper_phone", e.target.value)}
                   placeholder="0555123456"
                   dir="ltr"
                   className="mt-4 h-10 w-full rounded-xl border border-input bg-background px-3 text-left text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
@@ -386,10 +442,10 @@ const Shipping = () => {
 
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-slate-900">ولاية الإرسال</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">الولاية التي تنطلق منها شحناتك عند إنشاء الطلبات في Yalidine.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{`الولاية التي تنطلق منها شحناتك عند إنشاء الطلبات في ${activeCourierLabel}.`}</p>
                 <select
-                  value={yalidineSettings.from_wilaya_name}
-                  onChange={(e) => updateYalidine("from_wilaya_name", e.target.value)}
+                  value={activeCourierSettings.from_wilaya_name}
+                  onChange={(e) => updateActiveCourier("from_wilaya_name", e.target.value)}
                   className="mt-4 h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">اختر الولاية</option>
@@ -403,11 +459,11 @@ const Shipping = () => {
 
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-slate-900">بلدية / مركز الانطلاق</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">اختياري. يفيد في تحسين بيانات الشحنة إذا كانت Yalidine تعتمدها في حساب الفرع أو المسار.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{`اختياري. يفيد في تحسين بيانات الشحنة إذا كانت ${activeCourierLabel} تعتمدها في حساب الفرع أو المسار.`}</p>
                 <input
                   type="text"
-                  value={yalidineSettings.from_commune_name}
-                  onChange={(e) => updateYalidine("from_commune_name", e.target.value)}
+                  value={activeCourierSettings.from_commune_name}
+                  onChange={(e) => updateActiveCourier("from_commune_name", e.target.value)}
                   placeholder="مثال: السانيا"
                   className="mt-4 h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-right text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />
@@ -415,11 +471,11 @@ const Shipping = () => {
 
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-slate-900">Stop Desk ID</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">اختياري كقيمة override فقط. إذا تركته فارغًا سيختار النظام تلقائيًا أقرب مركز متاح من Yalidine داخل ولاية الزبون.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{`اختياري كقيمة override فقط. إذا تركته فارغًا سيختار النظام تلقائيًا أقرب مركز متاح من ${activeCourierLabel} داخل ولاية الزبون.`}</p>
                 <input
                   type="text"
-                  value={yalidineSettings.stopdesk_id}
-                  onChange={(e) => updateYalidine("stopdesk_id", e.target.value)}
+                  value={activeCourierSettings.stopdesk_id}
+                  onChange={(e) => updateActiveCourier("stopdesk_id", e.target.value)}
                   placeholder="مثال: 12345"
                   dir="ltr"
                   className="mt-4 h-10 w-full rounded-xl border border-input bg-background px-3 text-left text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
@@ -433,8 +489,8 @@ const Shipping = () => {
                 </p>
                 <input
                   type="text"
-                  value={yalidineSettings.default_product_name}
-                  onChange={(e) => updateYalidine("default_product_name", e.target.value)}
+                  value={activeCourierSettings.default_product_name}
+                  onChange={(e) => updateActiveCourier("default_product_name", e.target.value)}
                   placeholder="مثال: طلب متجر إلكتروني"
                   className="mt-4 h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-right text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />

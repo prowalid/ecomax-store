@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getOrders, getOrderItems, createOrder, updateOrderStatus, createYalidineOrderShipment } = require('../controllers/ordersController');
+const { getOrders, getOrderItems, createOrder, updateOrderStatus, createOrderShipment } = require('../controllers/ordersController');
 const authMiddleware = require('../middleware/auth');
 const { validateBody } = require('../middleware/validate');
 const { createOrderSchema, updateOrderStatusSchema } = require('../validators/orderSchemas');
@@ -23,6 +23,6 @@ router.use(authMiddleware);
 router.get('/', getOrders);
 router.get('/:id/items', getOrderItems);
 router.patch('/:id/status', validateBody(updateOrderStatusSchema), updateOrderStatus);
-router.post('/:id/shipping/yalidine', createYalidineOrderShipment);
+router.post('/:id/shipping/provider', createOrderShipment);
 
 module.exports = router;

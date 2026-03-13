@@ -105,7 +105,7 @@ function splitCustomerName(fullName) {
   };
 }
 
-async function fetchYalidineJson({ apiBaseUrl, path, apiId, apiToken }) {
+async function fetchYalidineJson({ apiBaseUrl, path, apiId, apiToken, providerLabel = 'Yalidine' }) {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ async function fetchYalidineJson({ apiBaseUrl, path, apiId, apiToken }) {
   const responseData = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message = extractApiErrorMessage(responseData) || 'فشل جلب مرجع ياليدين';
+    const message = extractApiErrorMessage(responseData) || `فشل جلب مرجع ${providerLabel}`;
     const error = new Error(message);
     error.status = response.status || 502;
     error.details = responseData;
@@ -127,7 +127,7 @@ async function fetchYalidineJson({ apiBaseUrl, path, apiId, apiToken }) {
   return responseData;
 }
 
-async function getYalidineWilayas({ apiBaseUrl, apiId, apiToken }) {
+async function getYalidineWilayas({ apiBaseUrl, apiId, apiToken, providerLabel = 'Yalidine' }) {
   if (referenceCache.wilayas) {
     return referenceCache.wilayas;
   }
@@ -137,13 +137,14 @@ async function getYalidineWilayas({ apiBaseUrl, apiId, apiToken }) {
     path: '/wilayas',
     apiId,
     apiToken,
+    providerLabel,
   });
 
   referenceCache.wilayas = Array.isArray(responseData.data) ? responseData.data : [];
   return referenceCache.wilayas;
 }
 
-async function getYalidineCommunesByWilayaId({ apiBaseUrl, apiId, apiToken, wilayaId }) {
+async function getYalidineCommunesByWilayaId({ apiBaseUrl, apiId, apiToken, wilayaId, providerLabel = 'Yalidine' }) {
   if (referenceCache.communesByWilayaId.has(wilayaId)) {
     return referenceCache.communesByWilayaId.get(wilayaId);
   }
@@ -153,6 +154,7 @@ async function getYalidineCommunesByWilayaId({ apiBaseUrl, apiId, apiToken, wila
     path: `/communes?wilaya_id=${wilayaId}`,
     apiId,
     apiToken,
+    providerLabel,
   });
 
   const communes = Array.isArray(responseData.data) ? responseData.data : [];
@@ -160,7 +162,7 @@ async function getYalidineCommunesByWilayaId({ apiBaseUrl, apiId, apiToken, wila
   return communes;
 }
 
-async function getYalidineCentersByWilayaId({ apiBaseUrl, apiId, apiToken, wilayaId }) {
+async function getYalidineCentersByWilayaId({ apiBaseUrl, apiId, apiToken, wilayaId, providerLabel = 'Yalidine' }) {
   const cacheKey = `centers:${wilayaId}`;
   if (referenceCache.communesByWilayaId.has(cacheKey)) {
     return referenceCache.communesByWilayaId.get(cacheKey);
@@ -171,6 +173,7 @@ async function getYalidineCentersByWilayaId({ apiBaseUrl, apiId, apiToken, wilay
     path: `/centers?wilaya_id=${wilayaId}`,
     apiId,
     apiToken,
+    providerLabel,
   });
 
   const centers = Array.isArray(responseData.data) ? responseData.data : [];
@@ -291,12 +294,12 @@ function extractResultEntries(responseData) {
   return [];
 }
 
-async function resolveYalidineAddress({ apiBaseUrl, apiId, apiToken, wilayaName, communeName, fieldLabel }) {
-  const wilayas = await getYalidineWilayas({ apiBaseUrl, apiId, apiToken });
+async function resolveYalidineAddress({ apiBaseUrl, apiId, apiToken, wilayaName, communeName, fieldLabel, providerLabel = 'Yalidine' }) {
+  const wilayas = await getYalidineWilayas({ apiBaseUrl, apiId, apiToken, providerLabel });
   const matchedWilaya = findBestNameMatch(wilayaName, wilayas);
 
   if (!matchedWilaya) {
-    const error = new Error(`تعذر مطابقة ${fieldLabel} الولاية مع مرجع ياليدين`);
+    const error = new Error(`تعذر مطابقة ${fieldLabel} الولاية مع مرجع ${providerLabel}`);
     error.status = 400;
     throw error;
   }
@@ -306,12 +309,13 @@ async function resolveYalidineAddress({ apiBaseUrl, apiId, apiToken, wilayaName,
     apiId,
     apiToken,
     wilayaId: matchedWilaya.id,
+    providerLabel,
   });
 
   const matchedCommune = communeName ? findBestNameMatch(communeName, communes) : null;
 
   if (communeName && !matchedCommune) {
-    const error = new Error(`تعذر مطابقة ${fieldLabel} البلدية مع مرجع ياليدين`);
+    const error = new Error(`تعذر مطابقة ${fieldLabel} البلدية مع مرجع ${providerLabel}`);
     error.status = 400;
     throw error;
   }
@@ -323,16 +327,17 @@ async function resolveYalidineAddress({ apiBaseUrl, apiId, apiToken, wilayaName,
   };
 }
 
-async function resolveYalidineStopDesk({ apiBaseUrl, apiId, apiToken, destination, manualStopDeskId }) {
+async function resolveYalidineStopDesk({ apiBaseUrl, apiId, apiToken, destination, manualStopDeskId, providerLabel = 'Yalidine' }) {
   const centers = await getYalidineCentersByWilayaId({
     apiBaseUrl,
     apiId,
     apiToken,
     wilayaId: destination.wilayaId,
+    providerLabel,
   });
 
   if (centers.length === 0) {
-    const error = new Error('لا يوجد أي مركز Desk متاح في ولاية الوجهة داخل ياليدين');
+    const error = new Error(`لا يوجد أي مركز Desk متاح في ولاية الوجهة داخل ${providerLabel}`);
     error.status = 400;
     throw error;
   }
@@ -362,25 +367,26 @@ async function resolveYalidineStopDesk({ apiBaseUrl, apiId, apiToken, destinatio
 }
 
 async function buildYalidinePayload(order, items, settings, apiContext) {
+  const providerLabel = apiContext.providerLabel || 'Yalidine';
   const { firstname, familyname } = splitCustomerName(order.customer_name);
   const productSummary = settings.default_product_name || summarizeItems(items);
   const normalizedCustomerPhone = normalizePhone(order.customer_phone);
   const normalizedShipperPhone = normalizePhone(settings.shipper_phone);
 
   if (!normalizedCustomerPhone) {
-    const error = new Error('رقم هاتف الزبون غير صالح للإرسال إلى ياليدين');
+    const error = new Error(`رقم هاتف الزبون غير صالح للإرسال إلى ${providerLabel}`);
     error.status = 400;
     throw error;
   }
 
   if (!normalizedShipperPhone) {
-    const error = new Error('رقم هاتف المرسل في إعدادات ياليدين غير صالح');
+    const error = new Error(`رقم هاتف المرسل في إعدادات ${providerLabel} غير صالح`);
     error.status = 400;
     throw error;
   }
 
   if (!settings.from_wilaya_name) {
-    const error = new Error('يرجى تحديد ولاية الإرسال في إعدادات ياليدين');
+    const error = new Error(`يرجى تحديد ولاية الإرسال في إعدادات ${providerLabel}`);
     error.status = 400;
     throw error;
   }
@@ -408,9 +414,10 @@ async function buildYalidinePayload(order, items, settings, apiContext) {
   const stopDesk = order.delivery_type === 'desk'
     ? await resolveYalidineStopDesk({
         ...apiContext,
-        destination,
-        manualStopDeskId: settings.stopdesk_id,
-      })
+      destination,
+      manualStopDeskId: settings.stopdesk_id,
+      providerLabel,
+    })
     : null;
 
   const finalDestinationCommuneName =
@@ -445,19 +452,19 @@ async function buildYalidinePayload(order, items, settings, apiContext) {
   });
 }
 
-async function createYalidineShipment({ order, items, settings }) {
+async function createPartnerShipment({ order, items, settings, providerKey = 'yalidine', providerLabel = 'Yalidine' }) {
   const apiBaseUrl = String(settings.api_base_url || '').trim().replace(/\/+$/, '');
   const apiId = String(settings.api_id || '').trim();
   const apiToken = String(settings.api_token || '').trim();
 
   if (!settings.enabled) {
-    const error = new Error('تكامل ياليدين غير مفعل من إعدادات الشحن');
+    const error = new Error(`تكامل ${providerLabel} غير مفعل من إعدادات الشحن`);
     error.status = 400;
     throw error;
   }
 
   if (!apiBaseUrl || !apiId || !apiToken) {
-    const error = new Error('بيانات ربط ياليدين غير مكتملة');
+    const error = new Error(`بيانات ربط ${providerLabel} غير مكتملة`);
     error.status = 400;
     throw error;
   }
@@ -466,6 +473,7 @@ async function createYalidineShipment({ order, items, settings }) {
     apiBaseUrl,
     apiId,
     apiToken,
+    providerLabel,
   });
   const response = await fetch(`${apiBaseUrl}/parcels`, {
     method: 'POST',
@@ -480,7 +488,7 @@ async function createYalidineShipment({ order, items, settings }) {
   const responseData = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message = extractApiErrorMessage(responseData) || 'فشل رفع الطلب إلى ياليدين';
+    const message = extractApiErrorMessage(responseData) || `فشل رفع الطلب إلى ${providerLabel}`;
     const error = new Error(message);
     error.status = response.status || 502;
     error.details = responseData;
@@ -494,7 +502,7 @@ async function createYalidineShipment({ order, items, settings }) {
       const message = failedEntries
         .map((entry) => stringifyApiErrorPart(entry.message) || stringifyApiErrorPart(entry.error))
         .filter(Boolean)
-        .join(' | ') || 'فشل رفع الطلب إلى ياليدين';
+        .join(' | ') || `فشل رفع الطلب إلى ${providerLabel}`;
 
       const error = new Error(message);
       error.status = 400;
@@ -504,13 +512,35 @@ async function createYalidineShipment({ order, items, settings }) {
   }
 
   return {
-    provider: 'yalidine',
+    provider: providerKey,
     payload,
     response: responseData,
     tracking_number: extractTrackingNumber(responseData),
   };
 }
 
+async function createYalidineShipment({ order, items, settings }) {
+  return createPartnerShipment({
+    order,
+    items,
+    settings,
+    providerKey: 'yalidine',
+    providerLabel: 'Yalidine',
+  });
+}
+
+async function createGuepexShipment({ order, items, settings }) {
+  return createPartnerShipment({
+    order,
+    items,
+    settings,
+    providerKey: 'guepex',
+    providerLabel: 'Guepex',
+  });
+}
+
 module.exports = {
+  createPartnerShipment,
   createYalidineShipment,
+  createGuepexShipment,
 };
