@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS pages (
 -- Default store settings
 INSERT INTO store_settings (key, value) VALUES
   ('whatsapp_notifications', '{"enabled_notifications": {"order_confirmed": true, "order_shipped": true, "order_delivered": false, "new_order_admin": true}, "admin_phone": "", "api_configured": false}'::jsonb),
-  ('shipping', '{"wilayas": []}'::jsonb),
+  ('shipping', '{"wilayas": [], "provider": {"active_provider": "manual"}, "yalidine": {"enabled": false, "api_base_url": "https://api.yalidine.app/v1", "api_id": "", "api_token": "", "shipper_name": "", "shipper_phone": "", "from_wilaya_name": "", "from_commune_name": "", "stopdesk_id": "", "default_product_name": ""}}'::jsonb),
   ('general', '{"store_name": "ECOMAX", "phone": "", "whatsapp_phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": ""}'::jsonb),
   ('appearance', '{"logo_url": "", "footer_logo_url": "", "favicon_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}'::jsonb),
   ('marketing', '{"pixel_id": "", "capi_token": "", "pixel_configured": false, "webhook_url": "", "enabled_events": {"PageView": true, "ViewContent": true, "AddToCart": true, "InitiateCheckout": true, "Purchase": true, "Lead": true}}'::jsonb),

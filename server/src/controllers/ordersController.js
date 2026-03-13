@@ -1,6 +1,8 @@
 const pool = require('../config/db');
 const format = require('pg-format');
 const { triggerOrderStatusNotification, sendOrderWebhook, buildOrderWebhookPayload } = require('./integrationsController');
+const { getShippingSettings } = require('../services/shipping/shippingSettings');
+const { createYalidineShipment } = require('../services/shipping/providers/yalidineProvider');
 
 function normalizeSelectedOptions(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
@@ -81,6 +83,22 @@ function formatNotificationItems(items) {
   return items
     .map((item) => `${item.product_name} × ${item.quantity}`)
     .join("، ");
+}
+
+async function getOrderWithItems(orderId) {
+  const { rows: orderRows } = await pool.query('SELECT * FROM orders WHERE id = $1 LIMIT 1', [orderId]);
+  if (orderRows.length === 0) {
+    const err = new Error('Order not found');
+    err.status = 404;
+    throw err;
+  }
+
+  const { rows: itemRows } = await pool.query(
+    'SELECT id, order_id, product_id, product_name, selected_options, quantity, unit_price, total FROM order_items WHERE order_id = $1 ORDER BY created_at ASC',
+    [orderId]
+  );
+
+  return { order: orderRows[0], items: itemRows };
 }
 
 // POST /api/orders
@@ -296,4 +314,45 @@ async function updateOrderStatus(req, res, next) {
   }
 }
 
-module.exports = { getOrders, getOrderItems, createOrder, updateOrderStatus };
+// POST /api/orders/:id/shipping/yalidine
+async function createYalidineOrderShipment(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { order, items } = await getOrderWithItems(id);
+
+    if (order.shipping_company === 'yalidine' && order.tracking_number) {
+      return res.status(409).json({ error: 'تم رفع هذا الطلب إلى Yalidine مسبقًا' });
+    }
+
+    const shippingSettings = await getShippingSettings();
+    const shipment = await createYalidineShipment({
+      order,
+      items,
+      settings: shippingSettings.yalidine || {},
+    });
+
+    const { rows } = await pool.query(
+      `
+        UPDATE orders
+        SET shipping_company = $1,
+            tracking_number = COALESCE($2, tracking_number),
+            updated_at = NOW()
+        WHERE id = $3
+        RETURNING *
+      `,
+      ['yalidine', shipment.tracking_number, id]
+    );
+
+    res.json({
+      success: true,
+      provider: 'yalidine',
+      tracking_number: shipment.tracking_number,
+      order: rows[0],
+      shipment_response: shipment.response,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getOrders, getOrderItems, createOrder, updateOrderStatus, createYalidineOrderShipment };

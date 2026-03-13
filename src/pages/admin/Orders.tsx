@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOrders, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
+import { useCreateYalidineShipment, useOrders, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
 import { api } from "@/lib/api";
 import { exportCsv } from "@/lib/exportCsv";
 import OrdersFilters from "@/components/admin/orders/OrdersFilters";
@@ -13,14 +13,29 @@ import { formatSelectedOptions } from "@/lib/productOptions";
 const Orders = () => {
   const { data: orders = [], isLoading } = useOrders();
   const updateStatus = useUpdateOrderStatus();
+  const createYalidineShipment = useCreateYalidineShipment();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<OrderStatus | "all">("all");
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
+  const normalizedSearch = search.trim().toLowerCase();
 
   const filtered = orders.filter((o) => {
-    const matchSearch = o.customer_name.includes(search) || String(o.order_number).includes(search) || o.customer_phone.includes(search);
+    const searchableFields = [
+      o.customer_name,
+      String(o.order_number),
+      o.customer_phone,
+      o.ip_address || "",
+      o.tracking_number || "",
+      o.shipping_company || "",
+      o.wilaya || "",
+      o.commune || "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const matchSearch = !normalizedSearch || searchableFields.includes(normalizedSearch);
     const matchFilter = activeFilter === "all" || o.status === activeFilter;
     return matchSearch && matchFilter;
   });
@@ -30,6 +45,10 @@ const Orders = () => {
     if (order) {
       updateStatus.mutate({ id, status: newStatus, order });
     }
+  };
+
+  const handleCreateYalidineShipment = (id: string) => {
+    createYalidineShipment.mutate(id);
   };
 
   const handleBulkStatusChange = async (newStatus: OrderStatus) => {
@@ -226,6 +245,8 @@ const Orders = () => {
         onToggleSelectAll={toggleSelectAll}
         onToggleExpand={(id) => setExpandedOrder(expandedOrder === id ? null : id)}
         onStatusChange={handleStatusChange}
+        onCreateYalidineShipment={handleCreateYalidineShipment}
+        creatingShipmentId={createYalidineShipment.isPending ? (createYalidineShipment.variables ?? null) : null}
       />
     </div>
   );

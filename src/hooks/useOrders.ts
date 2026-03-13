@@ -75,6 +75,18 @@ export function useUpdateOrderStatus() {
   });
 }
 
+export function useCreateYalidineShipment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderId: string) => api.post(`/orders/${orderId}/shipping/yalidine`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("تم رفع الطلب إلى Yalidine");
+    },
+    onError: (error: Error) => toast.error(error.message || "فشل رفع الطلب إلى Yalidine"),
+  });
+}
+
 export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({

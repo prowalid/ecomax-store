@@ -61,7 +61,7 @@ export default function OrdersFilters({
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="بحث بالاسم، الرقم، أو الهاتف..."
+            placeholder="بحث بالاسم، رقم الطلب، الهاتف، IP أو رقم التتبع..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full h-9 pr-9 pl-3 rounded-lg border border-input bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
