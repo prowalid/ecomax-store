@@ -1,3 +1,9 @@
+{
+  servers {
+    trusted_proxies static private_ranges
+  }
+}
+
 {$APP_DOMAIN:localhost} {
   encode gzip zstd
 

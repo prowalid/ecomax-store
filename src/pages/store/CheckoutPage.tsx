@@ -3,19 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Phone, User, MapPin, Truck, Loader2, ShoppingBag, Home, Building2, Tag, X, ChevronDown } from "lucide-react";
+import { Phone, User, MapPin, Truck, Loader2, ShoppingBag, Home, Building2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
-import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 import { useTracking } from "@/hooks/useTracking";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import { useProducts } from "@/hooks/useProducts";
 import { saveTrackingProfile } from "@/lib/trackingProfile";
 import OrderSuccessMessage from "@/components/store/OrderSuccessMessage";
+import { formatSelectedOptions } from "@/lib/productOptions";
 
 interface WilayaShipping {
   id: number;
@@ -58,9 +58,6 @@ export default function CheckoutPage() {
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
-  const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
-
-  const [couponCode, setCouponCode] = useState("");
   const [submittedOrderNumber, setSubmittedOrderNumber] = useState<number | null>(null);
   const { track } = useTracking();
   const leadTrackedRef = useRef(false);
@@ -173,24 +170,7 @@ export default function CheckoutPage() {
   }, [selectedWilaya, deliveryTypeValue]);
 
   const subtotal = totalPrice;
-  const discountAmount = calculateDiscount(subtotal, {
-    lineItems: items.map((item) => ({
-      productId: item.product_id,
-      unitPrice: item.product_price,
-      quantity: item.quantity,
-    })),
-  });
-  const total = subtotal - discountAmount + shippingCost;
-
-  const handleApplyCoupon = async () => {
-    await validateCode(couponCode, {
-      lineItems: items.map((item) => ({
-        productId: item.product_id,
-        unitPrice: item.product_price,
-        quantity: item.quantity,
-      })),
-    });
-  };
+  const total = subtotal + shippingCost;
 
   const unavailableItems = useMemo(() => {
     if (!items.length || !products.length) return [];
@@ -212,9 +192,47 @@ export default function CheckoutPage() {
       .filter((entry): entry is { name: string; reason: string } => entry !== null);
   }, [items, products]);
 
-  const onSubmit = async (values: CheckoutFormValues) => {
+  const { settings: securitySettings } = useStoreSettings<{ turnstile_enabled: boolean; site_key: string; honeypot_enabled: boolean }>("security", { 
+    turnstile_enabled: false, 
+    site_key: "",
+    honeypot_enabled: true 
+  });
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Dynamically load Turnstile script if enabled
+  useEffect(() => {
+    if (securitySettings.turnstile_enabled && securitySettings.site_key) {
+      const scriptId = "cf-turnstile-script";
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+
+      // Define callback globally for Turnstile
+      (window as any).onTurnstileSuccess = (token: string) => {
+        setTurnstileToken(token);
+      };
+      
+      // Handle expiring token
+      (window as any).onTurnstileExpire = () => {
+        setTurnstileToken(null);
+      };
+    }
+  }, [securitySettings.turnstile_enabled, securitySettings.site_key]);
+
+  const onSubmit = async (values: CheckoutFormValues & { website_url?: string }) => {
     if (!items.length) {
       toast.error("السلة فارغة، أضف منتجات أولاً");
+      return;
+    }
+
+    // Turnstile check
+    if (securitySettings.turnstile_enabled && !turnstileToken) {
+      toast.error("الرجاء إكمال التحقق الأمني");
       return;
     }
 
@@ -247,21 +265,17 @@ export default function CheckoutPage() {
         shipping_cost: shippingCost,
         total,
         customer_id: customerId,
-        discount_code: discount?.code || undefined,
-        discount_amount: discountAmount > 0 ? discountAmount : undefined,
+        website_url: values.website_url, // Honeypot
+        "cf-turnstile-response": turnstileToken, // Turnstile
         items: items.map((item) => ({
           product_id: item.product_id,
           product_name: item.product_name,
+          selected_options: item.selected_options,
           quantity: item.quantity,
           unit_price: item.product_price,
           total: item.product_price * item.quantity,
         })),
       });
-
-      // Increment discount usage
-      if (discount) {
-        await incrementUsage();
-      }
 
       saveTrackingProfile({
         name: values.customer_name,
@@ -510,49 +524,28 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Coupon Code */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-            <p className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-              <Tag size={16} />
-              كود الخصم
-            </p>
-            {discount ? (
-              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Tag size={16} className="text-green-600" />
-                  <span className="text-sm font-bold text-green-700">
-                    {discount.code} — خصم {discount.type === "percentage" ? `${discount.value}%` : `${discount.value} د.ج`}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { clearDiscount(); setCouponCode(""); }}
-                  className="p-1 rounded-full hover:bg-green-100 text-green-600 transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder="أدخل كود الخصم"
-                  dir="ltr"
-                  className="flex-1 h-11 px-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-gray-800 font-bold text-center uppercase"
-                />
-                <button
-                  type="button"
-                  onClick={handleApplyCoupon}
-                  disabled={isValidating || !couponCode.trim()}
-                  className="h-11 px-5 rounded-xl bg-store-primary text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Honeypot Field (Invisible) */}
+          <input 
+            type="text" 
+            {...register("website_url" as any)} 
+            className="hidden" 
+            tabIndex={-1} 
+            autoComplete="off" 
+          />
+
+          {/* Turnstile Widget */}
+          {securitySettings.turnstile_enabled && securitySettings.site_key && (
+            <div className="flex justify-center my-4 min-h-[65px]">
+              <div 
+                className="cf-turnstile" 
+                data-sitekey={securitySettings.site_key} 
+                data-callback="onTurnstileSuccess"
+                data-expired-callback="onTurnstileExpire"
+                data-error-callback="onTurnstileExpire"
+                data-theme="light"
+              ></div>
+            </div>
+          )}
 
           <button
             type="submit"
@@ -584,6 +577,9 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <p className="font-bold text-gray-900 line-clamp-2 max-w-[140px]">{item.product_name}</p>
+                  {formatSelectedOptions(item.selected_options) && (
+                    <p className="text-[11px] text-gray-500 max-w-[160px]">{formatSelectedOptions(item.selected_options)}</p>
+                  )}
                   <p className="text-[11px] text-gray-400">الكمية: {item.quantity}</p>
                 </div>
               </div>
@@ -597,12 +593,6 @@ export default function CheckoutPage() {
             <span>المجموع الفرعي:</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
-          {discountAmount > 0 && (
-            <div className="flex justify-between mb-3 text-sm text-green-600 font-bold">
-              <span>الخصم ({discount?.code}):</span>
-              <span>- {formatPrice(discountAmount)}</span>
-            </div>
-          )}
           <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
             <span>سعر التوصيل:</span>
             <span className={shippingCost > 0 ? "text-gray-900 font-bold" : "text-gray-500"}>

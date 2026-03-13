@@ -43,10 +43,12 @@ done
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ENV_FILE="${CLIENT_DIR}/.env.registry"
 COMPOSE_FILE="${CLIENT_DIR}/docker-compose.yml"
+CLIENT_CADDY_FILE="${CLIENT_DIR}/Caddyfile.client"
+SOURCE_CLIENT_CADDY_FILE="${REPO_ROOT}/deploy/Caddyfile.client-internal"
 WEB_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-web:stepdz-test"
 API_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-api:stepdz-test"
 
-if [[ ! -f "${ENV_FILE}" || ! -f "${COMPOSE_FILE}" ]]; then
+if [[ ! -f "${ENV_FILE}" || ! -f "${COMPOSE_FILE}" || ! -f "${SOURCE_CLIENT_CADDY_FILE}" ]]; then
   echo "Missing stepdz stack files under ${CLIENT_DIR}" >&2
   exit 1
 fi
@@ -76,6 +78,7 @@ if [[ "${BUILD_WEB}" == "true" ]]; then
 fi
 
 cp "${ENV_FILE}" "${BACKUP_FILE}"
+cp "${SOURCE_CLIENT_CADDY_FILE}" "${CLIENT_CADDY_FILE}"
 
 TARGET_API_IMAGE="${CURRENT_API_IMAGE}"
 TARGET_WEB_IMAGE="${CURRENT_WEB_IMAGE}"

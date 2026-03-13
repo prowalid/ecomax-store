@@ -12,10 +12,8 @@ import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useCart } from "@/hooks/useCart";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
-import { useValidateDiscount } from "@/hooks/useValidateDiscount";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import ProductCard from "@/components/store/ProductCard";
-import QuickOrderModal from "@/components/store/QuickOrderModal";
 import { toast } from "sonner";
 import { useTracking } from "@/hooks/useTracking";
 import ProductHero from "@/components/store/product-page/ProductHero";
@@ -23,6 +21,7 @@ import ProductTrustBadges from "@/components/store/product-page/ProductTrustBadg
 import { saveTrackingProfile } from "@/lib/trackingProfile";
 import { getStoreThemeTokens } from "@/lib/storeTheme";
 import { sanitizeProductDescription } from "@/lib/productDescription";
+import { formatSelectedOptions, hasRequiredSelections, normalizeProductOptions, normalizeSelectedOptions, type SelectedProductOptions } from "@/lib/productOptions";
 
 interface WilayaShipping {
   id: number;
@@ -46,7 +45,6 @@ const ProductPage = () => {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [timeLeft, setTimeLeft] = useState(3600);
-  const [orderModalOpen, setOrderModalOpen] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -56,7 +54,40 @@ const ProductPage = () => {
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
   const [submitted, setSubmitted] = useState(false);
   const [submittedOrderNumber, setSubmittedOrderNumber] = useState<number | null>(null);
-  const [couponCode, setCouponCode] = useState("");
+  const [selectedOptions, setSelectedOptions] = useState<SelectedProductOptions>({});
+  const [honeypotValue, setHoneypotValue] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const { settings: securitySettings } = useStoreSettings<{ turnstile_enabled: boolean; site_key: string; honeypot_enabled: boolean }>("security", { 
+    turnstile_enabled: false, 
+    site_key: "",
+    honeypot_enabled: true 
+  });
+
+  // Dynamically load Turnstile script if enabled
+  useEffect(() => {
+    if (securitySettings.turnstile_enabled && securitySettings.site_key) {
+      const scriptId = "cf-turnstile-script";
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+
+      // Define callback globally for Turnstile
+      (window as any).onTurnstileSuccess = (token: string) => {
+        setTurnstileToken(token);
+      };
+
+      // Handle expiring token
+      (window as any).onTurnstileExpire = () => {
+        setTurnstileToken(null);
+      };
+    }
+  }, [securitySettings.turnstile_enabled, securitySettings.site_key]);
 
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
@@ -65,11 +96,11 @@ const ProductPage = () => {
   const { settings: rawTheme, loading: themeLoading } = useAppearanceSettings();
   const theme = themeLoading ? defaultAppearance : rawTheme;
   const tokens = getStoreThemeTokens(theme);
-  const { discount, isValidating, validateCode, clearDiscount, calculateDiscount, incrementUsage } = useValidateDiscount();
   const { track } = useTracking();
   const leadTrackedRef = useRef(false);
 
   const product = products.find((p) => p.id === id);
+  const productOptions = normalizeProductOptions(product?.custom_options);
   const relatedProducts = products
     .filter((p) => p.id !== id && p.status === "active" && p.category_id === product?.category_id)
     .slice(0, 4);
@@ -108,11 +139,7 @@ const ProductPage = () => {
   }, [selectedWilaya, deliveryType]);
 
   const subtotal = useMemo(() => (product ? Number(product.price) * qty : 0), [product, qty]);
-  const discountAmount = useMemo(
-    () => calculateDiscount(subtotal, { unitPrice: Number(product?.price ?? 0), quantity: qty }),
-    [calculateDiscount, product?.price, qty, subtotal]
-  );
-  const total = useMemo(() => subtotal - discountAmount + shippingCost, [discountAmount, shippingCost, subtotal]);
+  const total = useMemo(() => subtotal + shippingCost, [shippingCost, subtotal]);
 
   // Track ViewContent when product loads
   useEffect(() => {
@@ -204,6 +231,10 @@ const ProductPage = () => {
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim() || !product) return;
+    if (!hasRequiredSelections(productOptions, selectedOptions)) {
+      toast.error("الرجاء اختيار جميع خيارات المنتج");
+      return;
+    }
     if (Number(product.stock) <= 0) {
       toast.error("هذا المنتج غير متوفر حالياً");
       return;
@@ -215,6 +246,19 @@ const ProductPage = () => {
 
     if (!formWilaya || !formCommune) {
       toast.error("الرجاء اختيار الولاية والبلدية");
+      return;
+    }
+
+    // Algerian Phone Validation
+    const phoneRegex = /^0[5-7][0-9]{8}$/;
+    if (!phoneRegex.test(formPhone.trim())) {
+      toast.error("رقام الهاتف غير صالح. يجب أن يكون رقم جزائري صحيح (05/06/07).");
+      return;
+    }
+
+    // Turnstile Check
+    if (securitySettings.turnstile_enabled && !turnstileToken) {
+      toast.error("الرجاء إكمال التحقق الأمني");
       return;
     }
 
@@ -242,12 +286,13 @@ const ProductPage = () => {
         shipping_cost: shippingCost,
         total,
         customer_id: customerId,
-        discount_code: discount?.code || undefined,
-        discount_amount: discountAmount > 0 ? discountAmount : undefined,
+        website_url: honeypotValue,
+        "cf-turnstile-response": turnstileToken,
         items: [
           {
             product_id: product.id,
             product_name: product.name,
+            selected_options: normalizeSelectedOptions(selectedOptions),
             quantity: qty,
             unit_price: Number(product.price),
             total: subtotal,
@@ -262,10 +307,8 @@ const ProductPage = () => {
             state: formWilaya,
             city: formCommune,
           });
-          if (discount) {
-            await incrementUsage();
-          }
-          const matchingCartItems = items.filter((item) => item.product_id === product.id);
+          const currentOptionsKey = JSON.stringify(normalizeSelectedOptions(selectedOptions));
+          const matchingCartItems = items.filter((item) => item.product_id === product.id && JSON.stringify(normalizeSelectedOptions(item.selected_options)) === currentOptionsKey);
           if (matchingCartItems.length > 0) {
             await Promise.all(matchingCartItems.map((item) => removeItemAsync(item.id)));
           }
@@ -292,9 +335,14 @@ const ProductPage = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
+    if (!hasRequiredSelections(productOptions, selectedOptions)) {
+      toast.error("اختر خيارات المنتج أولاً");
+      return;
+    }
     addItem({
       product_id: product.id,
       product_name: product.name,
+      selected_options: normalizeSelectedOptions(selectedOptions),
       product_price: Number(product.price),
       product_image_url: product.image_url,
       quantity: qty,
@@ -338,7 +386,8 @@ const ProductPage = () => {
     ? galleryImages.map((gi) => gi.image_url)
     : product.image_url ? [product.image_url] : [];
 
-  const inCart = items.some((item) => item.product_id === product.id);
+  const selectedOptionsKey = JSON.stringify(normalizeSelectedOptions(selectedOptions));
+  const inCart = items.some((item) => item.product_id === product.id && JSON.stringify(normalizeSelectedOptions(item.selected_options)) === selectedOptionsKey);
   const productDescriptionHtml = product.description ? sanitizeProductDescription(product.description) : "";
 
   return (
@@ -384,18 +433,16 @@ const ProductPage = () => {
         formWilaya={formWilaya}
         formCommune={formCommune}
         deliveryType={deliveryType}
-        couponCode={couponCode}
         selectedWilaya={selectedWilaya}
         availableCommunes={availableCommunes}
         wilayasWithPrices={wilayasWithPrices}
         shippingCost={shippingCost}
-        discountAmount={discountAmount}
         total={total}
         inCart={inCart}
+        productOptions={productOptions}
+        selectedOptions={selectedOptions}
         isAdding={isAdding}
-        isValidating={isValidating}
         isSubmitting={createOrder.isPending}
-        discount={discount}
         onImageSelect={setActiveImage}
         onQtyChange={(nextQty) => setQty(Math.max(1, Math.min(Number(product.stock || 1), nextQty)))}
         onNameChange={setFormName}
@@ -403,13 +450,11 @@ const ProductPage = () => {
         onWilayaChange={setFormWilaya}
         onCommuneChange={setFormCommune}
         onDeliveryTypeChange={setDeliveryType}
-        onCouponCodeChange={(value) => setCouponCode(value.toUpperCase())}
-        onApplyCoupon={() => validateCode(couponCode, { productId: product.id, quantity: qty })}
-        onClearCoupon={() => {
-          clearDiscount();
-          setCouponCode("");
-        }}
+        onSelectedOptionsChange={(name, value) => setSelectedOptions((prev) => ({ ...prev, [name]: value }))}
         onAddToCart={handleAddToCart}
+        securitySettings={securitySettings}
+        onHoneypotChange={setHoneypotValue}
+        onTurnstileSuccess={setTurnstileToken}
         onSubmit={handleSubmitOrder}
       />
 
@@ -444,6 +489,7 @@ const ProductPage = () => {
                 compare_price={p.compare_price ? Number(p.compare_price) : null}
                 image_url={p.image_url}
                 category_name={p.category_name}
+                custom_options={p.custom_options}
                 theme={theme}
               />
             ))}
@@ -451,18 +497,6 @@ const ProductPage = () => {
         </section>
       )}
 
-      {/* Quick Order Modal (if used elsewhere) */}
-      <QuickOrderModal
-        open={orderModalOpen}
-        onClose={() => setOrderModalOpen(false)}
-        product={{
-          id: product.id,
-          name: product.name,
-          price: Number(product.price),
-          image_url: product.image_url,
-          quantity: qty,
-        }}
-      />
     </div>
   );
 };

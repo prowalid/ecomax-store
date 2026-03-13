@@ -1,8 +1,9 @@
-import { ChevronDown, Loader2, MapPin, Package2, Phone, Receipt, Tag } from "lucide-react";
+import { ChevronDown, Loader2, MapPin, Package2, Phone, Receipt } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useOrderItems, type Order, type OrderStatus } from "@/hooks/useOrders";
+import { formatSelectedOptions } from "@/lib/productOptions";
 
 import { orderStatusConfig, orderStatusFlow } from "./constants";
 import { formatOrderDateTime, formatOrderPrice, formatOrderRelativeDate, getDeliveryLabel } from "./utils";
@@ -155,11 +156,6 @@ function OrderTableRow({
             <div className="text-[12px] text-slate-500">
               فرعي: {formatOrderPrice(order.subtotal)}
             </div>
-            {order.discount_amount > 0 && (
-              <div className="text-[12px] font-semibold text-emerald-600">
-                خصم: -{formatOrderPrice(order.discount_amount)}
-              </div>
-            )}
           </div>
         </td>
         <td className="px-4 py-4">
@@ -187,18 +183,6 @@ function OrderTableRow({
                 <div className="rounded-2xl border border-slate-200 bg-white p-4">
                   <p className="mb-1 text-[11px] font-semibold text-slate-400">الشحن</p>
                   <p className="text-base font-bold text-slate-900" dir="ltr">{formatOrderPrice(order.shipping_cost)}</p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="mb-1 text-[11px] font-semibold text-slate-400">الخصم</p>
-                  <p className={cn("text-base font-bold", order.discount_amount > 0 ? "text-emerald-600" : "text-slate-500")} dir="ltr">
-                    {order.discount_amount > 0 ? `- ${formatOrderPrice(order.discount_amount)}` : "لا يوجد"}
-                  </p>
-                  {order.discount_code && (
-                    <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
-                      <Tag className="h-3 w-3" />
-                      {order.discount_code}
-                    </div>
-                  )}
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white p-4">
                   <p className="mb-1 text-[11px] font-semibold text-slate-400">محاولات الاتصال</p>
@@ -231,7 +215,14 @@ function OrderTableRow({
                         <tbody>
                           {items.map((item) => (
                             <tr key={item.id} className="border-t border-slate-100">
-                              <td className="px-3 py-3 font-medium text-slate-800">{item.product_name}</td>
+                              <td className="px-3 py-3 font-medium text-slate-800">
+                                <div className="space-y-1">
+                                  <div>{item.product_name}</div>
+                                  {formatSelectedOptions(item.selected_options) && (
+                                    <div className="text-[11px] font-medium text-slate-500">{formatSelectedOptions(item.selected_options)}</div>
+                                  )}
+                                </div>
+                              </td>
                               <td className="px-3 py-3 text-center text-slate-600">{item.quantity}</td>
                               <td className="px-3 py-3 text-center text-slate-600" dir="ltr">
                                 {formatOrderPrice(item.unit_price)}
@@ -275,6 +266,12 @@ function OrderTableRow({
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500">نوع التوصيل</span>
                         <span className="font-semibold text-slate-900">{getDeliveryLabel(order.delivery_type)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">عنوان IP</span>
+                        <span className="font-semibold text-slate-900" dir="ltr">
+                          {order.ip_address || "—"}
+                        </span>
                       </div>
                     </div>
                   </div>

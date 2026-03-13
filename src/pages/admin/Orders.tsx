@@ -8,6 +8,7 @@ import { orderStatusConfig } from "@/components/admin/orders/constants";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
 import { X, Loader2 } from "lucide-react";
+import { formatSelectedOptions } from "@/lib/productOptions";
 
 const Orders = () => {
   const { data: orders = [], isLoading } = useOrders();
@@ -78,6 +79,7 @@ const Orders = () => {
     try {
       const orderItemsMap = new Map<string, Array<{
         product_name: string;
+        selected_options?: Record<string, string>;
         quantity: number;
         unit_price: number;
         total: number;
@@ -106,13 +108,12 @@ const Orders = () => {
           "البلدية",
           "العنوان",
           "نوع التوصيل",
+          "عنوان IP",
           "المنتجات",
           "إجمالي القطع",
           "تفاصيل العناصر",
           "المجموع الفرعي",
           "الشحن",
-          "كود الخصم",
-          "قيمة الخصم",
           "الإجمالي النهائي",
           "شركة الشحن",
           "رقم التتبع",
@@ -120,9 +121,14 @@ const Orders = () => {
         ],
         rows: dataToExport.map((order) => {
           const items = orderItemsMap.get(order.id) ?? [];
-          const productsSummary = items.map((item) => item.product_name).join(" | ");
+          const productsSummary = items
+            .map((item) => formatSelectedOptions(item.selected_options) ? `${item.product_name} (${formatSelectedOptions(item.selected_options)})` : item.product_name)
+            .join(" | ");
           const itemsDetails = items
-            .map((item) => `${item.product_name} × ${item.quantity} × ${item.unit_price}`)
+            .map((item) => {
+              const optionLabel = formatSelectedOptions(item.selected_options);
+              return `${item.product_name}${optionLabel ? ` (${optionLabel})` : ""} × ${item.quantity} × ${item.unit_price}`;
+            })
             .join(" | ");
           const totalQty = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 
@@ -136,13 +142,12 @@ const Orders = () => {
             order.commune || "",
             order.address || "",
             order.delivery_type === "home" ? "التوصيل للمنزل" : "مكتب التوصيل",
+            order.ip_address || "",
             productsSummary,
             totalQty,
             itemsDetails,
             order.subtotal,
             order.shipping_cost,
-            order.discount_code || "",
-            order.discount_amount || 0,
             order.total,
             order.shipping_company || "",
             order.tracking_number || "",

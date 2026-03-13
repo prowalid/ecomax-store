@@ -2,6 +2,16 @@ const pool = require('../config/db');
 const format = require('pg-format');
 const { triggerOrderStatusNotification, sendOrderWebhook, buildOrderWebhookPayload } = require('./integrationsController');
 
+function normalizeSelectedOptions(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+
+  return Object.fromEntries(
+    Object.entries(input)
+      .map(([key, value]) => [String(key).trim(), typeof value === 'string' ? value.trim() : ''])
+      .filter(([key, value]) => key && value)
+  );
+}
+
 // GET /api/orders
 async function getOrders(req, res, next) {
   try {
@@ -73,83 +83,6 @@ function formatNotificationItems(items) {
     .join("، ");
 }
 
-async function consumeDiscountCode(client, discountCode, items, subtotal) {
-  if (!discountCode) {
-    return { code: null, amount: 0 };
-  }
-
-  const normalizedCode = String(discountCode).trim().toUpperCase();
-  const { rows } = await client.query(
-    `
-      SELECT *
-      FROM discounts
-      WHERE code = $1 AND active = true
-      LIMIT 1
-      FOR UPDATE
-    `,
-    [normalizedCode]
-  );
-
-  if (rows.length === 0) {
-    const err = new Error('Invalid discount code');
-    err.status = 400;
-    throw err;
-  }
-
-  const discount = rows[0];
-  if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
-    const err = new Error('Discount code expired');
-    err.status = 400;
-    throw err;
-  }
-
-  if (discount.usage_limit && discount.usage_count >= discount.usage_limit) {
-    const err = new Error('Usage limit reached');
-    err.status = 400;
-    throw err;
-  }
-
-  const applicableItems = discount.apply_to === 'specific'
-    ? items.filter((item) => (discount.product_ids || []).includes(item.product_id))
-    : items;
-
-  if (applicableItems.length === 0) {
-    const err = new Error('Discount code does not apply to selected items');
-    err.status = 400;
-    throw err;
-  }
-
-  const applicableSubtotal = applicableItems.reduce((sum, item) => sum + asNumber(item.total), 0);
-  const applicableQty = applicableItems.reduce((sum, item) => sum + item.quantity, 0);
-
-  let baseAmount = applicableSubtotal;
-  if (discount.quantity_behavior === 'single') {
-    baseAmount = Math.max(...applicableItems.map((item) => asNumber(item.unit_price, 0)));
-  } else if (discount.quantity_behavior === 'min_quantity' && applicableQty < discount.min_quantity) {
-    const err = new Error(`Discount requires minimum quantity of ${discount.min_quantity}`);
-    err.status = 400;
-    throw err;
-  }
-
-  const value = asNumber(discount.value, 0);
-  let amount = discount.type === 'percentage'
-    ? (baseAmount * value) / 100
-    : Math.min(value, baseAmount);
-
-  amount = Math.max(0, Math.min(round2(amount), subtotal));
-
-  await client.query(
-    `
-      UPDATE discounts
-      SET usage_count = usage_count + 1, updated_at = NOW()
-      WHERE id = $1
-    `,
-    [discount.id]
-  );
-
-  return { code: normalizedCode, amount };
-}
-
 // POST /api/orders
 async function createOrder(req, res, next) {
   const client = await pool.connect();
@@ -197,6 +130,7 @@ async function createOrder(req, res, next) {
       return {
         product_id: item.product_id,
         product_name: dbProduct.name,
+        selected_options: normalizeSelectedOptions(item.selected_options),
         quantity: item.quantity,
         unit_price: unitPrice,
         total: lineTotal,
@@ -204,26 +138,18 @@ async function createOrder(req, res, next) {
     });
 
     const shippingCost = Math.max(0, asNumber(rawOrderData.shipping_cost, 0));
-    const consumedDiscount = await consumeDiscountCode(
-      client,
-      rawOrderData.discount_code,
-      normalizedItems,
-      computedSubtotal
-    );
-    const discountAmount = consumedDiscount.amount;
-    const finalTotal = Math.max(0, round2(computedSubtotal + shippingCost - discountAmount));
+    const finalTotal = Math.max(0, round2(computedSubtotal + shippingCost));
 
     // Whitelist allowed columns and inject server-side computed totals.
-    const allowedOrderFields = ['customer_name', 'customer_phone', 'customer_id', 'wilaya', 'commune', 'address', 'delivery_type', 'note'];
+    const allowedOrderFields = ['customer_name', 'customer_phone', 'customer_id', 'wilaya', 'commune', 'address', 'delivery_type', 'note', 'ip_address'];
     const orderData = {};
     for (const key of allowedOrderFields) {
       if (rawOrderData[key] !== undefined) orderData[key] = rawOrderData[key];
     }
     orderData.subtotal = computedSubtotal;
     orderData.shipping_cost = shippingCost;
-    orderData.discount_amount = discountAmount;
-    orderData.discount_code = consumedDiscount.code;
     orderData.total = finalTotal;
+    orderData.ip_address = req.headers['cf-connecting-ip'] || (req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',')[0].trim()) || req.ip;
 
     // Insert Order
     const orderCols = Object.keys(orderData);
@@ -244,13 +170,14 @@ async function createOrder(req, res, next) {
         newOrder.id,
         item.product_id,
         item.product_name,
+        JSON.stringify(item.selected_options || {}),
         item.quantity,
         item.unit_price,
         item.total
       ]);
 
       const itemsQuery = format(`
-        INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total)
+        INSERT INTO order_items (order_id, product_id, product_name, selected_options, quantity, unit_price, total)
         VALUES %L
       `, itemValues);
 
@@ -337,7 +264,7 @@ async function updateOrderStatus(req, res, next) {
     await client.query('COMMIT');
 
     const { rows: orderItems } = await pool.query(
-      'SELECT product_id, product_name, quantity, unit_price, total FROM order_items WHERE order_id = $1 ORDER BY created_at ASC',
+      'SELECT product_id, product_name, selected_options, quantity, unit_price, total FROM order_items WHERE order_id = $1 ORDER BY created_at ASC',
       [id]
     );
 

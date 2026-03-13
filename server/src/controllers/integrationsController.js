@@ -122,11 +122,25 @@ async function sendOrderWebhook(eventType, payload) {
 
 function buildOrderWebhookPayload(eventType, order, items, metadata = {}) {
   const normalizedItems = Array.isArray(items)
-    ? items.map((item) => ({
-        product: item.product_name,
+    ? items.map((item) => {
+        const options = item.selected_options && typeof item.selected_options === 'object' && !Array.isArray(item.selected_options)
+          ? Object.fromEntries(
+              Object.entries(item.selected_options)
+                .map(([key, value]) => [String(key).trim(), typeof value === 'string' ? value.trim() : ''])
+                .filter(([key, value]) => key && value)
+            )
+          : {};
+        const optionSuffix = Object.keys(options).length > 0
+          ? ` (${Object.entries(options).map(([key, value]) => `${key}: ${value}`).join('، ')})`
+          : '';
+
+        return {
+        product: `${item.product_name}${optionSuffix}`,
+        options,
         quantity: Number(item.quantity) || 0,
         price: Number(item.unit_price) || 0,
-      }))
+      };
+    })
     : [];
 
   const totalItemsQuantity = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -432,9 +446,7 @@ async function testOrderWebhook(req, res, next) {
       delivery_type: 'home',
       subtotal: 4500,
       shipping_cost: 600,
-      discount_code: 'TEST10',
-      discount_amount: 450,
-      total: 4650,
+      total: 5100,
       shipping_company: null,
       tracking_number: null,
       call_attempts: 0,

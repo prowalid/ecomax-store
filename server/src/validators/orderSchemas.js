@@ -12,12 +12,10 @@ exports.createOrderSchema = z.object({
   shipping_cost: z.number().min(0),
   total: z.number().min(0),
   note: z.string().optional().nullable(),
-  discount_code: z.string().optional().nullable(),
-  discount_amount: z.number().min(0).optional().nullable(),
-  
   items: z.array(z.object({
     product_id: z.string().uuid('Valid product ID is required'),
     product_name: z.string().min(1),
+    selected_options: z.record(z.string(), z.string()).optional().default({}),
     quantity: z.number().int().min(1),
     unit_price: z.number().min(0),
     total: z.number().min(0)

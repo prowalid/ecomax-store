@@ -32,7 +32,7 @@ const Appearance = () => {
 
   const handleUpload = async (file: File): Promise<string | null> => {
     try {
-      const data = await api.upload('/upload', file);
+      const data = (await api.upload('/upload', file)) as { url: string };
       return data.url;
     } catch {
       toast.error("فشل رفع الصورة");
@@ -125,7 +125,7 @@ const Appearance = () => {
 
   return (
     <div className="space-y-6 w-full">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-sidebar-heading">المظهر</h1>
           <p className="text-[13px] text-slate-500 mt-1 font-medium">تحكم كامل في شكل وألوان المتجر الخاص بك</p>
@@ -133,7 +133,7 @@ const Appearance = () => {
         <button
           onClick={() => saveSettings(draft)}
           disabled={saving}
-          className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+          className="h-11 px-6 flex items-center justify-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ التغييرات

@@ -3,6 +3,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getAdminPageMeta } from "./adminNavigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AdminHeaderProps {
   onOpenNavigation: () => void;
@@ -63,16 +74,36 @@ const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
             </div>
           )}
 
-          <button
-            onClick={handleLogout}
-            className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-white shadow-sm transition-colors hover:bg-destructive group"
-            title="تسجيل الخروج"
-          >
-            <span className="font-bold text-sm uppercase group-hover:hidden">
-              {user?.email?.charAt(0) || "A"}
-            </span>
-            <LogOut className="w-4 h-4 absolute inset-0 m-auto hidden group-hover:block" />
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-white shadow-sm transition-colors hover:bg-destructive group"
+                title="تسجيل الخروج"
+              >
+                <span className="font-bold text-sm uppercase group-hover:hidden">
+                  {user?.email?.charAt(0) || "A"}
+                </span>
+                <LogOut className="w-4 h-4 absolute inset-0 m-auto hidden group-hover:block" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent dir="rtl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-right">تأكيد تسجيل الخروج</AlertDialogTitle>
+                <AlertDialogDescription className="text-right">
+                  هل أنت متأكد من أنك تريد تسجيل الخروج من لوحة التحكم؟ ستحتاج إلى إدخال بيانات الاعتماد الخاصة بك مرة أخرى للوصول إليها.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-row-reverse gap-2">
+                <AlertDialogAction
+                  onClick={handleLogout}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  تسجيل الخروج
+                </AlertDialogAction>
+                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </header>

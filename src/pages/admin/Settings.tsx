@@ -93,7 +93,7 @@ const Settings = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-[13px] font-semibold text-slate-500 mb-2">رقم الهاتف</label>
               <input

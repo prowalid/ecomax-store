@@ -54,7 +54,7 @@ export default function AppearanceSlidesSection({
         </button>
       </div>
 
-      <div className={`grid ${columnsClass} gap-4`}>
+      <div className={`grid grid-cols-1 sm:${columnsClass} gap-4`}>
         {slides.map((slide, idx) => (
           <div key={idx} className="relative group rounded-[16px] overflow-hidden border border-slate-200 shadow-sm bg-slate-50">
             <img src={slide.image_url} alt={`${title} ${idx + 1}`} className={`w-full ${previewHeightClass} object-cover`} />

@@ -65,7 +65,7 @@ const Shipping = () => {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground">الشحن</h1>
           <p className="text-sm text-muted-foreground mt-0.5">أسعار التوصيل للمنزل والمكتب حسب الولاية</p>
@@ -73,14 +73,14 @@ const Shipping = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+          className="h-11 px-6 flex items-center justify-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ التغييرات
         </button>
       </div>
 
-      <div className="relative max-w-sm">
+      <div className="relative w-full sm:max-w-sm">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
@@ -91,7 +91,8 @@ const Shipping = () => {
         />
       </div>
 
-      <div className="bg-card rounded-lg shadow-card border border-border overflow-hidden animate-slide-in">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-card rounded-lg shadow-card border border-border overflow-hidden animate-slide-in">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border bg-muted/30">
@@ -126,6 +127,44 @@ const Shipping = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {filtered.map((w) => (
+          <div key={w.id} className="bg-card p-4 rounded-xl border border-border shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <span className="text-xs font-mono text-muted-foreground">#{String(w.id).padStart(2, "0")}</span>
+              <span className="font-bold text-foreground">{w.name}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground block">🏠 التوصيل للمنزل</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={w.homePrice}
+                    onChange={(e) => updatePrice(w.id, "homePrice", Number(e.target.value))}
+                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:ring-1 focus:ring-ring text-center"
+                  />
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-bold pointer-events-none">د.ج</span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground block">🏢 التوصيل للمكتب</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={w.deskPrice}
+                    onChange={(e) => updatePrice(w.id, "deskPrice", Number(e.target.value))}
+                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:ring-1 focus:ring-ring text-center"
+                  />
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-bold pointer-events-none">د.ج</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

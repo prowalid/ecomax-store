@@ -15,15 +15,14 @@ import {
   Phone,
   ShoppingBag,
   Star,
-  Tag,
   TrendingUp,
   Truck,
   User,
-  X,
 } from "lucide-react";
 
 import type { ProductHeroProps } from "./types";
 import OrderSuccessMessage from "@/components/store/OrderSuccessMessage";
+import { formatSelectedOptions } from "@/lib/productOptions";
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
@@ -42,18 +41,16 @@ export default function ProductHero({
   formWilaya,
   formCommune,
   deliveryType,
-  couponCode,
   selectedWilaya,
   availableCommunes,
   wilayasWithPrices,
   shippingCost,
-  discountAmount,
   total,
   inCart,
+  productOptions,
+  selectedOptions,
   isAdding,
-  isValidating,
   isSubmitting,
-  discount,
   onImageSelect,
   onQtyChange,
   onNameChange,
@@ -61,10 +58,11 @@ export default function ProductHero({
   onWilayaChange,
   onCommuneChange,
   onDeliveryTypeChange,
-  onCouponCodeChange,
-  onApplyCoupon,
-  onClearCoupon,
+  onSelectedOptionsChange,
   onAddToCart,
+  securitySettings,
+  onHoneypotChange,
+  onTurnstileSuccess,
   onSubmit,
 }: ProductHeroProps) {
   const subtotal = Number(product.price) * qty;
@@ -208,6 +206,54 @@ export default function ProductHero({
                 </div>
 
                 <form id="product-order-form" onSubmit={onSubmit} className="space-y-4" autoComplete="on">
+                  {productOptions.length > 0 && (
+                    <div className="rounded-[1.75rem] border border-store-primary/15 bg-gradient-to-b from-rose-50/80 via-white to-white p-4 sm:p-5 shadow-[0_12px_40px_rgba(220,53,69,0.08)] space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-black text-gray-900">خيارات المنتج</h3>
+                          <p className="mt-1 text-xs leading-6 text-gray-500">اختر القيمة المناسبة لكل عنصر حتى يتم اعتماد الطلب بشكل صحيح.</p>
+                        </div>
+                        <div className="rounded-full bg-store-primary/10 px-3 py-1 text-[11px] font-black text-store-primary">
+                          اختيارات مطلوبة
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        {productOptions.map((group) => (
+                          <div key={group.name} className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <label className="block text-sm font-black text-gray-900">{group.name}</label>
+                              <span className="text-[11px] font-bold text-gray-400">{group.values.length} خيارات</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2.5">
+                              {group.values.map((value) => {
+                                const active = selectedOptions[group.name] === value;
+                                return (
+                                  <button
+                                    key={`${group.name}-${value}`}
+                                    type="button"
+                                    onClick={() => onSelectedOptionsChange(group.name, value)}
+                                    className={`min-w-[84px] rounded-2xl px-4 py-2.5 text-xs font-black transition-all duration-200 ${
+                                      active
+                                        ? "bg-store-primary text-white shadow-[0_10px_24px_rgba(220,53,69,0.22)] ring-2 ring-store-primary/15"
+                                        : "border border-rose-100 bg-rose-50/40 text-gray-700 hover:border-store-primary/30 hover:bg-rose-50"
+                                    }`}
+                                  >
+                                    {value}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {formatSelectedOptions(selectedOptions) && (
+                        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs font-medium text-emerald-700">
+                          الاختيارات الحالية: <span className="font-black text-emerald-900">{formatSelectedOptions(selectedOptions)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative">
                       <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
@@ -242,6 +288,17 @@ export default function ProductHero({
                       />
                     </div>
                   </div>
+
+                  {/* Honeypot Field (Invisible) */}
+                  <input
+                    type="text"
+                    onChange={(e) => onHoneypotChange?.(e.target.value)}
+                    name="website_url"
+                    className="hidden"
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative">
@@ -384,58 +441,11 @@ export default function ProductHero({
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <p className="font-bold text-gray-700 mb-3 flex items-center gap-2 text-sm">
-                      <Tag size={14} />
-                      كود الخصم (اختياري)
-                    </p>
-                    {discount ? (
-                      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
-                        <span className="text-xs font-bold text-green-700">
-                          {discount.code} — خصم{" "}
-                          {discount.type === "percentage" ? `${discount.value}%` : `${discount.value} د.ج`}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={onClearCoupon}
-                          className="p-1 rounded-full hover:bg-green-100 text-green-600 transition-colors"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={couponCode}
-                          onChange={(e) => onCouponCodeChange(e.target.value)}
-                          placeholder="أدخل الكود"
-                          dir="ltr"
-                          className="flex-1 h-10 px-3 bg-white border border-gray-300 rounded-xl text-base md:text-sm font-bold text-center uppercase focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={onApplyCoupon}
-                          disabled={isValidating || !couponCode.trim()}
-                          className="h-10 px-4 rounded-xl bg-store-primary text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
-                        >
-                          {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
                   <div className="bg-[#f8f9fa] p-5 rounded-xl border border-gray-200 mt-2 shadow-sm">
                     <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
                       <span>المجموع الفرعي ({qty} قطعة):</span>
                       <span>{formatPrice(subtotal)}</span>
                     </div>
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between mb-3 text-sm text-green-600 font-bold">
-                        <span>الخصم ({discount?.code}):</span>
-                        <span>- {formatPrice(discountAmount)}</span>
-                      </div>
-                    )}
                     <div className="flex justify-between mb-3 text-sm text-gray-600 font-medium">
                       <span>التوصيل:</span>
                       <span className={selectedWilaya ? "text-gray-900 font-bold" : "text-gray-500"}>
@@ -447,6 +457,18 @@ export default function ProductHero({
                       <span className="text-store-primary">{formatPrice(total)}</span>
                     </div>
                   </div>
+
+                  {/* Turnstile Widget */}
+                  {securitySettings?.turnstile_enabled && securitySettings?.site_key && (
+                    <div className="flex justify-center my-4 min-h-[65px]">
+                      <div
+                        className="cf-turnstile"
+                        data-sitekey={securitySettings.site_key}
+                        data-callback="onTurnstileSuccess"
+                        data-theme="light"
+                      ></div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                     {product.stock <= 0 ? (

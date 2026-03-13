@@ -211,7 +211,7 @@ const StoreLayout = () => {
             )}
           </div>
           <div className="flex space-x-6 space-x-reverse font-medium">
-            <span className="flex items-center"><Truck size={14} className="ml-1" /> التوصيل مجاني</span>
+            <span className="flex items-center"><Truck size={14} className="ml-1" /> التوصيل سريع</span>
             <span className="flex items-center"><Clock size={14} className="ml-1" /> توصيل في أقل من 48 ساعة</span>
             <span className="flex items-center"><User size={14} className="ml-1" /> دعم فني</span>
           </div>
@@ -512,12 +512,15 @@ const StoreLayout = () => {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="مراسلة عبر واتساب"
-          className="fixed bottom-20 md:bottom-6 right-6 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl"
+          className="fixed bottom-20 md:bottom-6 right-6 z-50 w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-12 whatsapp-btn-pulse"
           style={{ backgroundColor: "#25D366", color: "#ffffff" }}
         >
-          <svg viewBox="0 0 32 32" className="w-6 h-6 fill-current" aria-hidden="true">
-            <path d="M19.11 17.24c-.3-.15-1.75-.86-2.02-.95-.27-.1-.47-.15-.67.15-.2.3-.77.95-.95 1.14-.17.2-.35.22-.65.07-.3-.15-1.28-.47-2.43-1.5-.9-.8-1.5-1.78-1.67-2.08-.17-.3-.02-.46.13-.61.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.02-1.05 2.48s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.1 4.48 3 1.3 3 0 3.54-.03.54-.03 1.75-.72 2-1.42.25-.7.25-1.3.17-1.42-.08-.12-.27-.2-.57-.35z" />
-            <path d="M26.7 5.28A13.2 13.2 0 0 0 5.86 21.22L4 28l6.94-1.82A13.2 13.2 0 1 0 26.7 5.28zm-10.5 21a10.7 10.7 0 0 1-5.45-1.49l-.39-.23-4.12 1.08 1.1-4-.25-.41A10.68 10.68 0 1 1 16.2 26.3z" />
+          <svg 
+            viewBox="0 0 448 512" 
+            className="w-8 h-8 md:w-9 md:h-9 fill-current drop-shadow-md" 
+            aria-hidden="true"
+          >
+            <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.4 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.4-11.3 2.5-2.4 5.5-6.5 8.3-9.7 2.8-3.3 3.7-5.6 5.5-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.4-29.8-17-41.1-4.5-10.9-9.1-9.4-12.4-9.6H173c-4.1 0-10.8 1.5-16.5 7.6-5.7 6.1-21.8 21.3-21.8 51.9s22.4 60.3 25.5 64.5c3.1 4.2 44 67.2 106.5 94.3 14.9 6.4 26.5 10.3 35.6 13.1 15 4.8 28.6 4.1 39.3 2.5 11.9-1.8 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
           </svg>
         </a>
       )}

@@ -1,4 +1,4 @@
-import { Loader2, Save, Upload, X } from "lucide-react";
+import { Loader2, Plus, Save, Upload, X } from "lucide-react";
 import { useRef } from "react";
 
 import { cn } from "@/lib/utils";
@@ -7,6 +7,7 @@ import type { Category } from "@/hooks/useCategories";
 import type { ProductImage } from "@/hooks/useProductImages";
 
 import type { ProductForm } from "./types";
+import type { ProductOptionGroup } from "@/lib/productOptions";
 
 interface ProductFormModalProps {
   open: boolean;
@@ -19,7 +20,7 @@ interface ProductFormModalProps {
   isUploading: boolean;
   onClose: () => void;
   onSave: () => void;
-  onFieldChange: (key: keyof ProductForm, value: string) => void;
+  onFieldChange: (key: keyof ProductForm, value: string | ProductOptionGroup[]) => void;
   onUploadFiles: (files: FileList) => void;
   onDeleteImage: (imageId: string) => void;
   onDragStart: (index: number) => void;
@@ -46,6 +47,30 @@ export default function ProductFormModal({
   onDrop,
 }: ProductFormModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateOptions = (nextOptions: ProductOptionGroup[]) => onFieldChange("custom_options", nextOptions);
+  const addOptionGroup = () => updateOptions([...form.custom_options, { name: "", values: [""] }]);
+  const updateOptionGroup = (index: number, nextGroup: ProductOptionGroup) => {
+    const nextOptions = [...form.custom_options];
+    nextOptions[index] = nextGroup;
+    updateOptions(nextOptions);
+  };
+  const removeOptionGroup = (index: number) => updateOptions(form.custom_options.filter((_, currentIndex) => currentIndex !== index));
+  const addOptionValue = (groupIndex: number) => {
+    const group = form.custom_options[groupIndex];
+    updateOptionGroup(groupIndex, { ...group, values: [...group.values, ""] });
+  };
+  const updateOptionValue = (groupIndex: number, valueIndex: number, nextValue: string) => {
+    const group = form.custom_options[groupIndex];
+    const nextValues = [...group.values];
+    nextValues[valueIndex] = nextValue;
+    updateOptionGroup(groupIndex, { ...group, values: nextValues });
+  };
+  const removeOptionValue = (groupIndex: number, valueIndex: number) => {
+    const group = form.custom_options[groupIndex];
+    const nextValues = group.values.filter((_, currentIndex) => currentIndex !== valueIndex);
+    updateOptionGroup(groupIndex, { ...group, values: nextValues.length > 0 ? nextValues : [""] });
+  };
 
   if (!open) {
     return null;
@@ -229,6 +254,84 @@ export default function ProductFormModal({
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               />
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">خيارات المنتج المخصصة</label>
+                <p className="mt-1 text-[11px] text-slate-500">أضف عناصر مرنة مثل اللون، المقاس، أو أي اختيار آخر يظهر للزبون قبل الإضافة للسلة.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addOptionGroup}
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-input px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <Plus className="h-4 w-4" />
+                إضافة عنصر
+              </button>
+            </div>
+
+            {form.custom_options.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
+                لا توجد خيارات مخصصة لهذا المنتج.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {form.custom_options.map((group, groupIndex) => (
+                  <div key={groupIndex} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={group.name}
+                        onChange={(e) => updateOptionGroup(groupIndex, { ...group, name: e.target.value })}
+                        placeholder="اسم العنصر مثل: اللون"
+                        className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeOptionGroup(groupIndex)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100"
+                        aria-label="حذف عنصر الخيارات"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {group.values.map((value, valueIndex) => (
+                        <div key={`${groupIndex}-${valueIndex}`} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={value}
+                            onChange={(e) => updateOptionValue(groupIndex, valueIndex, e.target.value)}
+                            placeholder="قيمة مثل: أحمر أو 42"
+                            className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeOptionValue(groupIndex, valueIndex)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-100"
+                            aria-label="حذف قيمة"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => addOptionValue(groupIndex)}
+                      className="inline-flex h-8 items-center gap-2 rounded-lg border border-input bg-white px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      إضافة قيمة
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

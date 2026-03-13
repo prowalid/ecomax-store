@@ -15,13 +15,14 @@ const Orders = lazy(() => import("./pages/admin/Orders"));
 const Products = lazy(() => import("./pages/admin/Products"));
 const Categories = lazy(() => import("./pages/admin/Categories"));
 const Customers = lazy(() => import("./pages/admin/Customers"));
-const Discounts = lazy(() => import("./pages/admin/Discounts"));
 const Shipping = lazy(() => import("./pages/admin/Shipping"));
 const Marketing = lazy(() => import("./pages/admin/Marketing"));
 const Analytics = lazy(() => import("./pages/admin/Analytics"));
 const Notifications = lazy(() => import("./pages/admin/Notifications"));
 const Pages = lazy(() => import("./pages/admin/Pages"));
 const Appearance = lazy(() => import("./pages/admin/Appearance"));
+const Security = lazy(() => import("./pages/admin/Security"));
+const Blacklist = lazy(() => import("./pages/admin/Blacklist"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 const AdminSetup = lazy(() => import("./pages/admin/AdminSetup"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
@@ -95,13 +96,14 @@ const App = () => (
               <Route path="products" element={withSuspense(<Products />)} />
               <Route path="categories" element={withSuspense(<Categories />)} />
               <Route path="customers" element={withSuspense(<Customers />)} />
-              <Route path="discounts" element={withSuspense(<Discounts />)} />
+              <Route path="blacklist" element={withSuspense(<Blacklist />)} />
               <Route path="shipping" element={withSuspense(<Shipping />)} />
               <Route path="marketing" element={withSuspense(<Marketing />)} />
               <Route path="analytics" element={withSuspense(<Analytics />)} />
               <Route path="notifications" element={withSuspense(<Notifications />)} />
               <Route path="pages" element={withSuspense(<Pages />)} />
               <Route path="appearance" element={withSuspense(<Appearance />)} />
+              <Route path="security" element={withSuspense(<Security />)} />
               <Route path="settings" element={withSuspense(<Settings />)} />
             </Route>
 

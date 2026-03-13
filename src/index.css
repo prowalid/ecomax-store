@@ -333,3 +333,18 @@
   transform: translateY(-50%) scale(1.1);
   box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
+
+/* WhatsApp Button Pulse Effect */
+@keyframes whatsapp-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+.whatsapp-btn-pulse {
+  animation: whatsapp-pulse 2s infinite;
+}
+
+.whatsapp-btn-pulse:hover {
+  animation: none;
+}

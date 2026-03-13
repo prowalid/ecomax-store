@@ -1,7 +1,8 @@
 const pool = require('../config/db');
 
-const PUBLIC_SETTINGS_KEYS = new Set(['appearance', 'general', 'shipping', 'marketing']);
+const PUBLIC_SETTINGS_KEYS = new Set(['appearance', 'general', 'shipping', 'marketing', 'security']);
 const PUBLIC_MARKETING_FIELDS = new Set(['pixel_id', 'pixel_configured', 'enabled_events', 'facebook_pixel_id']);
+const PUBLIC_SECURITY_FIELDS = new Set(['turnstile_enabled', 'site_key', 'honeypot_enabled']);
 const WHATSAPP_ALLOWED_PATTERN = /^[0-9+\-\s()]+$/;
 
 function normalizeWhatsAppPhone(input) {
@@ -67,6 +68,16 @@ function getPublicMarketingSettings(value) {
   );
 }
 
+function getPublicSecuritySettings(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).filter(([key]) => PUBLIC_SECURITY_FIELDS.has(key))
+  );
+}
+
 // GET /api/settings/:key
 async function getSettings(req, res, next) {
   const { key } = req.params;
@@ -90,6 +101,10 @@ async function getSettings(req, res, next) {
 
     if (key === 'marketing' && !req.user) {
       return res.json({ value: getPublicMarketingSettings(rows[0].value) });
+    }
+
+    if (key === 'security' && !req.user) {
+      return res.json({ value: getPublicSecuritySettings(rows[0].value) });
     }
 
     res.json(rows[0]);

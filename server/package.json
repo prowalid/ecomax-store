@@ -9,6 +9,7 @@
     "db:init": "psql -U etk_user -d expresstrade -f src/db/init.sql"
   },
   "dependencies": {
+    "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

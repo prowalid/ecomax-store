@@ -1,6 +1,25 @@
 const pool = require('../config/db');
 const format = require('pg-format');
 
+function normalizeCustomOptions(input) {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .map((group) => {
+      if (!group || typeof group !== 'object') return null;
+      const name = typeof group.name === 'string' ? group.name.trim() : '';
+      const values = Array.isArray(group.values)
+        ? group.values
+            .map((value) => (typeof value === 'string' ? value.trim() : ''))
+            .filter(Boolean)
+        : [];
+
+      if (!name || values.length === 0) return null;
+      return { name, values: Array.from(new Set(values)) };
+    })
+    .filter(Boolean);
+}
+
 // GET /api/products
 async function getProducts(req, res, next) {
   try {
@@ -30,15 +49,15 @@ async function getProducts(req, res, next) {
 // POST /api/products
 async function createProduct(req, res, next) {
   try {
-    const { name, description, price, compare_price, cost_price, stock, sku, category_id, image_url, status } = req.body;
+    const { name, description, price, compare_price, cost_price, stock, sku, category_id, image_url, custom_options, status } = req.body;
 
     const { rows } = await pool.query(`
       INSERT INTO products 
-        (name, description, price, compare_price, cost_price, stock, sku, category_id, image_url, status)
+        (name, description, price, compare_price, cost_price, stock, sku, category_id, image_url, custom_options, status)
       VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
-    `, [name, description, price, compare_price, cost_price, stock, sku, category_id || null, image_url, status || 'active']);
+    `, [name, description, price, compare_price, cost_price, stock, sku, category_id || null, image_url, JSON.stringify(normalizeCustomOptions(custom_options)), status || 'active']);
     
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -56,7 +75,7 @@ async function updateProduct(req, res, next) {
   }
 
   try {
-    const allowedFields = ['name', 'description', 'price', 'compare_price', 'cost_price', 'stock', 'sku', 'category_id', 'image_url', 'status'];
+    const allowedFields = ['name', 'description', 'price', 'compare_price', 'cost_price', 'stock', 'sku', 'category_id', 'image_url', 'custom_options', 'status'];
     const setClause = [];
     const values = [];
     let queryIndex = 1;
@@ -64,7 +83,7 @@ async function updateProduct(req, res, next) {
     for (const [key, value] of Object.entries(updates)) {
       if (!allowedFields.includes(key)) continue;
       setClause.push(`${key} = $${queryIndex}`);
-      values.push(value);
+      values.push(key === 'custom_options' ? JSON.stringify(normalizeCustomOptions(value)) : value);
       queryIndex++;
     }
 

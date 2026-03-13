@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { normalizeProductOptions, type ProductOptionGroup } from "@/lib/productOptions";
 
 export type ProductStatus = "active" | "draft" | "archived";
 
@@ -15,6 +16,7 @@ export interface Product {
   sku: string | null;
   category_id: string | null;
   image_url: string | null;
+  custom_options: ProductOptionGroup[];
   status: ProductStatus;
   variants_count: number;
   created_at: string;
@@ -27,7 +29,10 @@ export function useProducts() {
     queryKey: ["products"],
     queryFn: async () => {
       const data = await api.get('/products');
-      return data as Product[];
+      return (data as Product[]).map((product) => ({
+        ...product,
+        custom_options: normalizeProductOptions(product.custom_options),
+      }));
     },
   });
 }
@@ -35,7 +40,7 @@ export function useProducts() {
 export function useCreateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (product: { name: string; price?: number; stock?: number; status?: ProductStatus; category_id?: string; description?: string; compare_price?: number; cost_price?: number; sku?: string; image_url?: string }) => {
+    mutationFn: async (product: { name: string; price?: number; stock?: number; status?: ProductStatus; category_id?: string; description?: string; compare_price?: number; cost_price?: number; sku?: string; image_url?: string; custom_options?: ProductOptionGroup[] }) => {
       return await api.post('/products', product);
     },
     onSuccess: () => {

@@ -1,5 +1,6 @@
 import type { Product } from "@/hooks/useProducts";
 import type { Wilaya } from "@/data/algeriaWilayas";
+import type { ProductOptionGroup, SelectedProductOptions } from "@/lib/productOptions";
 
 export interface SelectedWilayaPricing extends Wilaya {
   homePrice: number;
@@ -21,22 +22,16 @@ export interface ProductHeroProps {
   formWilaya: string;
   formCommune: string;
   deliveryType: "home" | "desk";
-  couponCode: string;
   selectedWilaya?: SelectedWilayaPricing;
   availableCommunes: string[];
   wilayasWithPrices: SelectedWilayaPricing[];
   shippingCost: number;
-  discountAmount: number;
   total: number;
   inCart: boolean;
+  productOptions: ProductOptionGroup[];
+  selectedOptions: SelectedProductOptions;
   isAdding: boolean;
-  isValidating: boolean;
   isSubmitting: boolean;
-  discount?: {
-    code: string;
-    type: "percentage" | "fixed";
-    value: number;
-  } | null;
   onImageSelect: (image: string) => void;
   onQtyChange: (qty: number) => void;
   onNameChange: (value: string) => void;
@@ -44,9 +39,10 @@ export interface ProductHeroProps {
   onWilayaChange: (value: string) => void;
   onCommuneChange: (value: string) => void;
   onDeliveryTypeChange: (value: "home" | "desk") => void;
-  onCouponCodeChange: (value: string) => void;
-  onApplyCoupon: () => void;
-  onClearCoupon: () => void;
+  onSelectedOptionsChange: (name: string, value: string) => void;
   onAddToCart: () => void;
+  securitySettings?: { turnstile_enabled: boolean; site_key: string; honeypot_enabled: boolean };
+  onHoneypotChange?: (value: string) => void;
+  onTurnstileSuccess?: (token: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 }

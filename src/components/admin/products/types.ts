@@ -1,4 +1,5 @@
 import type { ProductStatus } from "@/hooks/useProducts";
+import type { ProductOptionGroup } from "@/lib/productOptions";
 
 export interface ProductForm {
   name: string;
@@ -10,6 +11,7 @@ export interface ProductForm {
   sku: string;
   category_id: string;
   status: ProductStatus;
+  custom_options: ProductOptionGroup[];
 }
 
 export const emptyProductForm: ProductForm = {
@@ -22,6 +24,7 @@ export const emptyProductForm: ProductForm = {
   sku: "",
   category_id: "",
   status: "active",
+  custom_options: [],
 };
 
 export const productStatusLabels: Record<

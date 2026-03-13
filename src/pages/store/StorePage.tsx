@@ -219,7 +219,7 @@ const StorePage = () => {
             { icon: ShieldCheck, title: "دفع آمن", sub: "100% عند الاستلام" },
             { icon: Headphones, title: "دعم العملاء", sub: "متوفر 24/7" },
             { icon: RotateCcw, title: "إرجاع سهل", sub: "ضمان 7 أيام" },
-            { icon: Globe, title: "شحن مجاني", sub: "لكل الولايات" },
+            { icon: Globe, title: "شحن سريع", sub: "لكل الولايات" },
           ].map((badge, idx) => (
             <div
               key={idx}
@@ -290,6 +290,7 @@ const StorePage = () => {
                 compare_price={product.compare_price ? Number(product.compare_price) : null}
                 image_url={product.image_url}
                 category_name={product.category_name}
+                custom_options={product.custom_options}
                 theme={theme}
               />
             ))}
@@ -387,6 +388,7 @@ const StorePage = () => {
                 compare_price={product.compare_price ? Number(product.compare_price) : null}
                 image_url={product.image_url}
                 category_name={product.category_name}
+                custom_options={product.custom_options}
                 theme={theme}
               />
             ))}

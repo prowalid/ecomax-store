@@ -18,13 +18,12 @@ export interface Order {
   status: OrderStatus;
   subtotal: number;
   shipping_cost: number;
-  discount_amount: number;
-  discount_code: string | null;
   total: number;
   tracking_number: string | null;
   shipping_company: string | null;
   note: string | null;
   call_attempts: number;
+  ip_address: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +33,7 @@ export interface OrderItem {
   order_id: string;
   product_id: string | null;
   product_name: string;
+  selected_options: Record<string, string>;
   quantity: number;
   unit_price: number;
   total: number;
@@ -78,7 +78,7 @@ export function useUpdateOrderStatus() {
 export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (order: { customer_name: string; customer_phone: string; total?: number; wilaya?: string; commune?: string; address?: string; delivery_type?: DeliveryType; subtotal?: number; shipping_cost?: number; note?: string | null; customer_id?: string; discount_code?: string; discount_amount?: number; items?: { product_name: string; quantity: number; unit_price: number; total: number; product_id?: string }[] }) => {
+    mutationFn: async (order: { customer_name: string; customer_phone: string; total?: number; wilaya?: string; commune?: string; address?: string; delivery_type?: DeliveryType; subtotal?: number; shipping_cost?: number; note?: string | null; customer_id?: string; website_url?: string; "cf-turnstile-response"?: string | null; items?: { product_name: string; quantity: number; unit_price: number; total: number; product_id?: string; selected_options?: Record<string, string> }[] }) => {
       
       // The backend now handles the entire transaction (inserting order, items, and updating stock) in one go
       const data = await api.post('/orders', order);

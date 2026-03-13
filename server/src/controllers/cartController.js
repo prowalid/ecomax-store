@@ -1,5 +1,15 @@
 const pool = require('../config/db');
 
+function normalizeSelectedOptions(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+
+  return Object.fromEntries(
+    Object.entries(input)
+      .map(([key, value]) => [String(key).trim(), typeof value === 'string' ? value.trim() : ''])
+      .filter(([key, value]) => key && value)
+  );
+}
+
 function isValidSessionId(value) {
   return typeof value === 'string' && /^[a-zA-Z0-9_-]{16,128}$/.test(value);
 }
@@ -19,10 +29,11 @@ async function getCartItems(req, res, next) {
 }
 
 // POST /api/cart
-// Request body: { session_id, product_id, product_name, product_price, product_image_url, quantity }
+// Request body: { session_id, product_id, product_name, selected_options, product_price, product_image_url, quantity }
 async function addOrUpdateCartItem(req, res, next) {
   try {
     const { session_id, product_id, product_name, product_price, product_image_url, quantity } = req.body;
+    const selected_options = normalizeSelectedOptions(req.body.selected_options);
     if (!isValidSessionId(session_id)) {
       return res.status(400).json({ error: 'Invalid session ID' });
     }
@@ -30,9 +41,9 @@ async function addOrUpdateCartItem(req, res, next) {
     // Check if item exists in this session
     const { rows: existingRows } = await pool.query(`
       SELECT id, quantity FROM cart_items 
-      WHERE session_id = $1 AND product_id = $2 
+      WHERE session_id = $1 AND product_id = $2 AND selected_options = $3::jsonb
       LIMIT 1
-    `, [session_id, product_id]);
+    `, [session_id, product_id, JSON.stringify(selected_options)]);
 
     if (existingRows.length > 0) {
       // Update quantity
@@ -51,10 +62,10 @@ async function addOrUpdateCartItem(req, res, next) {
 
     // Insert new item
     const { rows } = await pool.query(`
-      INSERT INTO cart_items (session_id, product_id, product_name, product_price, product_image_url, quantity)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO cart_items (session_id, product_id, product_name, selected_options, product_price, product_image_url, quantity)
+      VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)
       RETURNING *
-    `, [session_id, product_id, product_name, product_price, product_image_url || null, quantity || 1]);
+    `, [session_id, product_id, product_name, JSON.stringify(selected_options), product_price, product_image_url || null, quantity || 1]);
     
     res.status(201).json(rows[0]);
   } catch (err) {

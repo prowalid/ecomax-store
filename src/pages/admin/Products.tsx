@@ -119,6 +119,7 @@ const Products = () => {
       sku: p.sku || "",
       category_id: p.category_id || "",
       status: p.status,
+      custom_options: p.custom_options || [],
     });
     setShowModal(true);
   };
@@ -134,6 +135,7 @@ const Products = () => {
       stock: Number(form.stock) || 0,
       sku: form.sku || null,
       category_id: form.category_id || null,
+      custom_options: form.custom_options,
       status: form.status,
     };
 
@@ -167,7 +169,7 @@ const Products = () => {
     });
   };
 
-  const updateField = (key: keyof ProductForm, value: string) => {
+  const updateField = (key: keyof ProductForm, value: string | ProductForm["custom_options"]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 

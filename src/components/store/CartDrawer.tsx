@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus, ShoppingBag, X } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { Link } from "react-router-dom";
+import { formatSelectedOptions } from "@/lib/productOptions";
 
 interface CartDrawerProps {
   open: boolean;
@@ -86,6 +87,11 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
                         <h4 className="font-bold text-gray-900 text-sm line-clamp-2 leading-tight">
                           {item.product_name}
                         </h4>
+                        {formatSelectedOptions(item.selected_options) && (
+                          <p className="mt-1 text-[11px] font-medium text-gray-500">
+                            {formatSelectedOptions(item.selected_options)}
+                          </p>
+                        )}
                         <p className="text-store-primary font-bold text-sm mt-1">
                           {formatPrice(item.product_price)}
                         </p>

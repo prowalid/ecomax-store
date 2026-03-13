@@ -9,10 +9,11 @@ import {
   Package,
   Palette,
   Settings,
+  Shield,
   ShoppingCart,
-  Tag,
   Truck,
   Users,
+  UserX,
 } from "lucide-react";
 
 export type AdminNavItem = {
@@ -40,7 +41,7 @@ export const adminNavSections: AdminNavSection[] = [
       { to: "/admin/products", icon: Package, label: "المنتجات" },
       { to: "/admin/categories", icon: FolderOpen, label: "التصنيفات" },
       { to: "/admin/customers", icon: Users, label: "الزبائن" },
-      { to: "/admin/discounts", icon: Tag, label: "الخصومات" },
+      { to: "/admin/blacklist", icon: UserX, label: "القائمة السوداء" },
     ],
   },
   {
@@ -57,6 +58,7 @@ export const adminNavSections: AdminNavSection[] = [
     items: [
       { to: "/admin/pages", icon: FileText, label: "الصفحات" },
       { to: "/admin/appearance", icon: Palette, label: "المظهر" },
+      { to: "/admin/security", icon: Shield, label: "الأمان" },
       { to: "/admin/settings", icon: Settings, label: "الإعدادات" },
     ],
   },
@@ -103,10 +105,10 @@ export function getAdminPageMeta(pathname: string): AdminPageMeta {
     };
   }
 
-  if (pathname.startsWith("/admin/discounts")) {
+  if (pathname.startsWith("/admin/blacklist")) {
     return {
-      title: "الخصومات",
-      subtitle: "إدارة الكوبونات وقواعد التخفيض دون تعارضات منطقية.",
+      title: "القائمة السوداء",
+      subtitle: "حظر البوتات والزبائن المزعجين بناءً على الهاتف أو الـ IP.",
     };
   }
 
@@ -149,6 +151,13 @@ export function getAdminPageMeta(pathname: string): AdminPageMeta {
     return {
       title: "المظهر",
       subtitle: "تخصيص هوية المتجر والصور والألوان بما يحافظ على الاتساق.",
+    };
+  }
+
+  if (pathname.startsWith("/admin/security")) {
+    return {
+      title: "الأمان",
+      subtitle: "إدارة خيارات الحماية، مفاتيح التورنستايل، ومكافحة السبام.",
     };
   }
 

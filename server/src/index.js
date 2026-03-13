@@ -8,12 +8,12 @@ const ordersRoutes = require('./routes/orders');
 const categoriesRoutes = require('./routes/categories');
 const pagesRoutes = require('./routes/pages');
 const customersRoutes = require('./routes/customers');
-const discountsRoutes = require('./routes/discounts');
 const cartRoutes = require('./routes/cart');
 const settingsRoutes = require('./routes/settings');
 const uploadRoutes = require('./routes/upload');
 const integrationsRoutes = require('./routes/integrations');
 const analyticsRoutes = require('./routes/analytics');
+const blacklistRoutes = require('./routes/blacklist');
 const path = require('path');
 const helmet = require('helmet');
 const pool = require('./config/db');
@@ -23,6 +23,7 @@ const logger = require('./utils/logger');
 const { ensureAuthSessionsTable } = require('./utils/authSessions');
 const { ensureDefaultCategoryImages } = require('./utils/categoryDefaults');
 const { ensurePagesSlugIntegrity } = require('./utils/pagesIntegrity');
+const { ensureOrderSecuritySchema } = require('./utils/schemaMigrations');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -69,12 +70,12 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/pages', pagesRoutes);
 app.use('/api/customers', customersRoutes);
-app.use('/api/discounts', discountsRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/blacklist', blacklistRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {
@@ -96,6 +97,7 @@ app.use(errorHandler);
 // ─── Start ───
 async function startServer() {
   await ensureAuthSessionsTable();
+  await ensureOrderSecuritySchema();
   await ensureDefaultCategoryImages();
   await ensurePagesSlugIntegrity();
 

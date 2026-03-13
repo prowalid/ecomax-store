@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS products (
   sku TEXT,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
   image_url TEXT,
+  custom_options JSONB NOT NULL DEFAULT '[]'::jsonb,
   status product_status NOT NULL DEFAULT 'draft',
   variants_count INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -128,12 +129,23 @@ CREATE TABLE IF NOT EXISTS orders (
   tracking_number TEXT,
   shipping_company TEXT,
   note TEXT,
-  discount_code TEXT DEFAULT NULL,
-  discount_amount NUMERIC DEFAULT 0,
+  ip_address TEXT,
   call_attempts INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ─── Blacklist ───
+CREATE TABLE IF NOT EXISTS blacklist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL CHECK (type IN ('ip', 'phone')),
+  value TEXT NOT NULL,
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_blacklist_type_value_unique ON blacklist(type, value);
+CREATE INDEX IF NOT EXISTS idx_blacklist_value ON blacklist(value);
 
 -- ─── Order Items ───
 CREATE TABLE IF NOT EXISTS order_items (
@@ -141,6 +153,7 @@ CREATE TABLE IF NOT EXISTS order_items (
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id) ON DELETE SET NULL,
   product_name TEXT NOT NULL,
+  selected_options JSONB NOT NULL DEFAULT '{}'::jsonb,
   quantity INT NOT NULL DEFAULT 1,
   unit_price NUMERIC(12,2) NOT NULL DEFAULT 0,
   total NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -153,6 +166,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
   session_id TEXT NOT NULL,
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
   product_name TEXT NOT NULL,
+  selected_options JSONB NOT NULL DEFAULT '{}'::jsonb,
   product_price NUMERIC NOT NULL,
   product_image_url TEXT,
   quantity INT NOT NULL DEFAULT 1,
@@ -171,24 +185,6 @@ CREATE TABLE IF NOT EXISTS pages (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ─── Discounts ───
-CREATE TABLE IF NOT EXISTS discounts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code TEXT NOT NULL UNIQUE,
-  type TEXT NOT NULL DEFAULT 'percentage' CHECK (type IN ('percentage', 'fixed')),
-  value NUMERIC NOT NULL DEFAULT 0,
-  usage_count INTEGER NOT NULL DEFAULT 0,
-  usage_limit INTEGER DEFAULT NULL,
-  active BOOLEAN NOT NULL DEFAULT true,
-  expires_at TIMESTAMPTZ DEFAULT NULL,
-  apply_to TEXT NOT NULL DEFAULT 'all' CHECK (apply_to IN ('all', 'specific')),
-  product_ids UUID[] DEFAULT '{}',
-  quantity_behavior TEXT NOT NULL DEFAULT 'all' CHECK (quantity_behavior IN ('all', 'single', 'min_quantity')),
-  min_quantity INTEGER NOT NULL DEFAULT 1,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
 -- =============================================
 -- Seed Data
 -- =============================================
@@ -200,6 +196,7 @@ INSERT INTO store_settings (key, value) VALUES
   ('general', '{"store_name": "ECOMAX", "phone": "", "whatsapp_phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": ""}'::jsonb),
   ('appearance', '{"logo_url": "", "footer_logo_url": "", "favicon_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}'::jsonb),
   ('marketing', '{"pixel_id": "", "capi_token": "", "pixel_configured": false, "webhook_url": "", "enabled_events": {"PageView": true, "ViewContent": true, "AddToCart": true, "InitiateCheckout": true, "Purchase": true, "Lead": true}}'::jsonb),
+  ('security', '{"turnstile_enabled": false, "site_key": "", "secret_key": "", "honeypot_enabled": true}'::jsonb),
   ('category_image_defaults_seeded', '{"seeded": true}'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useCallback, useMemo } from "react";
 import { safeGetLocalStorageItem, safeSetLocalStorageItem } from "@/lib/safeStorage";
+import { normalizeSelectedOptions, type SelectedProductOptions } from "@/lib/productOptions";
 
 const SESSION_KEY = "cart_session_id";
 
@@ -26,6 +27,7 @@ export interface CartItem {
   id: string;
   product_id: string;
   product_name: string;
+  selected_options: SelectedProductOptions;
   product_price: number;
   product_image_url: string | null;
   quantity: number;
@@ -42,6 +44,7 @@ export function useCart() {
       const data = await api.get(`/cart/${sessionId}`);
       return (data as CartItem[]).map((item) => ({
         ...item,
+        selected_options: normalizeSelectedOptions(item.selected_options),
         product_price: Number(item.product_price),
         quantity: Number(item.quantity),
       }));
@@ -52,6 +55,7 @@ export function useCart() {
     mutationFn: async (product: {
       product_id: string;
       product_name: string;
+      selected_options?: SelectedProductOptions;
       product_price: number;
       product_image_url?: string | null;
       quantity?: number;
@@ -89,6 +93,7 @@ export function useCart() {
     (product: {
       product_id: string;
       product_name: string;
+      selected_options?: SelectedProductOptions;
       product_price: number;
       product_image_url?: string | null;
       quantity?: number;

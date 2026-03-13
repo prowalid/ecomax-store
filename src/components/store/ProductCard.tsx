@@ -5,6 +5,7 @@ import { useTracking } from "@/hooks/useTracking";
 import type { AppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { getStoreThemeTokens, hexToRgba, isDarkColor } from "@/lib/storeTheme";
 import { toast } from "sonner";
+import type { ProductOptionGroup } from "@/lib/productOptions";
 
 interface ProductCardProps {
   id: string;
@@ -14,16 +15,18 @@ interface ProductCardProps {
   compare_price?: number | null;
   image_url?: string | null;
   category_name?: string;
+  custom_options?: ProductOptionGroup[];
   theme: AppearanceSettings;
 }
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
-const ProductCard = ({ id, name, price, stock, compare_price, image_url, category_name, theme }: ProductCardProps) => {
+const ProductCard = ({ id, name, price, stock, compare_price, image_url, category_name, custom_options = [], theme }: ProductCardProps) => {
   const { addItem, isAdding, items } = useCart();
   const { track } = useTracking();
   const hasDiscount = compare_price && compare_price > price;
-  const inCart = items.some(item => item.product_id === id);
+  const requiresOptions = custom_options.length > 0;
+  const inCart = !requiresOptions && items.some(item => item.product_id === id);
   const outOfStock = stock <= 0;
   const tokens = getStoreThemeTokens(theme);
   const buttonIsDark = isDarkColor(theme.button_color);
@@ -33,6 +36,9 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
     e.stopPropagation();
     if (outOfStock) {
       toast.error("هذا المنتج غير متوفر حالياً");
+      return;
+    }
+    if (requiresOptions) {
       return;
     }
     addItem({
@@ -142,6 +148,17 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
           >
             نفد المخزون
           </button>
+        ) : requiresOptions ? (
+          <Link
+            to={`/product/${id}`}
+            className="flex w-full py-2 rounded-xl text-[13px] sm:text-sm font-bold justify-center items-center transition-all duration-300 active:translate-y-0 text-center shadow-sm hover:opacity-90"
+            style={{
+              backgroundColor: theme.button_color,
+              color: theme.button_text,
+            }}
+          >
+            اطلب الآن
+          </Link>
         ) : inCart ? (
            <button
              disabled
