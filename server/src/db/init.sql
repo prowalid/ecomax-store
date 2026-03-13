@@ -12,6 +12,12 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'admin',
+  name TEXT,
+  phone TEXT UNIQUE,
+  two_factor_enabled BOOLEAN DEFAULT false,
+  two_factor_secret TEXT,
+  recovery_code TEXT,
+  recovery_code_expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

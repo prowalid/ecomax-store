@@ -1,6 +1,6 @@
 import { ExternalLink, LogOut, Menu, Store } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getAdminPageMeta } from "./adminNavigation";
 import {
@@ -66,12 +66,12 @@ const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
             <ExternalLink className="h-4 w-4" />
           </a>
           {user && (
-            <div className="hidden text-right px-2 sm:block" dir="rtl">
+            <Link to="/admin/profile" className="hidden text-right px-2 sm:block hover:bg-accent hover:text-primary rounded-md p-1 transition-colors" dir="rtl" title="إعدادات الحساب">
               <p className="w-[150px] truncate text-[13px] font-bold leading-tight text-sidebar-heading">
                 {user.email}
               </p>
-              <p className="text-[10px] font-medium text-muted-foreground">جلسة آمنة فعالة</p>
-            </div>
+              <p className="text-[10px] font-medium text-muted-foreground">الملف الشخصي والأمان</p>
+            </Link>
           )}
 
           <AlertDialog>

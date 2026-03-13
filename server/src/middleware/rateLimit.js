@@ -38,4 +38,10 @@ function createRateLimit({ windowMs, max, message }) {
   };
 }
 
-module.exports = { createRateLimit };
+const loginLimiter = createRateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts
+  message: 'عفوا، لقد تجاوزت الحد المسموح به لمحاولات الدخول. يرجى المحاولة بعد 15 دقيقة.'
+});
+
+module.exports = { createRateLimit, loginLimiter };

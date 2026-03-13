@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertOctagon,
@@ -49,6 +50,7 @@ export default function ProductHero({
   inCart,
   productOptions,
   selectedOptions,
+  missingOptionName,
   isAdding,
   isSubmitting,
   onImageSelect,
@@ -66,6 +68,17 @@ export default function ProductHero({
   onSubmit,
 }: ProductHeroProps) {
   const subtotal = Number(product.price) * qty;
+  const optionGroupRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!missingOptionName) return;
+
+    const target = optionGroupRefs.current[missingOptionName];
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => target.focus({ preventScroll: true }), 250);
+  }, [missingOptionName]);
 
   return (
     <section className="container mx-auto px-3 sm:px-4 py-8 md:py-16 overflow-x-clip">
@@ -218,11 +231,33 @@ export default function ProductHero({
                         </div>
                       </div>
                       <div className="space-y-4">
-                        {productOptions.map((group) => (
-                          <div key={group.name} className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm space-y-3">
+                        {productOptions.map((group) => {
+                          const isMissing = missingOptionName === group.name;
+                          return (
+                          <div
+                            key={group.name}
+                            ref={(node) => {
+                              optionGroupRefs.current[group.name] = node;
+                            }}
+                            tabIndex={-1}
+                            className={`rounded-2xl p-3 shadow-sm space-y-3 outline-none transition-all duration-300 ${
+                              isMissing
+                                ? "border-2 border-store-primary bg-store-primary/5 shadow-[0_0_0_4px_rgba(220,53,69,0.12)]"
+                                : "border border-white/80 bg-white/90"
+                            }`}
+                          >
                             <div className="flex items-center justify-between gap-3">
-                              <label className="block text-sm font-black text-gray-900">{group.name}</label>
-                              <span className="text-[11px] font-bold text-gray-400">{group.values.length} خيارات</span>
+                              <div>
+                                <label className="block text-sm font-black text-gray-900">{group.name}</label>
+                                {isMissing && (
+                                  <p className="mt-1 text-[11px] font-bold text-store-primary">
+                                    هذا الخيار مطلوب قبل متابعة الطلب
+                                  </p>
+                                )}
+                              </div>
+                              <span className={`text-[11px] font-bold ${isMissing ? "text-store-primary" : "text-gray-400"}`}>
+                                {group.values.length} خيارات
+                              </span>
                             </div>
                             <div className="flex flex-wrap gap-2.5">
                               {group.values.map((value) => {
@@ -244,7 +279,7 @@ export default function ProductHero({
                               })}
                             </div>
                           </div>
-                        ))}
+                        )})}
                       </div>
                       {formatSelectedOptions(selectedOptions) && (
                         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs font-medium text-emerald-700">

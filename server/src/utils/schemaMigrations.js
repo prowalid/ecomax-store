@@ -20,6 +20,19 @@ async function ensureOrderSecuritySchema() {
   await pool.query('CREATE INDEX IF NOT EXISTS idx_blacklist_value ON blacklist(value)');
 }
 
+async function ensureUserAccountSchema() {
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT');
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT');
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT false');
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret TEXT');
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_code TEXT');
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_code_expires_at TIMESTAMPTZ');
+
+  await pool.query('UPDATE users SET two_factor_enabled = false WHERE two_factor_enabled IS NULL');
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_unique ON users(phone) WHERE phone IS NOT NULL');
+}
+
 module.exports = {
+  ensureUserAccountSchema,
   ensureOrderSecuritySchema,
 };

@@ -484,6 +484,7 @@ module.exports = {
   facebookCapi,
   whatsappNotify,
   updateGreenApi,
+  sendWhatsAppInternal,
   triggerOrderStatusNotification,
   sendOrderWebhook,
   buildOrderWebhookPayload,

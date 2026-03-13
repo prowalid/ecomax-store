@@ -48,3 +48,15 @@ export function hasRequiredSelections(
   const normalizedSelected = normalizeSelectedOptions(selected);
   return groups.every((group) => group.values.includes(normalizedSelected[group.name] || ""));
 }
+
+export function getFirstMissingSelection(
+  groups: ProductOptionGroup[],
+  selected: SelectedProductOptions
+): ProductOptionGroup | null {
+  if (groups.length === 0) return null;
+  const normalizedSelected = normalizeSelectedOptions(selected);
+
+  return (
+    groups.find((group) => !group.values.includes(normalizedSelected[group.name] || "")) ?? null
+  );
+}

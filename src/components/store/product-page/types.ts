@@ -30,6 +30,7 @@ export interface ProductHeroProps {
   inCart: boolean;
   productOptions: ProductOptionGroup[];
   selectedOptions: SelectedProductOptions;
+  missingOptionName?: string | null;
   isAdding: boolean;
   isSubmitting: boolean;
   onImageSelect: (image: string) => void;

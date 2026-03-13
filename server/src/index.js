@@ -23,7 +23,7 @@ const logger = require('./utils/logger');
 const { ensureAuthSessionsTable } = require('./utils/authSessions');
 const { ensureDefaultCategoryImages } = require('./utils/categoryDefaults');
 const { ensurePagesSlugIntegrity } = require('./utils/pagesIntegrity');
-const { ensureOrderSecuritySchema } = require('./utils/schemaMigrations');
+const { ensureOrderSecuritySchema, ensureUserAccountSchema } = require('./utils/schemaMigrations');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -97,6 +97,7 @@ app.use(errorHandler);
 // ─── Start ───
 async function startServer() {
   await ensureAuthSessionsTable();
+  await ensureUserAccountSchema();
   await ensureOrderSecuritySchema();
   await ensureDefaultCategoryImages();
   await ensurePagesSlugIntegrity();

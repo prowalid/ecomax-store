@@ -26,6 +26,8 @@ const Blacklist = lazy(() => import("./pages/admin/Blacklist"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 const AdminSetup = lazy(() => import("./pages/admin/AdminSetup"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const PasswordRecovery = lazy(() => import("./pages/admin/PasswordRecovery"));
+const Profile = lazy(() => import("./pages/admin/Profile"));
 const StorePage = lazy(() => import("./pages/store/StorePage"));
 const ProductPage = lazy(() => import("./pages/store/ProductPage"));
 const CheckoutPage = lazy(() => import("./pages/store/CheckoutPage"));
@@ -88,6 +90,14 @@ const App = () => (
                 </AdminGuestGuard>
               )}
             />
+            <Route
+              path="/admin/recover-password"
+              element={(
+                <AdminGuestGuard mode="login">
+                  {withSuspense(<PasswordRecovery />)}
+                </AdminGuestGuard>
+              )}
+            />
 
             {/* Admin Dashboard (Protected) */}
             <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
@@ -105,6 +115,7 @@ const App = () => (
               <Route path="appearance" element={withSuspense(<Appearance />)} />
               <Route path="security" element={withSuspense(<Security />)} />
               <Route path="settings" element={withSuspense(<Settings />)} />
+              <Route path="profile" element={withSuspense(<Profile />)} />
             </Route>
 
             <Route path="*" element={withSuspense(<NotFound />)} />

@@ -21,7 +21,7 @@ import ProductTrustBadges from "@/components/store/product-page/ProductTrustBadg
 import { saveTrackingProfile } from "@/lib/trackingProfile";
 import { getStoreThemeTokens } from "@/lib/storeTheme";
 import { sanitizeProductDescription } from "@/lib/productDescription";
-import { formatSelectedOptions, hasRequiredSelections, normalizeProductOptions, normalizeSelectedOptions, type SelectedProductOptions } from "@/lib/productOptions";
+import { formatSelectedOptions, getFirstMissingSelection, hasRequiredSelections, normalizeProductOptions, normalizeSelectedOptions, type SelectedProductOptions } from "@/lib/productOptions";
 
 interface WilayaShipping {
   id: number;
@@ -55,6 +55,7 @@ const ProductPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [submittedOrderNumber, setSubmittedOrderNumber] = useState<number | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<SelectedProductOptions>({});
+  const [missingOptionName, setMissingOptionName] = useState<string | null>(null);
   const [honeypotValue, setHoneypotValue] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
@@ -221,6 +222,17 @@ const ProductPage = () => {
     document.getElementById("order-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [submitted]);
 
+  useEffect(() => {
+    if (!missingOptionName) {
+      return;
+    }
+
+    const normalizedSelected = normalizeSelectedOptions(selectedOptions);
+    if (normalizedSelected[missingOptionName]) {
+      setMissingOptionName(null);
+    }
+  }, [missingOptionName, selectedOptions]);
+
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -231,10 +243,13 @@ const ProductPage = () => {
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim() || !product) return;
-    if (!hasRequiredSelections(productOptions, selectedOptions)) {
+    const firstMissingOption = getFirstMissingSelection(productOptions, selectedOptions);
+    if (firstMissingOption || !hasRequiredSelections(productOptions, selectedOptions)) {
+      setMissingOptionName(firstMissingOption?.name ?? null);
       toast.error("الرجاء اختيار جميع خيارات المنتج");
       return;
     }
+    setMissingOptionName(null);
     if (Number(product.stock) <= 0) {
       toast.error("هذا المنتج غير متوفر حالياً");
       return;
@@ -335,10 +350,13 @@ const ProductPage = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
-    if (!hasRequiredSelections(productOptions, selectedOptions)) {
+    const firstMissingOption = getFirstMissingSelection(productOptions, selectedOptions);
+    if (firstMissingOption || !hasRequiredSelections(productOptions, selectedOptions)) {
+      setMissingOptionName(firstMissingOption?.name ?? null);
       toast.error("اختر خيارات المنتج أولاً");
       return;
     }
+    setMissingOptionName(null);
     addItem({
       product_id: product.id,
       product_name: product.name,
@@ -441,6 +459,7 @@ const ProductPage = () => {
         inCart={inCart}
         productOptions={productOptions}
         selectedOptions={selectedOptions}
+        missingOptionName={missingOptionName}
         isAdding={isAdding}
         isSubmitting={createOrder.isPending}
         onImageSelect={setActiveImage}
