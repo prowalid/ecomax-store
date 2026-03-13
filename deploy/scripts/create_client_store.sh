@@ -102,6 +102,7 @@ if [[ -f "${EDGE_DIR}/docker-compose.yml" ]]; then
   (
     cd "${EDGE_DIR}"
     EDGE_NETWORK="${EDGE_NETWORK}" docker compose up -d
+    docker compose exec -T edge-proxy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || docker compose restart edge-proxy >/dev/null 2>&1 || true
   )
 fi
 
