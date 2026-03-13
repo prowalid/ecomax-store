@@ -211,9 +211,9 @@ INSERT INTO categories (name, slug, sort_order, image_url) VALUES
   ('أحذية', 'shoes', 1, 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200'),
   ('ساعات', 'watches', 2, 'https://images.unsplash.com/photo-1556910103-1c02745a8720?auto=format&fit=crop&q=80&w=1200'),
   ('ملابس رجالية', 'men-clothing', 3, 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&q=80&w=1200'),
-  ('ملابس نسائية', 'women-clothing', 4),
-  ('إكسسوارات', 'accessories', 5),
-  ('إلكترونيات', 'electronics', 6)
+  ('ملابس نسائية', 'women-clothing', 4, NULL),
+  ('إكسسوارات', 'accessories', 5, NULL),
+  ('إلكترونيات', 'electronics', 6, NULL)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Default pages
