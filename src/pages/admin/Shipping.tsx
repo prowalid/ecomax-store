@@ -52,37 +52,37 @@ const SHIPPING_PROVIDERS: Array<{
     key: "manual",
     label: "بدون مزود خارجي",
     status: "live",
-    description: "إدارة الشحن يدويًا من صفحة الطلبات دون رفع مباشر إلى شركة شحن.",
+    description: "إدارة الشحن يدوياً دون ربط آلي. مناسب للطلبات التي يتم توصيلها عبر مندوبين خاصين بك.",
   },
   {
     key: "yalidine",
     label: "Yalidine",
     status: "live",
-    description: "التكامل الفعلي الحالي. رفع الطلبات من الأدمن مع حفظ شركة الشحن ورقم التتبع.",
+    description: "اربط متجرك مباشرة بحسابك في شركة Yalidine لرفع الطلبات وتوليد رقم التتبع بنقرة واحدة.",
   },
   {
     key: "zr_express",
     label: "ZR Express",
     status: "planned",
-    description: "مزود مشهور في السوق الجزائري، والبنية الآن جاهزة لإضافة adapter مستقل له لاحقًا.",
+    description: "قريباً. سيتم توفير الربط المباشر مع ZR Express لتسهيل إرسال وتتبع طلباتك.",
   },
   {
     key: "mdm_express",
     label: "MDM Express",
     status: "planned",
-    description: "شركة محلية موجهة للتجارة الإلكترونية، أضفناها كمسار جاهز ضمن هيكل المزودات.",
+    description: "قريباً. نعمل على توفير الربط الآلي لترحيل طلباتك إلى MDM Express بسهولة.",
   },
   {
     key: "near_delivery",
     label: "Near Delivery",
     status: "planned",
-    description: "مزود يعتمد نقاط تسليم وشبكة وطنية، وسيأتي لاحقًا ضمن نفس طبقة الشحن.",
+    description: "قريباً. التكامل المباشر مع شبكة Near Delivery سيكون متاحاً في التحديثات القادمة.",
   },
   {
     key: "maystro",
     label: "Maystro",
     status: "planned",
-    description: "محجوزة كبوابة تكامل لاحقة حتى تبقى صفحة الشحن جاهزة للتوسع المنظم.",
+    description: "قريباً. سيتاح الربط المباشر لإرسال الطلبات وتتبعها عبر منصة Maystro لتسهيل عملك.",
   },
 ];
 

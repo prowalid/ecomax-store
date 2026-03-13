@@ -33,7 +33,7 @@ const StoreLayout = () => {
   const effectiveMetaTitle = generalSettings.meta_title?.trim() || `${effectiveStoreName} — متجر إلكتروني`;
   const effectiveMetaDescription =
     generalSettings.meta_description?.trim() ||
-    "متجر إلكتروني احترافي للدفع عند الاستلام مع تجربة شراء سريعة وآمنة داخل الجزائر.";
+    "أفضل متجر للدفع عند الاستلام في الجزائر. نوفر لك جودة استثنائية، سرعة في التوصيل، وتجربة تسوق آمنة تماماً.";
   const normalizedHeaderPages = headerPages.map((page) => ({ ...page, slug: normalizePageSlug(page.slug) }));
   const normalizedFooterPages = footerPages.map((page) => ({ ...page, slug: normalizePageSlug(page.slug) }));
   const footerLinks = normalizedFooterPages;
@@ -380,7 +380,7 @@ const StoreLayout = () => {
                 )}
               </h3>
               <p className="leading-relaxed max-w-md" style={{ color: theme.footer_text + 'aa' }}>
-                أفضل متجر للدفع عند الاستلام في الجزائر. نوفر لك جودة استثنائية، سرعة في التوصيل، وتجربة تسوق آمنة تماماً.
+                {effectiveMetaDescription}
               </p>
             </div>
             <div>

@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS pages (
 INSERT INTO store_settings (key, value) VALUES
   ('whatsapp_notifications', '{"enabled_notifications": {"order_confirmed": true, "order_shipped": true, "order_delivered": false, "new_order_admin": true}, "admin_phone": "", "api_configured": false}'::jsonb),
   ('shipping', '{"wilayas": [], "provider": {"active_provider": "manual"}, "yalidine": {"enabled": false, "api_base_url": "https://api.yalidine.app/v1", "api_id": "", "api_token": "", "shipper_name": "", "shipper_phone": "", "from_wilaya_name": "", "from_commune_name": "", "stopdesk_id": "", "default_product_name": ""}}'::jsonb),
-  ('general', '{"store_name": "ECOMAX", "phone": "", "whatsapp_phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": ""}'::jsonb),
+  ('general', '{"store_name": "ECOMAX", "phone": "", "whatsapp_phone": "", "email": "", "currency": "DZD", "meta_title": "", "meta_description": "أفضل متجر للدفع عند الاستلام في الجزائر. نوفر لك جودة استثنائية، سرعة في التوصيل، وتجربة تسوق آمنة تماماً."}'::jsonb),
   ('appearance', '{"logo_url": "", "footer_logo_url": "", "favicon_url": "", "store_name": "ECOMAX", "primary_color": "#0d6847", "button_color": "#0d6847", "bg_color": "#f4f5f7", "heading_font": "Cairo", "body_font": "Cairo", "custom_domain": ""}'::jsonb),
   ('marketing', '{"pixel_id": "", "capi_token": "", "pixel_configured": false, "webhook_url": "", "enabled_events": {"PageView": true, "ViewContent": true, "AddToCart": true, "InitiateCheckout": true, "Purchase": true, "Lead": true}}'::jsonb),
   ('security', '{"turnstile_enabled": false, "site_key": "", "secret_key": "", "honeypot_enabled": true}'::jsonb),
@@ -208,9 +208,9 @@ ON CONFLICT (key) DO NOTHING;
 
 -- Default categories
 INSERT INTO categories (name, slug, sort_order, image_url) VALUES
-  ('أحذية', 'shoes', 1, 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200'),
-  ('ساعات', 'watches', 2, 'https://images.unsplash.com/photo-1556910103-1c02745a8720?auto=format&fit=crop&q=80&w=1200'),
-  ('ملابس رجالية', 'men-clothing', 3, 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&q=80&w=1200'),
+  ('أحذية', 'shoes', 1, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=1200'),
+  ('ساعات', 'watches', 2, 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=1200'),
+  ('ملابس رجالية', 'men-clothing', 3, 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200'),
   ('ملابس نسائية', 'women-clothing', 4, NULL),
   ('إكسسوارات', 'accessories', 5, NULL),
   ('إلكترونيات', 'electronics', 6, NULL)

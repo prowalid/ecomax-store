@@ -54,10 +54,11 @@ export const defaultAppearance: AppearanceSettings = {
   heading_font: "Cairo",
   body_font: "Cairo",
   slides: [
-    { image_url: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=1600" },
-    { image_url: "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=1600" },
+    { image_url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1600" },
+    { image_url: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=1600" },
+    { image_url: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=1600" },
   ],
-  offers_banner_url: "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1200",
+  offers_banner_url: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&q=80&w=1400",
 };
 const APPEARANCE_CACHE_KEY = "etk:appearance-settings-cache";
 

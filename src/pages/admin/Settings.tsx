@@ -21,7 +21,7 @@ const Settings = () => {
     email: "",
     currency: "DZD",
     meta_title: "",
-    meta_description: "",
+    meta_description: "أفضل متجر للدفع عند الاستلام في الجزائر. نوفر لك جودة استثنائية، سرعة في التوصيل، وتجربة تسوق آمنة تماماً.",
   });
   const rawWhatsapp = settings.whatsapp_phone || "";
   const normalizedWhatsapp = normalizeWhatsAppPhone(rawWhatsapp);
