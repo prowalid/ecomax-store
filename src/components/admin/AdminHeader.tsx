@@ -68,9 +68,9 @@ const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
           {user && (
             <Link to="/admin/profile" className="hidden text-right px-2 sm:block hover:bg-accent hover:text-primary rounded-md p-1 transition-colors" dir="rtl" title="إعدادات الحساب">
               <p className="w-[150px] truncate text-[13px] font-bold leading-tight text-sidebar-heading">
-                {user.email}
+                {user.name || user.phone || "الملف الشخصي"}
               </p>
-              <p className="text-[10px] font-medium text-muted-foreground">الملف الشخصي والأمان</p>
+              <p className="text-[10px] font-medium text-muted-foreground">{user.phone || "الملف الشخصي والأمان"}</p>
             </Link>
           )}
 

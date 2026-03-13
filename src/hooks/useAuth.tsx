@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { api } from "@/lib/api";
 import { safeRemoveLocalStorageItem } from "@/lib/safeStorage";
 
-type AuthUser = { id: string; email: string; role: string; created_at: string };
+type AuthUser = { id: string; name?: string; phone?: string; role: string; created_at: string };
 
 interface AuthContextType {
   user: AuthUser | null;

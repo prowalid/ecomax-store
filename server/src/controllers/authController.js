@@ -22,11 +22,20 @@ const {
 
 async function getUserById(id) {
   const { rows } = await pool.query(
-    'SELECT id, email, role, created_at FROM users WHERE id = $1',
+    'SELECT id, name, phone, role, created_at FROM users WHERE id = $1',
     [id]
   );
 
   return rows[0] || null;
+}
+
+function normalizeAdminPhone(phone) {
+  return String(phone || '').replace(/\D/g, '').trim();
+}
+
+function buildInternalAdminEmail(phone) {
+  const normalizedPhone = normalizeAdminPhone(phone);
+  return `admin-${normalizedPhone || 'unknown'}@internal.etk`;
 }
 
 async function getTwoFactorIssuer() {
@@ -72,10 +81,11 @@ function getSessionIdFromRequest(req) {
 // POST /api/auth/register
 async function register(req, res, next) {
   try {
-    const { email, password } = req.body;
+    const { name, phone, password } = req.body;
+    const normalizedPhone = normalizeAdminPhone(phone);
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    if (!name || !normalizedPhone || !password) {
+      return res.status(400).json({ error: 'Name, phone, and password are required.' });
     }
 
     if (password.length < 6) {
@@ -91,11 +101,12 @@ async function register(req, res, next) {
     // Hash password
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
+    const internalEmail = buildInternalAdminEmail(normalizedPhone);
 
     // Create user
     const { rows } = await pool.query(
-      'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role, created_at',
-      [email.toLowerCase().trim(), passwordHash, 'admin']
+      'INSERT INTO users (name, phone, email, password_hash, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, phone, role, created_at',
+      [String(name).trim(), normalizedPhone, internalEmail, passwordHash, 'admin']
     );
 
     const user = rows[0];
@@ -113,11 +124,11 @@ async function register(req, res, next) {
 
     res.status(201).json({
       message: 'Admin account created successfully.',
-      user: { id: user.id, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, phone: user.phone, role: user.role },
     });
   } catch (err) {
     if (err.code === '23505') {
-      return res.status(409).json({ error: 'Email already exists.' });
+      return res.status(409).json({ error: 'Phone already exists.' });
     }
     next(err);
   }
@@ -126,20 +137,21 @@ async function register(req, res, next) {
 // POST /api/auth/login
 async function login(req, res, next) {
   try {
-    const { email, password, twoFactorCode } = req.body;
+    const { phone, password, twoFactorCode } = req.body;
+    const normalizedPhone = normalizeAdminPhone(phone);
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    if (!normalizedPhone || !password) {
+      return res.status(400).json({ error: 'Phone and password are required.' });
     }
 
     // Find user
     const { rows } = await pool.query(
-      'SELECT id, email, password_hash, role, two_factor_enabled, two_factor_secret FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
+      'SELECT id, name, phone, email, password_hash, role, two_factor_enabled, two_factor_secret FROM users WHERE phone = $1',
+      [normalizedPhone]
     );
 
     if (rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid phone or password.' });
     }
 
     const user = rows[0];
@@ -147,7 +159,7 @@ async function login(req, res, next) {
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid phone or password.' });
     }
 
     // Verify 2FA if enabled
@@ -174,7 +186,7 @@ async function login(req, res, next) {
     setAuthCookies(res, accessToken, refreshToken, ttl);
 
     res.json({
-      user: { id: user.id, email: user.email, role: user.role, two_factor_enabled: user.two_factor_enabled },
+      user: { id: user.id, name: user.name, phone: user.phone, role: user.role, two_factor_enabled: user.two_factor_enabled },
     });
   } catch (err) {
     next(err);
@@ -272,7 +284,7 @@ async function checkSetupStatus(req, res, next) {
 async function getProfile(req, res, next) {
   try {
     const { rows } = await pool.query(
-      'SELECT id, name, email, phone, role, two_factor_enabled FROM users WHERE id = $1',
+      'SELECT id, name, phone, role, two_factor_enabled FROM users WHERE id = $1',
       [req.user.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
@@ -285,14 +297,16 @@ async function getProfile(req, res, next) {
 // PUT /api/auth/profile
 async function updateProfile(req, res, next) {
   try {
-    const { name, email, phone } = req.body;
+    const { name, phone } = req.body;
+    const normalizedPhone = normalizeAdminPhone(phone);
+    const internalEmail = buildInternalAdminEmail(normalizedPhone);
     const { rows } = await pool.query(
-      'UPDATE users SET name = $1, email = $2, phone = $3 WHERE id = $4 RETURNING id, name, email, phone, role, two_factor_enabled',
-      [name, email, phone, req.user.id]
+      'UPDATE users SET name = $1, phone = $2, email = $3 WHERE id = $4 RETURNING id, name, phone, role, two_factor_enabled',
+      [String(name || '').trim(), normalizedPhone, internalEmail, req.user.id]
     );
     res.json(rows[0]);
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'Email or phone already exists.' });
+    if (err.code === '23505') return res.status(409).json({ error: 'Phone already exists.' });
     next(err);
   }
 }
@@ -324,10 +338,11 @@ async function changePassword(req, res, next) {
 // POST /api/auth/2fa/setup
 async function setup2FA(req, res, next) {
   try {
-    const { rows } = await pool.query('SELECT email FROM users WHERE id = $1', [req.user.id]);
+    const { rows } = await pool.query('SELECT name, phone FROM users WHERE id = $1', [req.user.id]);
     const secret = otplib.authenticator.generateSecret();
     const issuer = await getTwoFactorIssuer();
-    const otpauthUrl = otplib.authenticator.keyuri(rows[0].email, issuer, secret);
+    const accountName = rows[0].phone || rows[0].name || 'admin';
+    const otpauthUrl = otplib.authenticator.keyuri(accountName, issuer, secret);
     const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
     
     await pool.query('UPDATE users SET two_factor_secret = $1 WHERE id = $2', [secret, req.user.id]);

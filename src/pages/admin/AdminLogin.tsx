@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link, Navigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, ShieldCheck, Mail, Lock } from "lucide-react";
+import { Loader2, ShieldCheck, Phone, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -37,13 +37,17 @@ export default function AdminLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) return;
+    if (!phone.trim() || !password.trim()) return;
     if (requires2fa && !twoFactorCode.trim()) return;
+    if (!/^0[5-7][0-9]{8}$/.test(phone.trim())) {
+      toast.error("رقم الهاتف غير صالح. يجب أن يكون رقمًا جزائريًا صحيحًا.");
+      return;
+    }
 
     setLoading(true);
     try {
       const payload: any = {
-        email: email.trim(),
+        phone: phone.replace(/\D/g, ""),
         password,
       };
       
@@ -90,18 +94,18 @@ export default function AdminLogin() {
 
         <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-2xl p-6 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500">البريد الإلكتروني</label>
+            <label className="text-xs font-medium text-gray-500">رقم الهاتف</label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                <Mail size={18} />
+                <Phone size={18} />
               </div>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 required
                 disabled={requires2fa}
-                placeholder="admin@example.com"
+                placeholder="0555123456"
                 dir="ltr"
                 className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all disabled:opacity-50"
               />
@@ -134,7 +138,7 @@ export default function AdminLogin() {
 
           {requires2fa && (
             <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-              <label className="text-xs font-medium text-primary">كود المصادقة الثنائية (الواتساب أو التطبيق)</label>
+              <label className="text-xs font-medium text-primary">كود المصادقة الثنائية من التطبيق</label>
               <div className="relative">
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-primary/50">
                   <ShieldCheck size={18} />

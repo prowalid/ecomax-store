@@ -6,12 +6,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ShieldCheck, User, KeyRound, Smartphone, Mail, AlertTriangle } from "lucide-react";
+import { Loader2, ShieldCheck, User, KeyRound, Smartphone, AlertTriangle } from "lucide-react";
 
 export default function Profile() {
   const { user } = useAuth();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -30,11 +29,10 @@ export default function Profile() {
   // Use useEffect instead of setting state in queryFn, to handle React Query caching
   useEffect(() => {
     if (profile) {
-      setName(profile.name || "");
-      setEmail(profile.email || user?.email || "");
-      setPhone(profile.phone || "");
+      setName(profile.name || user?.name || "");
+      setPhone(profile.phone || user?.phone || "");
     }
-  }, [profile, user?.email]);
+  }, [profile, user?.name, user?.phone]);
 
   const updateProfileMutation = useMutation({
     mutationFn: (data: any) => api.put("/auth/profile", data),
@@ -130,15 +128,6 @@ export default function Profile() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold flex items-center gap-2"><Mail className="w-4 h-4"/> البريد الإلكتروني</label>
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
-                dir="ltr"
-              />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-bold flex items-center gap-2"><Smartphone className="w-4 h-4"/> الهاتف (لاستعادة الحساب)</label>
               <Input
                 value={phone}
@@ -150,7 +139,7 @@ export default function Profile() {
             <Button
               className="w-full font-bold mt-2"
               disabled={updateProfileMutation.isPending}
-              onClick={() => updateProfileMutation.mutate({ name, email, phone })}
+              onClick={() => updateProfileMutation.mutate({ name, phone })}
             >
               {updateProfileMutation.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
               حفظ التغييرات

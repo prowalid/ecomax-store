@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, ShieldCheck, Mail, Lock, User } from "lucide-react";
+import { Loader2, ShieldCheck, Lock, User, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 type SetupStatusResponse = { hasAdmin: boolean };
@@ -10,7 +10,8 @@ type SetupStatusResponse = { hasAdmin: boolean };
 export default function AdminSetup() {
   const navigate = useNavigate();
   const [hasAdmin, setHasAdmin] = useState<boolean | null>(null);
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,9 +39,13 @@ export default function AdminSetup() {
 
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) return;
+    if (!name.trim() || !phone.trim() || !password.trim()) return;
     if (password !== confirmPassword) {
       toast.error("كلمة المرور غير متطابقة");
+      return;
+    }
+    if (!/^0[5-7][0-9]{8}$/.test(phone.trim())) {
+      toast.error("رقم الهاتف غير صالح. يجب أن يكون رقمًا جزائريًا صحيحًا.");
       return;
     }
     if (password.length < 6) {
@@ -52,7 +57,8 @@ export default function AdminSetup() {
     try {
       // 1. Create user and get token
       const response = await api.post('/auth/register', {
-        email: email.trim(),
+        name: name.trim(),
+        phone: phone.replace(/\D/g, ""),
         password,
       });
 
@@ -65,7 +71,7 @@ export default function AdminSetup() {
       console.error("Setup error:", err);
       const message = err instanceof Error ? err.message : "";
       if (message.includes("already exists")) {
-        toast.error("هذا البريد مسجل مسبقاً");
+        toast.error("هذا الرقم مسجل مسبقاً");
       } else {
         toast.error(message || "حدث خطأ أثناء الإعداد");
       }
@@ -90,22 +96,40 @@ export default function AdminSetup() {
             <ShieldCheck className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-black text-white">إعداد المدير</h1>
-          <p className="text-gray-400 text-sm mt-2">أنشئ حساب المدير الأول للوحة التحكم</p>
+          <p className="text-gray-400 text-sm mt-2">أنشئ حساب المدير الأول بالاسم ورقم الهاتف وكلمة المرور</p>
         </div>
 
         <form onSubmit={handleSetup} className="bg-white rounded-2xl shadow-2xl p-6 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500">البريد الإلكتروني</label>
+            <label className="text-xs font-medium text-gray-500">اسم المدير</label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                <Mail size={18} />
+                <User size={18} />
               </div>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
-                placeholder="admin@example.com"
+                placeholder="اسم المدير"
+                dir="rtl"
+                className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-500">رقم الهاتف</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                <Phone size={18} />
+              </div>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                required
+                placeholder="0555123456"
                 dir="ltr"
                 className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
               />
