@@ -40,7 +40,7 @@ function createRateLimit({ windowMs, max, message }) {
 
 const loginLimiter = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
+  max: 7, // 7 attempts
   message: 'عفوا، لقد تجاوزت الحد المسموح به لمحاولات الدخول. يرجى المحاولة بعد 15 دقيقة.'
 });
 

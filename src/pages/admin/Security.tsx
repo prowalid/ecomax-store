@@ -123,9 +123,9 @@ const Security = () => {
                   <span className="text-green-600 text-sm font-bold">1</span>
                 </div>
                 <div>
-                  <h4 className="text-[14px] font-bold text-sidebar-heading mb-1">مصيدة البوتات (Honey Pot)</h4>
+                  <h4 className="text-[14px] font-bold text-sidebar-heading mb-1">حظر الطلبات الوهمية التلقائي</h4>
                   <p className="text-[12px] text-slate-500 leading-relaxed">
-                    حقل مخفي لا يراه الزبون الحقيقي ولكن تملأه البوتات تلقائياً، مما يسمح للسيرفر بكشفهم وحظرهم فوراً.
+                    يقوم النظام بالتعرف على الطلبات التي ترسلها البرامج الخبيثة (البوتات) ويحظرها فوراً قبل أن تصل إلى لوحتك وتضيع وقتك.
                   </p>
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-green-600 mt-2 bg-green-50 px-2 py-0.5 rounded-md">
                     <CheckCircle2 className="w-3 h-3" /> مفعّل دائماً بالخفاء
@@ -138,9 +138,9 @@ const Security = () => {
                   <span className="text-purple-600 text-sm font-bold">2</span>
                 </div>
                 <div>
-                  <h4 className="text-[14px] font-bold text-sidebar-heading mb-1">التحقق من صحة الرقم (Algerian Phone)</h4>
+                  <h4 className="text-[14px] font-bold text-sidebar-heading mb-1">فلترة أرقام الهاتف الخاطئة</h4>
                   <p className="text-[12px] text-slate-500 leading-relaxed">
-                    يمنع إرسال أي طلب برقم لا يتوافق مع الصيغة الجزائرية الرسمية (05/06/07) لضمان جودة الطلبات.
+                    لن تستلم بعد الآن طلبات بأرقام هاتف عشوائية أو ناقصة. النظام يرفض أي طلب لا يحمل رقماً جزائرياً صحيحاً (05/06/07).
                   </p>
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-green-600 mt-2 bg-green-50 px-2 py-0.5 rounded-md">
                     <CheckCircle2 className="w-3 h-3" /> مفعّل تلقائياً
@@ -153,9 +153,9 @@ const Security = () => {
                   <span className="text-red-600 text-sm font-bold">3</span>
                 </div>
                 <div>
-                  <h4 className="text-[14px] font-bold text-sidebar-heading mb-1">منع تكرار الطلبات (Spam Check)</h4>
+                  <h4 className="text-[14px] font-bold text-sidebar-heading mb-1">منع تكرار قائمة الطلبات المزعجة</h4>
                   <p className="text-[12px] text-slate-500 leading-relaxed">
-                    فحص ذكي للـ IP ورقم الهاتف لمنع تكرار نفس الطلب عدة مرات في وقت قصير من قبل نفس المصدر.
+                    لحمايتك من الزوار المزعجين، يمنع النظام إرسال نفس الطلب عدة مرات متتالية، مما يحافظ على نظافة وترتيب قائمة طلباتك.
                   </p>
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-green-600 mt-2 bg-green-50 px-2 py-0.5 rounded-md">
                     <CheckCircle2 className="w-3 h-3" /> مفعّل تلقائياً

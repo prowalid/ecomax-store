@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { Loader2, ShieldCheck, Phone, Lock, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import AdminAuthShell from "@/components/admin/AdminAuthShell";
+import { defaultAppearance, useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 
 export default function PasswordRecovery() {
   const navigate = useNavigate();
@@ -11,6 +13,8 @@ export default function PasswordRecovery() {
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const { settings: appearance } = useAppearanceSettings();
+  const accent = (appearance || defaultAppearance).accent_color;
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,17 +53,12 @@ export default function PasswordRecovery() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4" dir="rtl">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-black text-white">استعادة كلمة المرور</h1>
-          <p className="text-gray-400 text-sm mt-2">استعد حسابك عبر رقم الهاتف (واتساب)</p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-2xl p-6">
+    <AdminAuthShell
+      icon={Lock}
+      title="استعادة كلمة المرور"
+      description="استعد حسابك عبر رقم الهاتف المرتبط بالمتجر"
+    >
+      <div>
           {step === 1 ? (
             <form onSubmit={handleRequestOTP} className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
               <div className="space-y-1.5">
@@ -75,7 +74,7 @@ export default function PasswordRecovery() {
                     required
                     placeholder="0555123456"
                     dir="ltr"
-                    className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                    className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
                   />
                 </div>
               </div>
@@ -83,7 +82,8 @@ export default function PasswordRecovery() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 mt-6"
+                style={{ backgroundColor: accent, color: "var(--auth-button-text)" }}
+                className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl font-bold text-base transition-all hover:brightness-95 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "إرسال كود الواتساب"}
               </button>
@@ -91,9 +91,9 @@ export default function PasswordRecovery() {
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4 animate-in fade-in slide-in-from-right-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-primary">الكود المرسل (6 أرقام)</label>
+                <label className="text-xs font-medium text-[var(--auth-accent)]">الكود المرسل (6 أرقام)</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-primary/50">
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--auth-accent)]/50 pointer-events-none">
                     <ShieldCheck size={18} />
                   </div>
                   <input
@@ -104,7 +104,7 @@ export default function PasswordRecovery() {
                     maxLength={6}
                     placeholder="123456"
                     dir="ltr"
-                    className="w-full h-11 pr-10 pl-4 bg-primary/5 border border-primary/20 rounded-xl text-primary text-center font-bold tracking-widest focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all text-lg"
+                    className="h-11 w-full rounded-xl border border-[var(--auth-accent-soft)] bg-[var(--auth-accent-softest)] pr-10 pl-4 text-center text-lg font-bold tracking-widest text-[var(--auth-accent)] outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
                   />
                 </div>
               </div>
@@ -123,7 +123,7 @@ export default function PasswordRecovery() {
                     minLength={6}
                     placeholder="••••••••"
                     dir="ltr"
-                    className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                    className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
                   />
                 </div>
               </div>
@@ -131,7 +131,8 @@ export default function PasswordRecovery() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 mt-6"
+                style={{ backgroundColor: accent, color: "var(--auth-button-text)" }}
+                className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl font-bold text-base transition-all hover:brightness-95 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "تعيين وتأكيد"}
               </button>
@@ -146,7 +147,6 @@ export default function PasswordRecovery() {
             العودة إلى تسجيل الدخول
           </Link>
         </div>
-      </div>
-    </div>
+    </AdminAuthShell>
   );
 }

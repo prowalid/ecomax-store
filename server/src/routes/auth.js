@@ -11,6 +11,15 @@ const { createRateLimit, loginLimiter } = require('../middleware/rateLimit');
 const { validateBody } = require('../middleware/validate');
 const { loginSchema, registerSchema } = require('../validators/authSchemas');
 
+// Prevent caching for all auth routes (critical for Cloudflare/Proxy setups)
+router.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  next();
+});
+
 const authRateLimit = createRateLimit({
   windowMs: 10 * 60 * 1000,
   max: 30,

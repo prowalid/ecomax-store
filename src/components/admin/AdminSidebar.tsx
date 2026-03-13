@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminNavSections } from "./adminNavigation";
+import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 
 interface AdminSidebarProps {
   collapsed: boolean;
@@ -15,6 +17,12 @@ interface AdminSidebarProps {
 
 const AdminSidebar = ({ collapsed, onToggle, mobile = false, onNavigate }: AdminSidebarProps) => {
   const location = useLocation();
+  const { settings: appearance } = useAppearanceSettings();
+  const { settings: generalSettings } = useStoreSettings("general", {
+    store_name: "ECOMAX",
+  });
+  const logoUrl = appearance.logo_url?.trim();
+  const brandTitle = generalSettings.store_name?.trim() || appearance.store_name?.trim() || "ECOMAX";
 
   return (
     <aside
@@ -29,17 +37,21 @@ const AdminSidebar = ({ collapsed, onToggle, mobile = false, onNavigate }: Admin
       {/* Branding */}
       <div
         className={cn(
-          "flex items-center shrink-0",
-          mobile ? "h-20 gap-3 px-1" : "mt-2 h-24 px-6",
-          collapsed && !mobile ? "justify-center px-0" : "gap-3"
+          "flex shrink-0 items-center",
+          mobile ? "h-20 px-1" : "mt-2 h-24 px-6",
+          collapsed && !mobile ? "justify-center px-0" : logoUrl ? "justify-center" : "gap-3"
         )}
       >
-        <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
-          <Store className="w-6 h-6 text-white" />
+        <div className={cn("flex items-center justify-center overflow-hidden shrink-0", logoUrl ? "h-12 max-w-[140px]" : "h-11 w-11 rounded-xl bg-primary shadow-lg shadow-primary/30")}>
+          {logoUrl ? (
+            <img src={logoUrl} alt={brandTitle} className="h-full w-full object-contain" />
+          ) : (
+            <Store className="w-6 h-6 text-white" />
+          )}
         </div>
-        {(!collapsed || mobile) && (
+        {!logoUrl && (!collapsed || mobile) && (
           <div className="min-w-0">
-            <h1 className="text-[20px] font-bold text-sidebar-heading tracking-tight leading-none mb-1">لوحة التحكم</h1>
+            <h1 className="truncate text-[20px] font-bold text-sidebar-heading tracking-tight leading-none mb-1">{brandTitle}</h1>
             <p className="text-[12px] font-semibold text-sidebar-fg opacity-80 mt-1">
               {mobile ? "تنقل سريع بين أقسام الإدارة" : "الإدارة العامة"}
             </p>

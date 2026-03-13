@@ -33,7 +33,11 @@ export default function AdminGuestGuard({ children, mode }: AdminGuestGuardProps
     );
   }
 
-  if (user && isAdmin) {
+  // Ghost session check: if DB says no admin exists, but we have an admin session,
+  // we must ignore the ghost session and enforce setup.
+  const isGhostSession = !adminExists && user && isAdmin;
+
+  if (user && isAdmin && !isGhostSession) {
     return <Navigate to="/admin" replace />;
   }
 

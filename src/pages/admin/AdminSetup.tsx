@@ -4,6 +4,8 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldCheck, Lock, User, Phone } from "lucide-react";
 import { toast } from "sonner";
+import AdminAuthShell from "@/components/admin/AdminAuthShell";
+import { defaultAppearance, useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 
 type SetupStatusResponse = { hasAdmin: boolean };
 
@@ -17,6 +19,8 @@ export default function AdminSetup() {
   const [loading, setLoading] = useState(false);
 
   const { setSession } = useAuth();
+  const { settings: appearance } = useAppearanceSettings();
+  const accent = (appearance || defaultAppearance).accent_color;
 
   useEffect(() => {
     // Check if an admin already exists using the dedicated endpoint
@@ -89,17 +93,12 @@ export default function AdminSetup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4" dir="rtl">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <ShieldCheck className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-black text-white">إعداد المدير</h1>
-          <p className="text-gray-400 text-sm mt-2">أنشئ حساب المدير الأول بالاسم ورقم الهاتف وكلمة المرور</p>
-        </div>
-
-        <form onSubmit={handleSetup} className="bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+    <AdminAuthShell
+      icon={ShieldCheck}
+      title="إعداد المدير"
+      description="أنشئ حساب المدير الأول بالاسم ورقم الهاتف وكلمة المرور"
+    >
+      <form onSubmit={handleSetup} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-gray-500">اسم المدير</label>
             <div className="relative">
@@ -113,7 +112,7 @@ export default function AdminSetup() {
                 required
                 placeholder="اسم المدير"
                 dir="rtl"
-                className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 font-medium text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
               />
             </div>
           </div>
@@ -131,7 +130,7 @@ export default function AdminSetup() {
                 required
                 placeholder="0555123456"
                 dir="ltr"
-                className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
               />
             </div>
           </div>
@@ -150,7 +149,7 @@ export default function AdminSetup() {
                 minLength={8}
                 placeholder="8 أحرف على الأقل"
                 dir="ltr"
-                className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
               />
             </div>
           </div>
@@ -168,7 +167,7 @@ export default function AdminSetup() {
                 required
                 placeholder="أعد كتابة كلمة المرور"
                 dir="ltr"
-                className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
               />
             </div>
           </div>
@@ -176,16 +175,16 @@ export default function AdminSetup() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ backgroundColor: accent, color: "var(--auth-button-text)" }}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl font-bold text-base transition-all hover:brightness-95 disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><ShieldCheck className="w-5 h-5" /> إنشاء حساب المدير</>}
           </button>
 
           <p className="text-center text-xs text-gray-400 mt-3">
-            هذه الصفحة تظهر مرة واحدة فقط عند إعداد المشروع لأول مرة
+            هذه الصفحة تظهر مرة واحدة فقط عند إعداد المتجر لأول مرة
           </p>
         </form>
-      </div>
-    </div>
+    </AdminAuthShell>
   );
 }

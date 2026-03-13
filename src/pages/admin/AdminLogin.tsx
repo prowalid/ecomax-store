@@ -4,6 +4,8 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldCheck, Phone, Lock } from "lucide-react";
 import { toast } from "sonner";
+import AdminAuthShell from "@/components/admin/AdminAuthShell";
+import { defaultAppearance, useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -15,6 +17,8 @@ export default function AdminLogin() {
   const [twoFactorCode, setTwoFactorCode] = useState("");
 
   const { user, isAdmin, isLoading: authLoading, setSession } = useAuth();
+  const { settings: appearance } = useAppearanceSettings();
+  const accent = (appearance || defaultAppearance).accent_color;
 
   useEffect(() => {
     if (authLoading) return;
@@ -82,17 +86,12 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4" dir="rtl">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <ShieldCheck className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-black text-white">لوحة التحكم</h1>
-          <p className="text-gray-400 text-sm mt-2">سجّل دخولك للوصول إلى لوحة الإدارة</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+    <AdminAuthShell
+      icon={ShieldCheck}
+      title="لوحة التحكم"
+      description="سجّل دخولك للوصول إلى لوحة الإدارة"
+    >
+      <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-gray-500">رقم الهاتف</label>
             <div className="relative">
@@ -107,7 +106,7 @@ export default function AdminLogin() {
                 disabled={requires2fa}
                 placeholder="0555123456"
                 dir="ltr"
-                className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all disabled:opacity-50"
+                className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)] disabled:opacity-50"
               />
             </div>
           </div>
@@ -115,7 +114,7 @@ export default function AdminLogin() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-gray-500">كلمة المرور</label>
-              <Link to="/admin/recover-password" className="text-[11px] font-bold text-primary hover:underline">
+              <Link to="/admin/recover-password" className="text-[11px] font-bold text-[var(--auth-accent)] hover:underline">
                 نسيت كلمة المرور؟
               </Link>
             </div>
@@ -131,16 +130,16 @@ export default function AdminLogin() {
                 disabled={requires2fa}
                 placeholder="••••••••"
                 dir="ltr"
-                className="w-full h-11 pr-10 pl-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all disabled:opacity-50"
+                className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)] disabled:opacity-50"
               />
             </div>
           </div>
 
           {requires2fa && (
             <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-              <label className="text-xs font-medium text-primary">كود المصادقة الثنائية من التطبيق</label>
+              <label className="text-xs font-medium text-[var(--auth-accent)]">كود المصادقة الثنائية من التطبيق</label>
               <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-primary/50">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--auth-accent)]/50 pointer-events-none">
                   <ShieldCheck size={18} />
                 </div>
                 <input
@@ -151,7 +150,7 @@ export default function AdminLogin() {
                   placeholder="123456"
                   maxLength={6}
                   dir="ltr"
-                  className="w-full h-11 pr-10 pl-4 bg-primary/5 border border-primary/20 rounded-xl text-primary font-bold focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all text-center tracking-widest text-lg"
+                  className="h-11 w-full rounded-xl border border-[var(--auth-accent-soft)] bg-[var(--auth-accent-softest)] pr-10 pl-4 text-center text-lg font-bold tracking-widest text-[var(--auth-accent)] outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
                 />
               </div>
             </div>
@@ -160,7 +159,8 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 mt-6"
+            style={{ backgroundColor: accent, color: "var(--auth-button-text)" }}
+            className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl font-bold text-base transition-all hover:brightness-95 disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : requires2fa ? "تحقق ودخول" : "تسجيل الدخول"}
           </button>
@@ -182,7 +182,6 @@ export default function AdminLogin() {
             العودة إلى المتجر
           </Link>
         </form>
-      </div>
-    </div>
+    </AdminAuthShell>
   );
 }
