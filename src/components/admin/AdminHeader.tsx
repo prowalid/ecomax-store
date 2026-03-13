@@ -1,4 +1,4 @@
-import { ExternalLink, LogOut, Menu, Store } from "lucide-react";
+import { ExternalLink, LogOut, Menu, Store, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -74,16 +74,26 @@ const AdminHeader = ({ onOpenNavigation }: AdminHeaderProps) => {
             </Link>
           )}
 
+          {user && (
+            <Link
+              to="/admin/profile"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-primary sm:hidden"
+              title="الملف الشخصي"
+              aria-label="الملف الشخصي"
+            >
+              <UserCircle2 className="h-5 w-5" />
+            </Link>
+          )}
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
-                className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-white shadow-sm transition-colors hover:bg-destructive group"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-destructive/20 bg-destructive/10 px-3 text-destructive shadow-sm transition-colors hover:bg-destructive hover:text-white"
                 title="تسجيل الخروج"
+                aria-label="تسجيل الخروج"
               >
-                <span className="font-bold text-sm uppercase group-hover:hidden">
-                  {user?.email?.charAt(0) || "A"}
-                </span>
-                <LogOut className="w-4 h-4 absolute inset-0 m-auto hidden group-hover:block" />
+                <LogOut className="h-4 w-4" />
+                <span className="hidden text-sm font-bold sm:inline">خروج</span>
               </button>
             </AlertDialogTrigger>
             <AlertDialogContent dir="rtl">
