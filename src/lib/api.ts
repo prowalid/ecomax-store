@@ -87,7 +87,6 @@ export const api = {
     // We intentionally don't use apiFetch because we need to let the browser set the Content-Type with boundary for FormData
     const headers: Record<string, string> = { ...(options?.headers as Record<string, string>) };
 
-    const API_URL = import.meta.env.VITE_API_URL || '/api';
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       method: 'POST',

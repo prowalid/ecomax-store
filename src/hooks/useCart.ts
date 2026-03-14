@@ -77,7 +77,7 @@ export function useCart() {
 
   const removeItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
-      await api.delete(`/cart/${itemId}`, { body: JSON.stringify({ session_id: sessionId }) });
+      await api.delete(`/cart/${itemId}?session_id=${encodeURIComponent(sessionId)}`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });

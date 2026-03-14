@@ -316,7 +316,7 @@ async function changePassword(req, res, next) {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword || newPassword.length < 6) {
-      return res.status(400).json({ error: 'Invalid password data.' });
+      return res.status(400).json({ error: 'بيانات كلمة المرور غير صالحة.' });
     }
 
     const { rows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
@@ -357,12 +357,12 @@ async function setup2FA(req, res, next) {
 async function verify2FA(req, res, next) {
   try {
     const { code } = req.body;
-    if (!code) return res.status(400).json({ error: 'Code is required.' });
+    if (!code) return res.status(400).json({ error: 'كود التحقق مطلوب.' });
 
     const { rows } = await pool.query('SELECT two_factor_secret FROM users WHERE id = $1', [req.user.id]);
     const secret = rows[0].two_factor_secret;
 
-    if (!secret) return res.status(400).json({ error: '2FA is not setup.' });
+    if (!secret) return res.status(400).json({ error: 'المصادقة الثنائية غير مفعلة على هذا الحساب.' });
 
     const isValid = otplib.authenticator.check(code, secret);
     if (!isValid) return res.status(400).json({ error: 'كود التحقق غير صحيح.' });
@@ -378,7 +378,7 @@ async function verify2FA(req, res, next) {
 async function disable2FA(req, res, next) {
   try {
     const { code } = req.body;
-    if (!code) return res.status(400).json({ error: 'Code is required.' });
+    if (!code) return res.status(400).json({ error: 'كود التحقق مطلوب.' });
 
     const { rows } = await pool.query('SELECT two_factor_secret FROM users WHERE id = $1', [req.user.id]);
     const secret = rows[0].two_factor_secret;
@@ -393,7 +393,7 @@ async function disable2FA(req, res, next) {
   }
 }
 
-// Password Recovery Helpers (Mock Green API Send via console + db store)
+// Password Recovery عبر WhatsApp مع حفظ كود الاسترداد في قاعدة البيانات
 async function recoverPassword(req, res, next) {
   try {
     const { phone } = req.body;

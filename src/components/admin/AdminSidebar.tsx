@@ -42,20 +42,29 @@ const AdminSidebar = ({ collapsed, onToggle, mobile = false, onNavigate }: Admin
           collapsed && !mobile ? "justify-center px-0" : logoUrl ? "justify-center" : "gap-3"
         )}
       >
-        <div className={cn("flex items-center justify-center overflow-hidden shrink-0", logoUrl ? "h-12 max-w-[140px]" : "h-11 w-11 rounded-xl bg-primary shadow-lg shadow-primary/30")}>
-          {logoUrl ? (
-            <img src={logoUrl} alt={brandTitle} className="h-full w-full object-contain" />
-          ) : (
+        {/* When collapsed on desktop: always show the default icon */}
+        {collapsed && !mobile ? (
+          <div className="h-11 w-11 rounded-xl bg-primary shadow-lg shadow-primary/30 flex items-center justify-center shrink-0">
             <Store className="w-6 h-6 text-white" />
-          )}
-        </div>
-        {!logoUrl && (!collapsed || mobile) && (
-          <div className="min-w-0">
-            <h1 className="truncate text-[20px] font-bold text-sidebar-heading tracking-tight leading-none mb-1">{brandTitle}</h1>
-            <p className="text-[12px] font-semibold text-sidebar-fg opacity-80 mt-1">
-              {mobile ? "تنقل سريع بين أقسام الإدارة" : "الإدارة العامة"}
-            </p>
           </div>
+        ) : (
+          <>
+            <div className={cn("flex items-center justify-center overflow-hidden shrink-0", logoUrl ? "h-12 max-w-[140px]" : "h-11 w-11 rounded-xl bg-primary shadow-lg shadow-primary/30")}>
+              {logoUrl ? (
+                <img src={logoUrl} alt={brandTitle} className="h-full w-full object-contain" />
+              ) : (
+                <Store className="w-6 h-6 text-white" />
+              )}
+            </div>
+            {!logoUrl && (
+              <div className="min-w-0">
+                <h1 className="truncate text-[20px] font-bold text-sidebar-heading tracking-tight leading-none mb-1">{brandTitle}</h1>
+                <p className="text-[12px] font-semibold text-sidebar-fg opacity-80 mt-1">
+                  {mobile ? "تنقل سريع بين أقسام الإدارة" : "الإدارة العامة"}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

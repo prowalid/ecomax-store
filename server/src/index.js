@@ -24,6 +24,7 @@ const { ensureAuthSessionsTable } = require('./utils/authSessions');
 const { ensureDefaultCategoryImages } = require('./utils/categoryDefaults');
 const { ensurePagesSlugIntegrity } = require('./utils/pagesIntegrity');
 const { ensureOrderSecuritySchema, ensureUserAccountSchema } = require('./utils/schemaMigrations');
+const { startCartCleanupJob } = require('./utils/cartCleanup');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -101,6 +102,7 @@ async function startServer() {
   await ensureOrderSecuritySchema();
   await ensureDefaultCategoryImages();
   await ensurePagesSlugIntegrity();
+  startCartCleanupJob();
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Express Trade Kit API running on http://0.0.0.0:${PORT}`);

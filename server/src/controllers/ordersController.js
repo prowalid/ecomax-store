@@ -3,16 +3,7 @@ const format = require('pg-format');
 const { triggerOrderStatusNotification, sendOrderWebhook, buildOrderWebhookPayload } = require('./integrationsController');
 const { getShippingSettings } = require('../services/shipping/shippingSettings');
 const { createYalidineShipment, createGuepexShipment } = require('../services/shipping/providers/yalidineProvider');
-
-function normalizeSelectedOptions(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
-
-  return Object.fromEntries(
-    Object.entries(input)
-      .map(([key, value]) => [String(key).trim(), typeof value === 'string' ? value.trim() : ''])
-      .filter(([key, value]) => key && value)
-  );
-}
+const { normalizeSelectedOptions } = require('../utils/normalizeSelectedOptions');
 
 // GET /api/orders
 async function getOrders(req, res, next) {

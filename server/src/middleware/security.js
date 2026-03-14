@@ -107,9 +107,10 @@ async function validateBotProtection(req, res, next) {
     next();
   } catch (err) {
     console.error('[Security Error]', err);
-    // On server error, we fail open to not block real users, or fail closed? 
-    // Usually, security failure should not block orders if it's the server's fault.
-    next(); 
+    return res.status(503).json({
+      error: 'تعذر التحقق من الحماية حاليًا. يرجى المحاولة بعد قليل.',
+      code: 'SECURITY_CHECK_UNAVAILABLE',
+    });
   }
 }
 

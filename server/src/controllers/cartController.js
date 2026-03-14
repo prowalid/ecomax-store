@@ -1,14 +1,5 @@
 const pool = require('../config/db');
-
-function normalizeSelectedOptions(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
-
-  return Object.fromEntries(
-    Object.entries(input)
-      .map(([key, value]) => [String(key).trim(), typeof value === 'string' ? value.trim() : ''])
-      .filter(([key, value]) => key && value)
-  );
-}
+const { normalizeSelectedOptions } = require('../utils/normalizeSelectedOptions');
 
 function isValidSessionId(value) {
   return typeof value === 'string' && /^[a-zA-Z0-9_-]{16,128}$/.test(value);
@@ -112,7 +103,7 @@ async function updateCartItemQuantity(req, res, next) {
 // DELETE /api/cart/:itemId
 async function deleteCartItem(req, res, next) {
   const { itemId } = req.params;
-  const { session_id } = req.body;
+  const session_id = typeof req.query.session_id === 'string' ? req.query.session_id : '';
   if (!isValidSessionId(session_id)) {
     return res.status(400).json({ error: 'Invalid session ID' });
   }

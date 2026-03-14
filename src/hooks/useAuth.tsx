@@ -1,6 +1,5 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { api } from "@/lib/api";
-import { safeRemoveLocalStorageItem } from "@/lib/safeStorage";
 
 type AuthUser = { id: string; name?: string; phone?: string; role: string; created_at: string };
 
@@ -30,12 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const clearLegacyToken = () => {
-    safeRemoveLocalStorageItem("auth_token");
-  };
-
   const setSession = (userData: AuthUser) => {
-    clearLegacyToken();
     setSessionState({ access_token: "cookie-session" });
     setUser(userData);
     setIsAdmin(userData.role === "admin");
@@ -48,7 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Logout error:", err);
     }
-    clearLegacyToken();
     setUser(null);
     setSessionState(null);
     setIsAdmin(false);
@@ -59,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { user: userData } = await api.get("/auth/me");
         if (userData) {
-          clearLegacyToken();
           setSessionState({ access_token: "cookie-session" });
           setUser(userData);
           setIsAdmin(userData.role === "admin");
@@ -67,7 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw new Error("Invalid user");
         }
       } catch (err) {
-        clearLegacyToken();
         setUser(null);
         setSessionState(null);
         setIsAdmin(false);
