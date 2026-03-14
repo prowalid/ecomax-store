@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type ProductStatus, type Product } from "@/hooks/useProducts";
@@ -11,6 +11,15 @@ import ProductsTable from "@/components/admin/products/ProductsTable";
 import { emptyProductForm, productStatusLabels, type ProductForm } from "@/components/admin/products/types";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
+import { toast } from "sonner";
+
+type DraftProductImage = {
+  id: string;
+  image_url: string;
+  persistedId?: string;
+  file?: File;
+  previewObjectUrl?: string;
+};
 
 const Products = () => {
   const { data: products = [], isLoading } = useProducts();
@@ -24,8 +33,10 @@ const Products = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyProductForm);
+  const [draftImages, setDraftImages] = useState<DraftProductImage[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [isSyncingImages, setIsSyncingImages] = useState(false);
 
   const { data: editImages = [] } = useProductImages(editingId);
   const uploadImage = useUploadProductImage();
@@ -33,15 +44,26 @@ const Products = () => {
   const reorderImages = useReorderProductImages();
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (!showModal || !editingId) return;
+
+    setDraftImages(
+      editImages.map((img) => ({
+        id: img.id,
+        persistedId: img.id,
+        image_url: img.image_url,
+      }))
+    );
+  }, [showModal, editingId, editImages]);
+
   const handleDragStart = (idx: number) => setDragIdx(idx);
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
   const handleDrop = (dropIdx: number) => {
     if (dragIdx === null || dragIdx === dropIdx || !editingId) return;
-    const reordered = [...editImages];
+    const reordered = [...draftImages];
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(dropIdx, 0, moved);
-    const updated = reordered.map((img, i) => ({ id: img.id, sort_order: i, image_url: img.image_url }));
-    reorderImages.mutate({ productId: editingId, images: updated });
+    setDraftImages(reordered);
     setDragIdx(null);
   };
 
@@ -80,7 +102,6 @@ const Products = () => {
         "الوصف",
         "السعر (د.ج)",
         "السعر قبل التخفيض",
-        "سعر التكلفة",
         "المخزون",
         "SKU",
         "التصنيف",
@@ -92,7 +113,6 @@ const Products = () => {
         product.description || "",
         product.price,
         product.compare_price || "",
-        product.cost_price || "",
         product.stock,
         product.sku || "",
         product.category_name || "",
@@ -104,6 +124,7 @@ const Products = () => {
   const openAdd = () => {
     setEditingId(null);
     setForm(emptyProductForm);
+    setDraftImages([]);
     setShowModal(true);
   };
 
@@ -114,24 +135,38 @@ const Products = () => {
       description: p.description || "",
       price: String(p.price),
       compare_price: p.compare_price ? String(p.compare_price) : "",
-      cost_price: p.cost_price ? String(p.cost_price) : "",
       stock: String(p.stock),
       sku: p.sku || "",
       category_id: p.category_id || "",
       status: p.status,
       custom_options: p.custom_options || [],
     });
+    setDraftImages([]);
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const cleanupDraftObjectUrls = () => {
+    draftImages.forEach((image) => {
+      if (image.previewObjectUrl) {
+        URL.revokeObjectURL(image.previewObjectUrl);
+      }
+    });
+  };
+
+  const closeModal = () => {
+    cleanupDraftObjectUrls();
+    setDraftImages([]);
+    setDragIdx(null);
+    setShowModal(false);
+  };
+
+  const handleSave = async () => {
     if (!form.name.trim()) return;
     const payload = {
       name: form.name.trim(),
       description: form.description || null,
       price: Number(form.price) || 0,
       compare_price: form.compare_price ? Number(form.compare_price) : null,
-      cost_price: form.cost_price ? Number(form.cost_price) : null,
       stock: Number(form.stock) || 0,
       sku: form.sku || null,
       category_id: form.category_id || null,
@@ -140,27 +175,79 @@ const Products = () => {
     };
 
     if (editingId) {
-      updateProduct.mutate({ id: editingId, ...payload }, {
-        onSuccess: () => setShowModal(false),
-      });
+      try {
+        setIsSyncingImages(true);
+        await updateProduct.mutateAsync({ id: editingId, ...payload });
+
+        const existingImageIds = new Set(editImages.map((img) => img.id));
+        const keptExistingIds = new Set(
+          draftImages.map((img) => img.persistedId).filter((value): value is string => Boolean(value))
+        );
+
+        const deletedExistingIds = Array.from(existingImageIds).filter((id) => !keptExistingIds.has(id));
+        for (const imageId of deletedExistingIds) {
+          await deleteImage.mutateAsync({ id: imageId, productId: editingId });
+        }
+
+        const finalizedImages: { id: string; image_url: string; sort_order: number }[] = [];
+        for (const image of draftImages) {
+          if (image.persistedId) {
+            finalizedImages.push({
+              id: image.persistedId,
+              image_url: image.image_url,
+              sort_order: finalizedImages.length,
+            });
+            continue;
+          }
+
+          if (!image.file) continue;
+          const uploaded = await uploadImage.mutateAsync({ productId: editingId, file: image.file });
+          finalizedImages.push({
+            id: uploaded.id,
+            image_url: uploaded.image_url,
+            sort_order: finalizedImages.length,
+          });
+        }
+
+        if (finalizedImages.length > 0) {
+          await reorderImages.mutateAsync({ productId: editingId, images: finalizedImages });
+        }
+
+        closeModal();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "فشل حفظ المنتج");
+      } finally {
+        setIsSyncingImages(false);
+      }
     } else {
       createProduct.mutate(payload as any, {
-        onSuccess: () => setShowModal(false),
+        onSuccess: () => closeModal(),
       });
     }
   };
 
   const handleUploadFiles = (files: FileList) => {
     if (!editingId) return;
-
-    Array.from(files).forEach((file) => {
-      uploadImage.mutate({ productId: editingId, file });
+    const nextImages = Array.from(files).map((file) => {
+      const previewObjectUrl = URL.createObjectURL(file);
+      return {
+        id: `draft-${crypto.randomUUID()}`,
+        image_url: previewObjectUrl,
+        file,
+        previewObjectUrl,
+      } satisfies DraftProductImage;
     });
+    setDraftImages((prev) => [...prev, ...nextImages]);
   };
 
   const handleDeleteImage = (imageId: string) => {
-    if (!editingId) return;
-    deleteImage.mutate({ id: imageId, productId: editingId });
+    setDraftImages((prev) => {
+      const target = prev.find((image) => image.id === imageId);
+      if (target?.previewObjectUrl) {
+        URL.revokeObjectURL(target.previewObjectUrl);
+      }
+      return prev.filter((image) => image.id !== imageId);
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -173,7 +260,13 @@ const Products = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const isSaving = createProduct.isPending || updateProduct.isPending;
+  const isSaving =
+    createProduct.isPending ||
+    updateProduct.isPending ||
+    uploadImage.isPending ||
+    deleteImage.isPending ||
+    reorderImages.isPending ||
+    isSyncingImages;
 
   if (isLoading) {
     return <AdminDataState type="loading" title="جاري تحميل المنتجات" description="يتم تحضير الكتالوج والمخزون والتصنيفات." />;
@@ -277,11 +370,11 @@ const Products = () => {
         editingId={editingId}
         form={form}
         categories={categories}
-        images={editImages}
+        images={draftImages}
         dragIdx={dragIdx}
         isSaving={isSaving}
-        isUploading={uploadImage.isPending}
-        onClose={() => setShowModal(false)}
+        isUploading={false}
+        onClose={closeModal}
         onSave={handleSave}
         onFieldChange={updateField}
         onUploadFiles={handleUploadFiles}

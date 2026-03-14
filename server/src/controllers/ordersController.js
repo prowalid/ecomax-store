@@ -5,6 +5,18 @@ const { getShippingSettings } = require('../services/shipping/shippingSettings')
 const { createYalidineShipment, createGuepexShipment } = require('../services/shipping/providers/yalidineProvider');
 const { normalizeSelectedOptions } = require('../utils/normalizeSelectedOptions');
 
+const ORDER_STATUS_FLOW = {
+  new: ['attempt', 'confirmed', 'cancelled'],
+  attempt: ['no_answer', 'confirmed', 'cancelled'],
+  no_answer: ['attempt', 'confirmed', 'cancelled'],
+  confirmed: ['ready', 'cancelled'],
+  cancelled: [],
+  ready: ['shipped'],
+  shipped: ['delivered', 'returned'],
+  delivered: [],
+  returned: [],
+};
+
 // GET /api/orders
 async function getOrders(req, res, next) {
   try {
@@ -239,6 +251,16 @@ async function updateOrderStatus(req, res, next) {
     
     const oldStatus = orderRows[0].status;
     let newCallAttempts = orderRows[0].call_attempts;
+
+    if (status !== oldStatus) {
+      const allowedNextStatuses = ORDER_STATUS_FLOW[oldStatus] || [];
+      if (!allowedNextStatuses.includes(status)) {
+        return res.status(400).json({
+          error: `لا يمكن نقل الطلب من حالة "${oldStatus}" إلى حالة "${status}" مباشرة.`,
+          code: 'INVALID_ORDER_STATUS_TRANSITION',
+        });
+      }
+    }
     
     if (status === 'attempt') {
       newCallAttempts = (newCallAttempts || 0) + 1;

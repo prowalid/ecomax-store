@@ -16,16 +16,16 @@ const storage = multer.diskStorage({
   }
 });
 
-const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp|svg\+xml/;
+const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp/;
 
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
   fileFilter: (_req, file, cb) => {
-    const extOk = /\.(jpe?g|png|gif|webp|svg)$/i.test(file.originalname);
+    const extOk = /\.(jpe?g|png|gif|webp)$/i.test(file.originalname);
     const mimeOk = ALLOWED_TYPES.test(file.mimetype);
     if (extOk && mimeOk) return cb(null, true);
-    cb(new Error('Only image files (jpg, png, gif, webp, svg) are allowed'));
+    cb(new Error('Only image files (jpg, png, gif, webp) are allowed'));
   },
 });
 

@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const format = require('pg-format');
+const { cleanupRemovedUploadUrls } = require('../utils/uploadCleanup');
 
 function normalizeCustomOptions(input) {
   if (!Array.isArray(input)) return [];
@@ -75,6 +76,12 @@ async function updateProduct(req, res, next) {
   }
 
   try {
+    const { rows: existingRows } = await pool.query('SELECT image_url FROM products WHERE id = $1 LIMIT 1', [id]);
+    if (existingRows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const previousImageUrl = existingRows[0].image_url;
     const allowedFields = ['name', 'description', 'price', 'compare_price', 'cost_price', 'stock', 'sku', 'category_id', 'image_url', 'custom_options', 'status'];
     const setClause = [];
     const values = [];
@@ -106,10 +113,7 @@ async function updateProduct(req, res, next) {
 
     const { rows } = await pool.query(query, values);
     
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
+    await cleanupRemovedUploadUrls([previousImageUrl], [rows[0].image_url]);
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -120,11 +124,17 @@ async function updateProduct(req, res, next) {
 async function deleteProduct(req, res, next) {
   const { id } = req.params;
   try {
-    const { rowCount } = await pool.query('DELETE FROM products WHERE id = $1', [id]);
-    
-    if (rowCount === 0) {
+    const { rows: productRows } = await pool.query('SELECT image_url FROM products WHERE id = $1 LIMIT 1', [id]);
+    if (productRows.length === 0) {
       return res.status(404).json({ error: 'Product not found' });
     }
+
+    const { rows: imageRows } = await pool.query('SELECT image_url FROM product_images WHERE product_id = $1', [id]);
+    const urlsToCleanup = [productRows[0].image_url, ...imageRows.map((row) => row.image_url)];
+
+    await pool.query('DELETE FROM products WHERE id = $1', [id]);
+    
+    await cleanupRemovedUploadUrls(urlsToCleanup, []);
 
     res.status(204).send();
   } catch (err) {
@@ -210,7 +220,14 @@ async function reorderProductImages(req, res, next) {
 async function deleteProductImage(req, res, next) {
   const { id, imageId } = req.params;
   try {
-    await pool.query('DELETE FROM product_images WHERE id = $1', [imageId]);
+    const { rows: deletedRows } = await pool.query(
+      'DELETE FROM product_images WHERE id = $1 AND product_id = $2 RETURNING image_url',
+      [imageId, id]
+    );
+
+    if (deletedRows.length === 0) {
+      return res.status(404).json({ error: 'Product image not found' });
+    }
 
     const { rows: remaining } = await pool.query(
       'SELECT image_url FROM product_images WHERE product_id = $1 ORDER BY sort_order ASC LIMIT 1',
@@ -219,6 +236,7 @@ async function deleteProductImage(req, res, next) {
 
     const newMainImage = remaining.length > 0 ? remaining[0].image_url : null;
     await pool.query('UPDATE products SET image_url = $1 WHERE id = $2', [newMainImage, id]);
+    await cleanupRemovedUploadUrls([deletedRows[0].image_url], [newMainImage]);
 
     res.status(204).send();
   } catch (err) {

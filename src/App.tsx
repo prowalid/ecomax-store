@@ -3,12 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Component, Suspense, lazy, type ErrorInfo, type ReactNode } from "react";
 import { AuthProvider } from "./hooks/useAuth";
 import AdminGuard from "./components/admin/AdminGuard";
 import AdminGuestGuard from "./components/admin/AdminGuestGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import StoreLayout from "./components/store/StoreLayout";
+import { handleChunkRecovery } from "./lib/chunkRecovery";
 
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const Orders = lazy(() => import("./pages/admin/Orders"));
@@ -33,6 +34,7 @@ const ProductPage = lazy(() => import("./pages/store/ProductPage"));
 const CheckoutPage = lazy(() => import("./pages/store/CheckoutPage"));
 const DynamicPage = lazy(() => import("./pages/store/DynamicPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const StoreNotFound = lazy(() => import("./pages/store/StoreNotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,10 +52,32 @@ const RouteLoader = () => (
   </div>
 );
 
-const withSuspense = (element: JSX.Element) => (
-  <Suspense fallback={<RouteLoader />}>
-    {element}
-  </Suspense>
+class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown, _errorInfo: ErrorInfo) {
+    handleChunkRecovery(error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <RouteLoader />;
+    }
+
+    return this.props.children;
+  }
+}
+
+const withSuspense = (element: ReactNode) => (
+  <RouteErrorBoundary>
+    <Suspense fallback={<RouteLoader />}>
+      {element}
+    </Suspense>
+  </RouteErrorBoundary>
 );
 
 const App = () => (
@@ -71,6 +95,7 @@ const App = () => (
               <Route path="/product/:id" element={withSuspense(<ProductPage />)} />
               <Route path="/checkout" element={withSuspense(<CheckoutPage />)} />
               <Route path="/page/:slug" element={withSuspense(<DynamicPage />)} />
+              <Route path="*" element={withSuspense(<StoreNotFound />)} />
             </Route>
 
             {/* Admin Auth */}

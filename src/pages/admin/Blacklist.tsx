@@ -70,7 +70,7 @@ const Blacklist = () => {
   const filteredEntries = entries.filter(
     (e) =>
       e.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.reason.toLowerCase().includes(searchTerm.toLowerCase())
+      (e.reason || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

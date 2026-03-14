@@ -6,7 +6,6 @@ export interface ProductForm {
   description: string;
   price: string;
   compare_price: string;
-  cost_price: string;
   stock: string;
   sku: string;
   category_id: string;
@@ -19,7 +18,6 @@ export const emptyProductForm: ProductForm = {
   description: "",
   price: "",
   compare_price: "",
-  cost_price: "",
   stock: "0",
   sku: "",
   category_id: "",

@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
+const API_URL = import.meta.env.VITE_API_URL || "/api";
+
 export interface ProductImage {
   id: string;
   product_id: string;
@@ -28,7 +30,6 @@ export function useUploadProductImage() {
       // 1. Upload file to backend storage
       const uploadRes = await api.upload('/upload', file);
       
-      const API_URL = import.meta.env.VITE_API_URL || "/api";
       const rootUrl = API_URL.endsWith("/api") ? API_URL.slice(0, -4) : API_URL;
       const fullUrl = rootUrl.startsWith("http")
         ? `${rootUrl}${uploadRes.url}`

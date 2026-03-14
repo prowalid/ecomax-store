@@ -44,7 +44,18 @@ const ProductPage = () => {
   const { data: galleryImages = [] } = useProductImages(id || null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
-  const [timeLeft, setTimeLeft] = useState(3600);
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const key = `offer_timer_${id}`;
+    const stored = sessionStorage.getItem(key);
+    if (stored) {
+      const remaining = Math.max(0, Math.floor((Number(stored) - Date.now()) / 1000));
+      return remaining;
+    }
+    // First visit in this session: set timer to 2 hours
+    const expiresAt = Date.now() + 2 * 60 * 60 * 1000;
+    sessionStorage.setItem(key, String(expiresAt));
+    return 2 * 60 * 60;
+  });
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -208,11 +219,12 @@ const ProductPage = () => {
 
   // Timer
   useEffect(() => {
+    if (timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [timeLeft > 0]);
 
   useEffect(() => {
     if (!submitted) {

@@ -2,19 +2,22 @@ import { Loader2, Plus, Save, Upload, X } from "lucide-react";
 import { useRef } from "react";
 
 import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 import type { Category } from "@/hooks/useCategories";
-import type { ProductImage } from "@/hooks/useProductImages";
-
 import type { ProductForm } from "./types";
 import type { ProductOptionGroup } from "@/lib/productOptions";
+
+type EditableProductImage = {
+  id: string;
+  image_url: string;
+};
 
 interface ProductFormModalProps {
   open: boolean;
   editingId: string | null;
   form: ProductForm;
   categories: Category[];
-  images: ProductImage[];
+  images: EditableProductImage[];
   dragIdx: number | null;
   isSaving: boolean;
   isUploading: boolean;
@@ -183,19 +186,13 @@ export default function ProductFormModal({
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">الوصف</label>
-            <Textarea
+            <RichTextEditor
               value={form.description}
-              onChange={(e) => onFieldChange("description", e.target.value)}
-              placeholder={"يمكنك كتابة نص عادي أو HTML بسيط مثل:\n<p>وصف المنتج</p>\n<ul><li>ميزة 1</li><li>ميزة 2</li></ul>"}
-              rows={5}
-              className="resize-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+              onChange={(html) => onFieldChange("description", html)}
             />
-            <p className="text-[11px] text-muted-foreground">
-              مدعوم: <span dir="ltr">p, br, strong, b, em, ul, ol, li</span> والنص العادي أيضًا.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">السعر (د.ج) *</label>
               <input
@@ -207,23 +204,12 @@ export default function ProductFormModal({
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 sm:col-span-1">
               <label className="text-xs font-medium text-muted-foreground">السعر قبل التخفيض</label>
               <input
                 type="number"
                 value={form.compare_price}
                 onChange={(e) => onFieldChange("compare_price", e.target.value)}
-                placeholder="اختياري"
-                dir="ltr"
-                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">سعر التكلفة</label>
-              <input
-                type="number"
-                value={form.cost_price}
-                onChange={(e) => onFieldChange("cost_price", e.target.value)}
                 placeholder="اختياري"
                 dir="ltr"
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"

@@ -28,7 +28,7 @@ const StoreLayout = () => {
   const { settings: marketing } = useMarketingSettings();
   const { data: headerPages = [] } = usePublishedPages("header");
   const { data: footerPages = [] } = usePublishedPages("footer");
-  const { settings: generalSettings, loading: generalLoading } = useStoreSettings("general", { phone: "", whatsapp_phone: "", email: "", store_name: "ECOMAX", currency: "DZD", meta_title: "", meta_description: "" });
+  const { settings: generalSettings, loading: generalLoading } = useStoreSettings("general", { phone: "", whatsapp_phone: "", email: "", store_name: "ECOMAX", currency: "DZD", meta_title: "", meta_description: "", social_facebook: "", social_instagram: "", social_tiktok: "" });
   const effectiveStoreName = generalSettings.store_name || theme.store_name || "ECOMAX";
   const effectiveMetaTitle = generalSettings.meta_title?.trim() || `${effectiveStoreName} — متجر إلكتروني`;
   const effectiveMetaDescription =
@@ -39,6 +39,19 @@ const StoreLayout = () => {
   const footerLinks = normalizedFooterPages;
   const whatsappDigits = normalizeWhatsAppPhone(generalSettings.whatsapp_phone || "");
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
+
+  const socialLinks = [
+    { key: "facebook", url: generalSettings.social_facebook, icon: (
+      <svg viewBox="0 0 320 512" className="w-5 h-5 fill-current" aria-hidden="true"><path d="M80 299.3V512H196V299.3h86.5l18-97.8H196V166.9c0-51.7 20.3-71.5 72.7-71.5 16.3 0 29.4.4 37 1.2V7.9C291.4 4 256.4 0 236.2 0 129.3 0 80 50.5 80 159.4v42.1H14v97.8H80z"/></svg>
+    )},
+    { key: "instagram", url: generalSettings.social_instagram, icon: (
+      <svg viewBox="0 0 448 512" className="w-5 h-5 fill-current" aria-hidden="true"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>
+    )},
+    { key: "tiktok", url: generalSettings.social_tiktok, icon: (
+      <svg viewBox="0 0 448 512" className="w-5 h-5 fill-current" aria-hidden="true"><path d="M448 209.9a210.1 210.1 0 01-122.8-39.3v178.8A162.6 162.6 0 11185 188.3v89.9a74.6 74.6 0 1052.2 71.2V0h88a121 121 0 00122.8 121v88.9z"/></svg>
+    )},
+  ].filter(s => s.url?.trim());
+
 
   useEffect(() => {
     if (marketing.pixel_id) {
@@ -355,6 +368,22 @@ const StoreLayout = () => {
                 {page.title}
               </Link>
             ))}
+            {socialLinks.length > 0 && (
+              <div className="flex items-center justify-center gap-4 px-4 pb-3 pt-1">
+                {socialLinks.map(s => (
+                  <a
+                    key={s.key}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ color: theme.header_text + 'aa', backgroundColor: theme.header_text + '11' }}
+                  >
+                    {s.icon}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </nav>
       </header>
@@ -441,6 +470,24 @@ const StoreLayout = () => {
                   </li>
                 )}
               </ul>
+              {socialLinks.length > 0 && (
+                <div className="flex items-center gap-3 mt-6">
+                  {socialLinks.map(s => (
+                    <a
+                      key={s.key}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2.5 rounded-lg transition-all duration-200 hover:scale-110"
+                      style={{ backgroundColor: theme.footer_text + '1a', color: theme.footer_text + 'bb' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.footer_accent; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = theme.footer_text + '1a'; e.currentTarget.style.color = theme.footer_text + 'bb'; }}
+                    >
+                      {s.icon}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="pt-8 flex flex-col md:flex-row justify-between items-center text-sm" style={{ borderTop: `1px solid ${theme.footer_text}22`, color: theme.footer_text + '88' }}>

@@ -39,7 +39,7 @@ export default function OrderSuccessMessage({
         {actionTo ? (
           <Link
             to={actionTo}
-            className={`inline-flex items-center justify-center rounded-xl bg-store-primary px-6 font-bold text-white transition-colors hover:bg-red-700 ${
+            className={`inline-flex items-center justify-center rounded-xl bg-store-primary px-6 font-bold text-white transition-colors hover:opacity-90 ${
               compact ? "h-10 text-sm" : "h-11"
             }`}
           >
@@ -49,7 +49,7 @@ export default function OrderSuccessMessage({
           <button
             type="button"
             onClick={onAction}
-            className={`inline-flex items-center justify-center rounded-xl bg-store-primary px-6 font-bold text-white transition-colors hover:bg-red-700 ${
+            className={`inline-flex items-center justify-center rounded-xl bg-store-primary px-6 font-bold text-white transition-colors hover:opacity-90 ${
               compact ? "h-10 text-sm" : "h-11"
             }`}
           >

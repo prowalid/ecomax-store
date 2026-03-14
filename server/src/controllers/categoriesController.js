@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { normalizeSlug } = require('../utils/slug');
+const { cleanupRemovedUploadUrls } = require('../utils/uploadCleanup');
 
 // GET /api/categories
 async function getCategories(req, res, next) {
@@ -54,6 +55,12 @@ async function updateCategory(req, res, next) {
   }
 
   try {
+    const { rows: existingRows } = await pool.query('SELECT image_url FROM categories WHERE id = $1 LIMIT 1', [id]);
+    if (existingRows.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    const previousImageUrl = existingRows[0].image_url;
     if (updates.slug !== undefined) {
       updates.slug = normalizeSlug(updates.slug) || null;
 
@@ -96,10 +103,7 @@ async function updateCategory(req, res, next) {
 
     const { rows } = await pool.query(query, values);
     
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-
+    await cleanupRemovedUploadUrls([previousImageUrl], [rows[0].image_url]);
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -110,11 +114,13 @@ async function updateCategory(req, res, next) {
 async function deleteCategory(req, res, next) {
   const { id } = req.params;
   try {
-    const { rowCount } = await pool.query('DELETE FROM categories WHERE id = $1', [id]);
-    
-    if (rowCount === 0) {
+    const { rows } = await pool.query('DELETE FROM categories WHERE id = $1 RETURNING image_url', [id]);
+
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
+
+    await cleanupRemovedUploadUrls([rows[0].image_url], []);
 
     res.status(204).send();
   } catch (err) {

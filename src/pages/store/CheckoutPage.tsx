@@ -337,7 +337,7 @@ export default function CheckoutPage() {
         <p className="text-gray-500 text-sm">السلة فارغة حالياً، أضف منتجات للمتابعة</p>
         <button
           onClick={() => navigate("/shop")}
-          className="inline-block bg-store-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
+          className="inline-block bg-store-primary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all"
         >
           الذهاب إلى المتجر
         </button>

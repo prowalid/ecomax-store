@@ -54,6 +54,10 @@ const StorePage = () => {
     ? activeProducts.filter((p) => p.category_id === selectedCategory)
     : activeProducts;
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
+  const maxDiscount = saleProducts.reduce((max, p) => {
+    const percent = Math.round(((Number(p.compare_price) - Number(p.price)) / Number(p.compare_price)) * 100);
+    return percent > max ? percent : max;
+  }, 0);
 
   const { track } = useTracking();
 
@@ -349,7 +353,9 @@ const StorePage = () => {
               <div className="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold mb-4 inline-flex items-center border border-white/30">
                 <Tag size={16} className="ml-2" /> عروض حصرية
               </div>
-              <h3 className="text-white text-2xl sm:text-4xl font-black mb-4 leading-tight">تخفيضات تصل لـ 50%</h3>
+              <h3 className="text-white text-2xl sm:text-4xl font-black mb-4 leading-tight">
+                {maxDiscount > 0 ? `تخفيضات تصل لـ ${maxDiscount}%` : "عروض وتخفيضات مميزة"}
+              </h3>
               <button
                 type="button"
                 onClick={scrollToOffers}

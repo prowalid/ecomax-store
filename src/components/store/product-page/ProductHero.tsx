@@ -8,14 +8,12 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  Flame,
   Home,
   Loader2,
   MapPin,
   Package,
   Phone,
   ShoppingBag,
-  Star,
   TrendingUp,
   Truck,
   User,
@@ -135,17 +133,17 @@ export default function ProductHero({
             {product.name}
           </h1>
 
-          <div className="flex items-center space-x-4 space-x-reverse mb-8 flex-wrap gap-y-3">
-            <div className="flex items-center bg-yellow-50 px-3 py-1.5 rounded-full">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={16} className="text-yellow-500 fill-yellow-500" />
-              ))}
-              <span className="text-yellow-700 text-sm font-bold mr-2">4.9</span>
-            </div>
-            <span className="text-gray-300">|</span>
-            <span className="text-orange-600 text-sm font-bold bg-orange-50 px-4 py-1.5 rounded-full flex items-center border border-orange-100">
-              <Flame size={16} className="ml-1.5 text-orange-500" /> الأكثر مبيعاً هذا الأسبوع
-            </span>
+          <div className="flex items-center flex-wrap gap-2 mb-8">
+            {hasDiscount && (
+              <span className="text-sm font-bold bg-green-50 text-green-700 px-4 py-1.5 rounded-full flex items-center border border-green-100">
+                <TrendingUp size={16} className="ml-1.5 text-green-500" /> وفّر {discountPercent}%
+              </span>
+            )}
+            {product.stock > 0 && product.stock <= 20 && (
+              <span className="text-sm font-bold bg-orange-50 text-orange-700 px-4 py-1.5 rounded-full flex items-center border border-orange-100">
+                <AlertOctagon size={14} className="ml-1.5 text-orange-500" /> بقي {product.stock} قطع فقط
+              </span>
+            )}
           </div>
 
           <div className="bg-gradient-to-br from-red-50 to-white p-4 sm:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-red-100/50 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">

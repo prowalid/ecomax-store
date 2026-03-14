@@ -1,6 +1,7 @@
 // Global Error Handler Middleware
 exports.errorHandler = (err, req, res, next) => {
   console.error(`[ERROR] ${req.method} ${req.originalUrl}:`, err);
+  const isProduction = process.env.NODE_ENV === 'production';
 
   // PostgreSQL Unique Constraint Violation
   if (err.code === "23505") {
@@ -21,12 +22,16 @@ exports.errorHandler = (err, req, res, next) => {
   if (err.status && Number.isInteger(err.status)) {
     return res.status(err.status).json({
       error: err.status >= 500 ? "Internal Server Error" : "Bad Request",
-      message: err.message || "Request failed"
+      message: err.status >= 500 && isProduction
+        ? "حدث خطأ داخلي غير متوقع. يرجى المحاولة لاحقًا."
+        : (err.message || "Request failed")
     });
   }
 
   return res.status(500).json({
     error: "Internal Server Error",
-    message: err.message
+    message: isProduction
+      ? "حدث خطأ داخلي غير متوقع. يرجى المحاولة لاحقًا."
+      : err.message
   });
 };

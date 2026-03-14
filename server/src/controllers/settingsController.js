@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { collectAppearanceUploadUrls, cleanupRemovedUploadUrls } = require('../utils/uploadCleanup');
 
 const PUBLIC_SETTINGS_KEYS = new Set(['appearance', 'general', 'shipping', 'marketing', 'security']);
 const PUBLIC_MARKETING_FIELDS = new Set(['pixel_id', 'pixel_configured', 'enabled_events', 'facebook_pixel_id']);
@@ -132,6 +133,12 @@ async function saveSettings(req, res, next) {
   }
 
   try {
+    let previousAppearanceUrls = [];
+    if (key === 'appearance') {
+      const { rows: existingRows } = await pool.query('SELECT value FROM store_settings WHERE key = $1 LIMIT 1', [key]);
+      previousAppearanceUrls = collectAppearanceUploadUrls(existingRows[0]?.value);
+    }
+
     const { rows } = await pool.query(`
       INSERT INTO store_settings (key, value, updated_at)
       VALUES ($1, $2, $3)
@@ -140,6 +147,11 @@ async function saveSettings(req, res, next) {
       RETURNING value
     `, [key, value, new Date().toISOString()]);
     
+    if (key === 'appearance') {
+      const nextAppearanceUrls = collectAppearanceUploadUrls(rows[0].value);
+      await cleanupRemovedUploadUrls(previousAppearanceUrls, nextAppearanceUrls);
+    }
+
     res.json(rows[0]);
   } catch (err) {
     next(err);

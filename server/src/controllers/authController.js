@@ -426,6 +426,9 @@ async function recoverPassword(req, res, next) {
 async function resetPassword(req, res, next) {
   try {
     const { phone, code, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'كلمة المرور الجديدة غير صالحة.' });
+    }
     const { rows } = await pool.query(
       'SELECT id, recovery_code, recovery_code_expires_at FROM users WHERE phone = $1',
       [phone]

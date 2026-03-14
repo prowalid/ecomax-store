@@ -5,6 +5,7 @@ import { usePages, useCreatePage, useUpdatePage, useDeletePage, type Page, type 
 import { toast } from "sonner";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 
 const SHOW_IN_OPTIONS: { value: PageShowIn; label: string }[] = [
   { value: "none", label: "لا يظهر في القوائم" },
@@ -372,14 +373,10 @@ const Pages = () => {
 
               {/* Content */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">محتوى الصفحة (يدعم HTML)</label>
-                <textarea
+                <label className="text-xs font-medium text-muted-foreground">محتوى الصفحة</label>
+                <RichTextEditor
                   value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  rows={12}
-                  className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring resize-y"
-                  dir="rtl"
-                  placeholder="اكتب محتوى الصفحة هنا... يمكنك استخدام HTML"
+                  onChange={setEditContent}
                 />
               </div>
             </div>

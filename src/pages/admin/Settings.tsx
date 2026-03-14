@@ -11,6 +11,9 @@ interface GeneralSettings {
   currency: string;
   meta_title: string;
   meta_description: string;
+  social_facebook: string;
+  social_instagram: string;
+  social_tiktok: string;
 }
 
 const Settings = () => {
@@ -22,6 +25,9 @@ const Settings = () => {
     currency: "DZD",
     meta_title: "",
     meta_description: "أفضل متجر للدفع عند الاستلام في الجزائر. نوفر لك جودة استثنائية، سرعة في التوصيل، وتجربة تسوق آمنة تماماً.",
+    social_facebook: "",
+    social_instagram: "",
+    social_tiktok: "",
   });
   const rawWhatsapp = settings.whatsapp_phone || "";
   const normalizedWhatsapp = normalizeWhatsAppPhone(rawWhatsapp);
@@ -171,6 +177,46 @@ const Settings = () => {
                   placeholder="وصف مختصر وواضح للمتجر يظهر في محركات البحث وعند مشاركة الصفحة."
                   rows={4}
                   className="w-full px-4 py-3 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-y"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
+            <h4 className="text-[14px] font-bold text-sidebar-heading mb-4">التواصل الاجتماعي</h4>
+            <p className="text-[11px] font-medium text-slate-400 mb-4">أضف روابط حساباتك. ستظهر أيقونة الموقع فقط إذا أدخلت رابطه وحفظت.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-500 mb-2">فيسبوك</label>
+                <input
+                  type="url"
+                  value={settings.social_facebook}
+                  onChange={(e) => setSettings({ ...settings, social_facebook: e.target.value })}
+                  placeholder="https://facebook.com/yourpage"
+                  className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-500 mb-2">إنستغرام</label>
+                <input
+                  type="url"
+                  value={settings.social_instagram}
+                  onChange={(e) => setSettings({ ...settings, social_instagram: e.target.value })}
+                  placeholder="https://instagram.com/yourpage"
+                  className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-500 mb-2">تيك توك</label>
+                <input
+                  type="url"
+                  value={settings.social_tiktok}
+                  onChange={(e) => setSettings({ ...settings, social_tiktok: e.target.value })}
+                  placeholder="https://tiktok.com/@yourpage"
+                  className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  dir="ltr"
                 />
               </div>
             </div>

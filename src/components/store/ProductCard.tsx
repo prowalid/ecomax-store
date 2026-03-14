@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingBag, Star, Check } from "lucide-react";
+import { ShoppingBag, Check } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useTracking } from "@/hooks/useTracking";
 import type { AppearanceSettings } from "@/hooks/useAppearanceSettings";
@@ -119,21 +119,12 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
             {name}
           </h3>
 
-          {/* Rate & Price Row */}
-          <div className="flex w-full flex-col items-center justify-center space-y-0.5">
-            <div className="flex items-center space-x-1 space-x-reverse">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} size={10} className="text-yellow-400 fill-yellow-400" />
-              ))}
-              <span className="text-[9px] mr-1" style={{ color: tokens.textSoft }}>(4.9)</span>
-            </div>
-            
-            <div className="flex items-baseline justify-center space-x-2 space-x-reverse">
-              <span className="font-black text-[15px] sm:text-base" style={{ color: theme.accent_color }}>{formatPrice(price)}</span>
-              {hasDiscount && (
-                <span className="line-through text-[11px] font-medium" style={{ color: tokens.textSoft }}>{formatPrice(compare_price)}</span>
-              )}
-            </div>
+          {/* Price */}
+          <div className="flex items-baseline justify-center space-x-2 space-x-reverse">
+            <span className="font-black text-[15px] sm:text-base" style={{ color: theme.accent_color }}>{formatPrice(price)}</span>
+            {hasDiscount && (
+              <span className="line-through text-[11px] font-medium" style={{ color: tokens.textSoft }}>{formatPrice(compare_price)}</span>
+            )}
           </div>
         </div>
       </Link>

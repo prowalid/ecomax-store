@@ -50,7 +50,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
             <SheetClose asChild>
               <Link
                 to="/"
-                className="bg-store-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
+                className="bg-store-primary text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all"
               >
                 تصفح المنتجات
               </Link>
