@@ -368,11 +368,12 @@ async function createOrderShipment(req, res, next) {
         UPDATE orders
         SET shipping_company = $1,
             tracking_number = COALESCE($2, tracking_number),
+            shipping_label_url = COALESCE($3, shipping_label_url),
             updated_at = NOW()
-        WHERE id = $3
+        WHERE id = $4
         RETURNING *
       `,
-      [providerConfig.settingsKey, shipment.tracking_number, id]
+      [providerConfig.settingsKey, shipment.tracking_number, shipment.shipping_label_url, id]
     );
 
     res.json({
@@ -380,6 +381,7 @@ async function createOrderShipment(req, res, next) {
       provider: providerConfig.settingsKey,
       provider_label: providerConfig.label,
       tracking_number: shipment.tracking_number,
+      shipping_label_url: shipment.shipping_label_url,
       order: rows[0],
       shipment_response: shipment.response,
     });

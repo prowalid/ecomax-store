@@ -125,6 +125,15 @@ const Appearance = () => {
 
   return (
     <div className="space-y-6 w-full">
+      <input
+        ref={slideInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+        multiple
+        className="hidden"
+        onChange={handleSlideUpload}
+      />
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-sidebar-heading">المظهر</h1>
@@ -234,7 +243,7 @@ const Appearance = () => {
                 </div>
               )}
               <div>
-                <input ref={faviconInputRef} type="file" accept="image/png,image/x-icon,image/svg+xml,image/webp" className="hidden" onChange={handleFaviconUpload} />
+                <input ref={faviconInputRef} type="file" accept="image/png,image/x-icon,image/webp" className="hidden" onChange={handleFaviconUpload} />
                 <button
                   onClick={() => faviconInputRef.current?.click()}
                   disabled={uploadingFavicon}
@@ -263,7 +272,7 @@ const Appearance = () => {
           uploading={uploadingSlide}
           slides={draft.slides || []}
           previewHeightClass="h-28"
-          columnsClass="grid-cols-2"
+          columnsClass="sm:grid-cols-2"
           emptyLabel='اضغط "إضافة صور" للبدء بتشكيل سلايدشو رائع للمتجر'
           onUploadClick={() => slideInputRef.current?.click()}
           onRemove={removeSlide}

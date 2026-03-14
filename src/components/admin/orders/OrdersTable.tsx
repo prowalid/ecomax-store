@@ -1,4 +1,4 @@
-import { ChevronDown, Loader2, Package2, Phone, Receipt, Truck } from "lucide-react";
+import { ChevronDown, ExternalLink, Loader2, Package2, Phone, Receipt, Truck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -307,6 +307,23 @@ function OrderTableRow({
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500">رقم التتبع</span>
                         <span className="font-semibold text-slate-900" dir="ltr">{order.tracking_number || "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">رابط البوليصة</span>
+                        {order.shipping_label_url ? (
+                          <a
+                            href={order.shipping_label_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                            dir="ltr"
+                          >
+                            فتح
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        ) : (
+                          <span className="font-semibold text-slate-900">—</span>
+                        )}
                       </div>
                     </div>
                   </div>

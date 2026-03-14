@@ -240,6 +240,73 @@ function extractTrackingNumber(responseData) {
   return nestedMatch ? String(nestedMatch) : null;
 }
 
+function isHttpUrl(value) {
+  return typeof value === 'string' && /^https?:\/\//i.test(value.trim());
+}
+
+function extractShippingLabelUrl(responseData) {
+  if (!responseData || typeof responseData !== 'object') return null;
+
+  const candidates = [
+    responseData.label,
+    responseData.label_url,
+    responseData.labelUrl,
+    responseData.bordereau_url,
+    responseData.bordereauUrl,
+    responseData.slip_url,
+    responseData.slipUrl,
+    responseData.pdf_url,
+    responseData.pdfUrl,
+    responseData.ticket_url,
+    responseData.ticketUrl,
+    responseData.data?.label,
+    responseData.data?.label_url,
+    responseData.data?.labelUrl,
+    responseData.data?.bordereau_url,
+    responseData.data?.bordereauUrl,
+    responseData.data?.slip_url,
+    responseData.data?.slipUrl,
+    responseData.data?.pdf_url,
+    responseData.data?.pdfUrl,
+    responseData.data?.ticket_url,
+    responseData.data?.ticketUrl,
+  ];
+
+  const directMatch = candidates.find(isHttpUrl);
+  if (directMatch) return directMatch.trim();
+
+  const nestedEntries = extractResultEntries(responseData);
+  const nestedMatch = nestedEntries
+    .flatMap((entry) => [
+      entry.label,
+      entry.label_url,
+      entry.labelUrl,
+      entry.bordereau_url,
+      entry.bordereauUrl,
+      entry.slip_url,
+      entry.slipUrl,
+      entry.pdf_url,
+      entry.pdfUrl,
+      entry.ticket_url,
+      entry.ticketUrl,
+    ])
+    .find(isHttpUrl);
+
+  return nestedMatch ? nestedMatch.trim() : null;
+}
+
+async function fetchParcelDetailsByTracking({ apiBaseUrl, apiId, apiToken, trackingNumber, providerLabel = 'Yalidine' }) {
+  if (!trackingNumber) return null;
+
+  return fetchYalidineJson({
+    apiBaseUrl,
+    path: `/parcels/${encodeURIComponent(trackingNumber)}`,
+    apiId,
+    apiToken,
+    providerLabel,
+  });
+}
+
 function stringifyApiErrorPart(value) {
   if (!value) return '';
   if (typeof value === 'string') return value.trim();
@@ -511,11 +578,30 @@ async function createPartnerShipment({ order, items, settings, providerKey = 'ya
     }
   }
 
+  const trackingNumber = extractTrackingNumber(responseData);
+  let shippingLabelUrl = extractShippingLabelUrl(responseData);
+  let detailsResponse = null;
+
+  if (trackingNumber && !shippingLabelUrl) {
+    detailsResponse = await fetchParcelDetailsByTracking({
+      apiBaseUrl,
+      apiId,
+      apiToken,
+      trackingNumber,
+      providerLabel,
+    }).catch(() => null);
+
+    if (detailsResponse) {
+      shippingLabelUrl = extractShippingLabelUrl(detailsResponse);
+    }
+  }
+
   return {
     provider: providerKey,
     payload,
-    response: responseData,
-    tracking_number: extractTrackingNumber(responseData),
+    response: detailsResponse || responseData,
+    tracking_number: trackingNumber,
+    shipping_label_url: shippingLabelUrl,
   };
 }
 

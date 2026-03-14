@@ -4,6 +4,7 @@ async function ensureOrderSecuritySchema() {
   await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS custom_options JSONB NOT NULL DEFAULT '[]'::jsonb");
   await pool.query("ALTER TABLE cart_items ADD COLUMN IF NOT EXISTS selected_options JSONB NOT NULL DEFAULT '{}'::jsonb");
   await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS ip_address TEXT');
+  await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_label_url TEXT');
   await pool.query("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS selected_options JSONB NOT NULL DEFAULT '{}'::jsonb");
 
   await pool.query(`

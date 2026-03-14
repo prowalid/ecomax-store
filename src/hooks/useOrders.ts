@@ -20,6 +20,7 @@ export interface Order {
   shipping_cost: number;
   total: number;
   tracking_number: string | null;
+  shipping_label_url: string | null;
   shipping_company: string | null;
   note: string | null;
   call_attempts: number;

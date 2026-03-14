@@ -59,7 +59,7 @@ const Products = () => {
   const handleDragStart = (idx: number) => setDragIdx(idx);
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
   const handleDrop = (dropIdx: number) => {
-    if (dragIdx === null || dragIdx === dropIdx || !editingId) return;
+    if (dragIdx === null || dragIdx === dropIdx) return;
     const reordered = [...draftImages];
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(dropIdx, 0, moved);

@@ -104,7 +104,7 @@ export default function ProductFormModal({
           <div className="space-y-3">
             <label className="text-xs font-medium text-muted-foreground">صور المنتج</label>
 
-            {editingId && (
+            {images.length > 0 && (
               <div className="grid grid-cols-4 gap-3">
                 {images.map((img, idx) => (
                   <div

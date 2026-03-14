@@ -145,6 +145,7 @@ const Orders = () => {
           "الإجمالي النهائي",
           "شركة الشحن",
           "رقم التتبع",
+          "رابط البوليصة",
           "ملاحظات",
         ],
         rows: dataToExport.map((order) => {
@@ -179,6 +180,7 @@ const Orders = () => {
             order.total,
             order.shipping_company || "",
             order.tracking_number || "",
+            order.shipping_label_url || "",
             order.note || "",
           ];
         }),
