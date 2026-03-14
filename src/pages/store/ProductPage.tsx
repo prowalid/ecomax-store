@@ -172,6 +172,15 @@ const ProductPage = () => {
   }, [product, track]);
 
   useEffect(() => {
+    saveTrackingProfile({
+      name: formName,
+      phone: formPhone,
+      state: formWilaya,
+      city: formCommune,
+    });
+  }, [formName, formPhone, formWilaya, formCommune]);
+
+  useEffect(() => {
     const hasLeadData =
       formName.trim().length >= 2 &&
       /^0[5-7][0-9]{8}$/.test(formPhone.trim()) &&

@@ -13,12 +13,45 @@ async function getMarketingSettings() {
 
 // SHA-256 hash helper (lowercase hex)
 function sha256(value) {
-  return crypto.createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
+  return crypto.createHash('sha256').update(String(value || '').trim().toLowerCase()).digest('hex');
 }
 
-// Normalize phone: remove spaces, dashes, +; ensure digits only
+function normalizeText(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function normalizeEmail(email) {
+  return normalizeText(email);
+}
+
+function normalizeName(value) {
+  return normalizeText(value);
+}
+
+function normalizeLocation(value) {
+  return normalizeText(value);
+}
+
+// Normalize phone to international Algerian format when possible
 function normalizePhone(phone) {
-  return phone.replace(/[\s\-\+\(\)]/g, "");
+  let digits = String(phone || '').replace(/[^\d+]/g, '').replace(/\+/g, '');
+  if (!digits) return '';
+
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.startsWith('0') && digits.length === 10) {
+    digits = `213${digits.slice(1)}`;
+  } else if (digits.length === 9 && !digits.startsWith('213')) {
+    digits = `213${digits}`;
+  }
+
+  return digits;
 }
 
 function createWebhookSignature(secret, rawBody) {
@@ -198,23 +231,38 @@ async function facebookCapi(req, res, next) {
 
     const hashedUserData = {};
 
-    if (user_data.ph) {
-      hashedUserData.ph = [sha256(normalizePhone(user_data.ph))];
+    const normalizedPhone = normalizePhone(user_data.ph);
+    const normalizedFirstName = normalizeName(user_data.fn);
+    const normalizedLastName = normalizeName(user_data.ln);
+    const normalizedCity = normalizeLocation(user_data.ct);
+    const normalizedState = normalizeLocation(user_data.st);
+    const normalizedEmail = normalizeEmail(user_data.em);
+    const normalizedCountry = normalizeText(user_data.country || 'dz');
+    const normalizedExternalId = normalizePhone(user_data.external_id || user_data.ph);
+
+    if (normalizedPhone) {
+      hashedUserData.ph = [sha256(normalizedPhone)];
     }
-    if (user_data.fn) {
-      hashedUserData.fn = [sha256(user_data.fn)];
+    if (normalizedFirstName) {
+      hashedUserData.fn = [sha256(normalizedFirstName)];
     }
-    if (user_data.ln) {
-      hashedUserData.ln = [sha256(user_data.ln)];
+    if (normalizedLastName) {
+      hashedUserData.ln = [sha256(normalizedLastName)];
     }
-    if (user_data.ct) {
-      hashedUserData.ct = [sha256(user_data.ct)];
+    if (normalizedCity) {
+      hashedUserData.ct = [sha256(normalizedCity)];
     }
-    if (user_data.st) {
-      hashedUserData.st = [sha256(user_data.st)];
+    if (normalizedState) {
+      hashedUserData.st = [sha256(normalizedState)];
     }
-    if (user_data.em) {
-      hashedUserData.em = [sha256(user_data.em)];
+    if (normalizedEmail) {
+      hashedUserData.em = [sha256(normalizedEmail)];
+    }
+    if (normalizedCountry) {
+      hashedUserData.country = [sha256(normalizedCountry)];
+    }
+    if (normalizedExternalId) {
+      hashedUserData.external_id = [sha256(normalizedExternalId)];
     }
 
     if (clientIp) {

@@ -7,6 +7,7 @@ import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
 import { usePublishedPages } from "@/hooks/usePages";
 import { initPixel, trackEvent } from "@/lib/facebook-pixel";
+import { getTrackingProfile } from "@/lib/trackingProfile";
 import { normalizePageSlug } from "@/lib/storePages";
 import { normalizeWhatsAppPhone } from "@/lib/whatsapp";
 import CartDrawer from "./CartDrawer";
@@ -55,7 +56,7 @@ const StoreLayout = () => {
 
   useEffect(() => {
     if (marketing.pixel_id) {
-      initPixel(marketing.pixel_id);
+      initPixel(marketing.pixel_id, getTrackingProfile());
     }
   }, [marketing.pixel_id]);
 
@@ -63,7 +64,7 @@ const StoreLayout = () => {
     if (!marketing.pixel_id || !marketing.pixel_configured) return;
     if (marketing.enabled_events?.PageView === false) return;
 
-    trackEvent("PageView", {}, {});
+    trackEvent("PageView", getTrackingProfile(), {});
   }, [location.pathname, location.search, marketing.pixel_id, marketing.pixel_configured, marketing.enabled_events]);
 
   useEffect(() => {

@@ -141,36 +141,30 @@ export default function ProductFormModal({
               </div>
             )}
 
-            {editingId ? (
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      onUploadFiles(e.target.files);
-                    }
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="h-9 px-4 flex items-center gap-2 rounded-lg border border-dashed border-input text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
-                >
-                  <Upload className="w-4 h-4" />
-                  رفع صور
-                </button>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                💡 أضف المنتج أولاً ثم يمكنك رفع الصور عبر تعديله
-              </p>
-            )}
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    onUploadFiles(e.target.files);
+                  }
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="h-9 px-4 flex items-center gap-2 rounded-lg border border-dashed border-input text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4" />
+                رفع صور
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -217,29 +211,16 @@ export default function ProductFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">المخزون</label>
-              <input
-                type="number"
-                value={form.stock}
-                onChange={(e) => onFieldChange("stock", e.target.value)}
-                placeholder="0"
-                dir="ltr"
-                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">رمز SKU</label>
-              <input
-                type="text"
-                value={form.sku}
-                onChange={(e) => onFieldChange("sku", e.target.value)}
-                placeholder="اختياري"
-                dir="ltr"
-                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">المخزون</label>
+            <input
+              type="number"
+              value={form.stock}
+              onChange={(e) => onFieldChange("stock", e.target.value)}
+              placeholder="0"
+              dir="ltr"
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+            />
           </div>
 
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">

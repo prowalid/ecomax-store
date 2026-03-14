@@ -81,11 +81,6 @@ export default function ProductsTable({
                       <span className="text-[14px] font-bold text-sidebar-heading group-hover:text-primary transition-colors block">
                         {product.name}
                       </span>
-                      {product.sku && (
-                        <span className="text-[11px] font-semibold text-slate-400" dir="ltr">
-                          SKU: {product.sku}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </td>

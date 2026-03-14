@@ -103,7 +103,6 @@ const Products = () => {
         "السعر (د.ج)",
         "السعر قبل التخفيض",
         "المخزون",
-        "SKU",
         "التصنيف",
         "الحالة",
       ],
@@ -114,7 +113,6 @@ const Products = () => {
         product.price,
         product.compare_price || "",
         product.stock,
-        product.sku || "",
         product.category_name || "",
         productStatusLabels[product.status].label,
       ]),
@@ -136,7 +134,6 @@ const Products = () => {
       price: String(p.price),
       compare_price: p.compare_price ? String(p.compare_price) : "",
       stock: String(p.stock),
-      sku: p.sku || "",
       category_id: p.category_id || "",
       status: p.status,
       custom_options: p.custom_options || [],
@@ -168,7 +165,6 @@ const Products = () => {
       price: Number(form.price) || 0,
       compare_price: form.compare_price ? Number(form.compare_price) : null,
       stock: Number(form.stock) || 0,
-      sku: form.sku || null,
       category_id: form.category_id || null,
       custom_options: form.custom_options,
       status: form.status,
@@ -220,14 +216,38 @@ const Products = () => {
         setIsSyncingImages(false);
       }
     } else {
-      createProduct.mutate(payload as any, {
-        onSuccess: () => closeModal(),
-      });
+      try {
+        setIsSyncingImages(true);
+        const created = await createProduct.mutateAsync(payload as any);
+        const newProductId = (created as any)?.id;
+
+        // Upload images that were selected during creation
+        if (newProductId && draftImages.length > 0) {
+          const finalizedImages: { id: string; image_url: string; sort_order: number }[] = [];
+          for (const image of draftImages) {
+            if (!image.file) continue;
+            const uploaded = await uploadImage.mutateAsync({ productId: newProductId, file: image.file });
+            finalizedImages.push({
+              id: uploaded.id,
+              image_url: uploaded.image_url,
+              sort_order: finalizedImages.length,
+            });
+          }
+          if (finalizedImages.length > 0) {
+            await reorderImages.mutateAsync({ productId: newProductId, images: finalizedImages });
+          }
+        }
+
+        closeModal();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "فشل إنشاء المنتج");
+      } finally {
+        setIsSyncingImages(false);
+      }
     }
   };
 
   const handleUploadFiles = (files: FileList) => {
-    if (!editingId) return;
     const nextImages = Array.from(files).map((file) => {
       const previewObjectUrl = URL.createObjectURL(file);
       return {

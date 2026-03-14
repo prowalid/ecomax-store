@@ -7,7 +7,6 @@ export interface ProductForm {
   price: string;
   compare_price: string;
   stock: string;
-  sku: string;
   category_id: string;
   status: ProductStatus;
   custom_options: ProductOptionGroup[];
@@ -19,7 +18,6 @@ export const emptyProductForm: ProductForm = {
   price: "",
   compare_price: "",
   stock: "0",
-  sku: "",
   category_id: "",
   status: "active",
   custom_options: [],

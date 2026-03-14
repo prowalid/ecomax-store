@@ -46,10 +46,10 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 const formatPrice = (n: number) => `${n.toLocaleString("ar-DZ")} دج`;
 
 const selectClass =
-  "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer";
+  "w-full pr-11 pl-8 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/30 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer shadow-sm";
 
 const inputClass =
-  "w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold";
+  "w-full pr-11 pl-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/30 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold shadow-sm";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -111,6 +111,15 @@ export default function CheckoutPage() {
   const deliveryTypeValue = watch("delivery_type") as DeliveryType;
   const customerNameValue = watch("customer_name");
   const customerPhoneValue = watch("customer_phone");
+
+  useEffect(() => {
+    saveTrackingProfile({
+      name: customerNameValue,
+      phone: customerPhoneValue,
+      state: wilayaValue,
+      city: communeValue,
+    });
+  }, [customerNameValue, customerPhoneValue, wilayaValue, communeValue]);
 
   useEffect(() => {
     const hasLeadData =

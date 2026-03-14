@@ -139,11 +139,6 @@ export default function ProductHero({
                 <TrendingUp size={16} className="ml-1.5 text-green-500" /> وفّر {discountPercent}%
               </span>
             )}
-            {product.stock > 0 && product.stock <= 20 && (
-              <span className="text-sm font-bold bg-orange-50 text-orange-700 px-4 py-1.5 rounded-full flex items-center border border-orange-100">
-                <AlertOctagon size={14} className="ml-1.5 text-orange-500" /> بقي {product.stock} قطع فقط
-              </span>
-            )}
           </div>
 
           <div className="bg-gradient-to-br from-red-50 to-white p-4 sm:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-red-100/50 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -265,9 +260,9 @@ export default function ProductHero({
                                     key={`${group.name}-${value}`}
                                     type="button"
                                     onClick={() => onSelectedOptionsChange(group.name, value)}
-                                    className={`min-w-[84px] rounded-2xl px-4 py-2.5 text-xs font-black transition-all duration-200 ${
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-black transition-all duration-200 ${
                                       active
-                                        ? "bg-store-primary text-white shadow-[0_10px_24px_rgba(220,53,69,0.22)] ring-2 ring-store-primary/15"
+                                        ? "bg-store-primary text-white shadow-[0_6px_16px_rgba(220,53,69,0.22)] ring-2 ring-store-primary/15"
                                         : "border border-rose-100 bg-rose-50/40 text-gray-700 hover:border-store-primary/30 hover:bg-rose-50"
                                     }`}
                                   >
@@ -300,7 +295,7 @@ export default function ProductHero({
                         autoComplete="name"
                         placeholder="الاسم الكامل"
                         required
-                        className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold"
+                        className="w-full pr-11 pl-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/30 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold shadow-sm"
                       />
                     </div>
                     <div className="relative">
@@ -316,7 +311,7 @@ export default function ProductHero({
                         inputMode="tel"
                         placeholder="رقم الهاتف"
                         required
-                        className="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-left font-bold text-gray-800"
+                        className="w-full pr-11 pl-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/30 focus:border-store-primary outline-none transition-all text-base md:text-sm text-left font-bold text-gray-800 shadow-sm"
                         dir="ltr"
                       />
                     </div>
@@ -344,7 +339,7 @@ export default function ProductHero({
                         name="wilaya"
                         autoComplete="address-level1"
                         required
-                        className="w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer"
+                        className="w-full pr-11 pl-8 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/30 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer shadow-sm"
                       >
                         <option value="">اختر الولاية</option>
                         {wilayasWithPrices.map((wilaya) => (
@@ -370,7 +365,7 @@ export default function ProductHero({
                         required
                         disabled={!formWilaya}
                         className={
-                          "w-full pr-11 pl-8 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/50 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer" +
+                          "w-full pr-11 pl-8 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-store-primary/30 focus:border-store-primary outline-none transition-all text-base md:text-sm text-gray-800 font-bold appearance-none cursor-pointer shadow-sm" +
                           (!formWilaya ? " opacity-50 cursor-not-allowed" : "")
                         }
                       >

@@ -53,9 +53,61 @@ export function getFbc(): string | null {
 // ─── Pixel (Browser-side) ──────────────────────────────────────────
 
 let pixelInitialized = false;
+let pixelInitSignature = "";
 
-export function initPixel(pixelId: string) {
-  if (pixelInitialized || !pixelId) return;
+function normalizeEmail(value?: string) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizeText(value?: string) {
+  return String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function normalizePhone(value?: string) {
+  let digits = String(value || "").replace(/[^\d+]/g, "").replace(/\+/g, "");
+  if (!digits) return "";
+
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.startsWith("0") && digits.length === 10) {
+    digits = `213${digits.slice(1)}`;
+  } else if (digits.length === 9 && !digits.startsWith("213")) {
+    digits = `213${digits}`;
+  }
+
+  return digits;
+}
+
+function buildAdvancedMatching(userData: CAPIUserData = {}) {
+  const advancedMatching: Record<string, string> = {};
+
+  const email = normalizeEmail(userData.email);
+  const phone = normalizePhone(userData.phone);
+  const firstName = normalizeText(userData.firstName);
+  const lastName = normalizeText(userData.lastName);
+  const city = normalizeText(userData.city);
+  const state = normalizeText(userData.state);
+  const country = normalizeText(userData.country || "dz");
+
+  if (email) advancedMatching.em = email;
+  if (phone) advancedMatching.ph = phone;
+  if (firstName) advancedMatching.fn = firstName;
+  if (lastName) advancedMatching.ln = lastName;
+  if (city) advancedMatching.ct = city;
+  if (state) advancedMatching.st = state;
+  if (country) advancedMatching.country = country;
+
+  return advancedMatching;
+}
+
+export function initPixel(pixelId: string, userData: CAPIUserData = {}) {
+  if (!pixelId) return;
 
   // Standard Facebook Pixel base code
   (function (f: Window, b: Document, e: string, v: string, n?: FBQ, t?: HTMLScriptElement, s?: Element) {
@@ -85,8 +137,18 @@ export function initPixel(pixelId: string) {
     s?.parentNode?.insertBefore(t, s);
   })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
 
-  window.fbq?.("init", pixelId);
-  pixelInitialized = true;
+  const advancedMatching = buildAdvancedMatching(userData);
+  const nextSignature = JSON.stringify({ pixelId, advancedMatching });
+
+  if (!pixelInitialized || pixelInitSignature !== nextSignature) {
+    if (Object.keys(advancedMatching).length > 0) {
+      window.fbq?.("init", pixelId, advancedMatching);
+    } else {
+      window.fbq?.("init", pixelId);
+    }
+    pixelInitialized = true;
+    pixelInitSignature = nextSignature;
+  }
 }
 
 /**
@@ -112,6 +174,8 @@ export interface CAPIUserData {
   city?: string;
   state?: string;
   email?: string;
+  country?: string;
+  externalId?: string;
 }
 
 export interface CAPIEventPayload {
@@ -138,6 +202,10 @@ function normalizeUserData(userData: CAPIUserData) {
     }
   }
 
+  if (!normalized.country) {
+    normalized.country = "dz";
+  }
+
   return normalized;
 }
 
@@ -162,6 +230,8 @@ export async function sendCAPIEvent(payload: CAPIEventPayload) {
       ct: userData.city || null,
       st: userData.state || null,
       em: userData.email || null,
+      country: userData.country || "dz",
+      external_id: userData.externalId || userData.phone || null,
       fbp: payload.fbp ?? getFbp(),
       fbc: payload.fbc ?? getFbc(),
       client_user_agent: payload.userAgent || navigator.userAgent,
