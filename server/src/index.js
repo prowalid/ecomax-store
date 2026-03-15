@@ -23,7 +23,7 @@ const logger = require('./utils/logger');
 const { ensureAuthSessionsTable } = require('./utils/authSessions');
 const { ensureDefaultCategoryImages } = require('./utils/categoryDefaults');
 const { ensurePagesSlugIntegrity } = require('./utils/pagesIntegrity');
-const { ensureOrderSecuritySchema, ensureUserAccountSchema } = require('./utils/schemaMigrations');
+const { ensureAppearanceSettingsShape, ensureOrderSecuritySchema, ensureUserAccountSchema } = require('./utils/schemaMigrations');
 const { startCartCleanupJob } = require('./utils/cartCleanup');
 const { getVersionPayload } = require('./utils/versionInfo');
 
@@ -105,6 +105,7 @@ async function startServer() {
   await ensureAuthSessionsTable();
   await ensureUserAccountSchema();
   await ensureOrderSecuritySchema();
+  await ensureAppearanceSettingsShape();
   await ensureDefaultCategoryImages();
   await ensurePagesSlugIntegrity();
   startCartCleanupJob();

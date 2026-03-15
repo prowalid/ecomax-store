@@ -11,7 +11,7 @@ import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useTracking } from "@/hooks/useTracking";
-import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { ALGERIA_WILAYAS, normalizeAlgeriaLocationName } from "@/data/algeriaWilayas";
 import { useProducts } from "@/hooks/useProducts";
 import { saveTrackingProfile } from "@/lib/trackingProfile";
 import OrderSuccessMessage from "@/components/store/OrderSuccessMessage";
@@ -78,9 +78,11 @@ export default function CheckoutPage() {
 
   // Merge shipping settings prices with ALGERIA_WILAYAS defaults
   const wilayasWithPrices = useMemo(() => {
-    const settingsMap = new Map(shippingSettings.wilayas?.map((w) => [w.name, w]) ?? []);
+    const settingsMap = new Map(
+      shippingSettings.wilayas?.map((w) => [normalizeAlgeriaLocationName(w.name), w]) ?? []
+    );
     return ALGERIA_WILAYAS.map((w) => {
-      const override = settingsMap.get(w.name);
+      const override = settingsMap.get(normalizeAlgeriaLocationName(w.name));
       return {
         ...w,
         homePrice: override?.homePrice ?? w.priceHome,
@@ -357,8 +359,14 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8 grid gap-8 lg:grid-cols-[2fr,1.2fr]" dir="rtl">
       {/* Form */}
-      <div className="bg-white border-2 border-store-primary/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-store-primary to-orange-400" />
+      <div
+        className="bg-white border-2 border-store-primary/20 rounded-3xl p-5 md:p-7 relative overflow-hidden"
+        style={{ boxShadow: "0 8px 30px rgb(var(--store-primary) / 0.10)" }}
+      >
+        <div
+          className="absolute top-0 left-0 right-0 h-1.5"
+          style={{ background: "linear-gradient(to right, rgb(var(--store-primary)), rgb(var(--store-button)))" }}
+        />
 
         {/* Wait, adding the progress steps */}
         <div className="flex items-center justify-center gap-2 mb-8 mt-2">
@@ -471,19 +479,19 @@ export default function CheckoutPage() {
 
           {/* Shipping Cost Display */}
           {selectedWilaya ? (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="bg-store-primary/5 border border-store-primary/15 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Truck className="w-5 h-5 text-blue-600" />
-                <h3 className="font-bold text-blue-900 text-sm">أسعار التوصيل - {selectedWilaya.name}</h3>
+                <Truck className="w-5 h-5 text-store-primary" />
+                <h3 className="font-bold text-gray-900 text-sm">أسعار التوصيل - {selectedWilaya.name}</h3>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-blue-700">🏠 للمنزل:</span>
-                  <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.homePrice)}</span>
+                  <span className="text-gray-700">🏠 للمنزل:</span>
+                  <span className="font-bold text-gray-900">{formatPrice(selectedWilaya.homePrice)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-blue-700">🏢 للمكتب:</span>
-                  <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.deskPrice)}</span>
+                  <span className="text-gray-700">🏢 للمكتب:</span>
+                  <span className="font-bold text-gray-900">{formatPrice(selectedWilaya.deskPrice)}</span>
                 </div>
               </div>
             </div>
@@ -559,7 +567,11 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={createOrder.isPending}
-            className="w-full bg-gradient-to-r from-store-primary to-[#e84a59] text-white font-black py-3 rounded-xl hover:shadow-[0_8px_25px_rgba(220,53,69,0.35)] transition-all duration-300 flex justify-center items-center disabled:opacity-50"
+            className="w-full text-white font-black py-3 rounded-xl transition-all duration-300 flex justify-center items-center disabled:opacity-50"
+            style={{
+              background: "linear-gradient(to right, rgb(var(--store-button)), rgb(var(--store-primary)))",
+              boxShadow: "0 8px 25px rgb(var(--store-primary) / 0.35)",
+            }}
           >
             {createOrder.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "تأكيد الطلب"}
           </button>

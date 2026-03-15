@@ -4,7 +4,7 @@ import { ChevronDown, Loader2, Save, Search, Truck } from "lucide-react";
 import AdminIntegrationStatusNote from "@/components/admin/AdminIntegrationStatusNote";
 import AdminSecureField from "@/components/admin/AdminSecureField";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
-import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { ALGERIA_WILAYAS, normalizeAlgeriaLocationName } from "@/data/algeriaWilayas";
 
 interface WilayaShipping {
   id: number;
@@ -139,10 +139,10 @@ const Shipping = () => {
   const [providerPanelOpen, setProviderPanelOpen] = useState(true);
 
   useEffect(() => {
-    const savedMap = new Map((settings.wilayas || []).map((w) => [w.name, w]));
+    const savedMap = new Map((settings.wilayas || []).map((w) => [normalizeAlgeriaLocationName(w.name), w]));
     setWilayas(
       ALGERIA_WILAYAS.map((w) => {
-        const saved = savedMap.get(w.name);
+        const saved = savedMap.get(normalizeAlgeriaLocationName(w.name));
         return {
           id: w.id,
           name: w.name,
@@ -170,7 +170,9 @@ const Shipping = () => {
   }, [settings]);
 
   const filtered = wilayas.filter(
-    (w) => w.name.toLowerCase().includes(search.toLowerCase()) || w.id.toString().includes(search)
+    (w) =>
+      normalizeAlgeriaLocationName(w.name).includes(normalizeAlgeriaLocationName(search))
+      || w.id.toString().includes(search)
   );
 
   const savedYalidineSettings = useMemo(

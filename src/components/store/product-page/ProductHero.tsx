@@ -135,13 +135,19 @@ export default function ProductHero({
 
           <div className="flex items-center flex-wrap gap-2 mb-8">
             {hasDiscount && (
-              <span className="text-sm font-bold bg-green-50 text-green-700 px-4 py-1.5 rounded-full flex items-center border border-green-100">
-                <TrendingUp size={16} className="ml-1.5 text-green-500" /> وفّر {discountPercent}%
+              <span className="text-sm font-bold px-4 py-1.5 rounded-full flex items-center border border-store-primary/15 bg-store-primary/10 text-store-primary">
+                <TrendingUp size={16} className="ml-1.5" /> وفّر {discountPercent}%
               </span>
             )}
           </div>
 
-          <div className="bg-gradient-to-br from-red-50 to-white p-4 sm:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-red-100/50 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div
+            className="p-4 sm:p-6 rounded-[1.5rem] md:rounded-[2rem] border shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
+            style={{
+              background: "linear-gradient(135deg, rgb(var(--store-primary) / 0.10), #ffffff 58%)",
+              borderColor: "rgb(var(--store-primary) / 0.15)",
+            }}
+          >
             <div>
               <div className="flex items-baseline space-x-3 space-x-reverse mb-2">
                 <span className="text-3xl sm:text-4xl md:text-5xl font-black text-store-primary tracking-tight">
@@ -154,10 +160,10 @@ export default function ProductHero({
                 )}
               </div>
               {hasDiscount && (
-                <div className="inline-flex items-center bg-white border border-red-100 px-3 py-1.5 rounded-xl shadow-sm">
-                  <Clock size={16} className="ml-2 text-red-500" />
+                <div className="inline-flex items-center bg-white px-3 py-1.5 rounded-xl shadow-sm" style={{ border: "1px solid rgb(var(--store-primary) / 0.15)" }}>
+                  <Clock size={16} className="ml-2 text-store-primary" />
                   <span className="text-sm text-gray-600 font-bold ml-2">العرض ينتهي خلال:</span>
-                  <span className="bg-red-500 text-white px-2 py-0.5 rounded text-sm font-black tracking-widest">
+                  <span className="text-white px-2 py-0.5 rounded text-sm font-black tracking-widest" style={{ backgroundColor: "rgb(var(--store-primary))" }}>
                     {timeLeftLabel}
                   </span>
                 </div>
@@ -165,17 +171,20 @@ export default function ProductHero({
             </div>
 
             {product.stock > 0 && product.stock <= 20 && (
-              <div className="w-full md:w-56 bg-white p-4 rounded-2xl border border-red-100 shadow-sm">
+              <div className="w-full md:w-56 bg-white p-4 rounded-2xl shadow-sm" style={{ border: "1px solid rgb(var(--store-primary) / 0.15)" }}>
                 <p className="text-xs text-gray-900 font-bold mb-3 flex justify-between items-center">
-                  <span className="flex items-center text-red-600 bg-red-50 px-2 py-1 rounded-md">
+                  <span className="flex items-center px-2 py-1 rounded-md text-store-primary bg-store-primary/10">
                     <AlertOctagon size={14} className="ml-1" /> سارع بالطلب!
                   </span>
                   <span className="bg-gray-100 px-2 py-1 rounded-md">{product.stock} قطع فقط</span>
                 </p>
                 <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-l from-red-500 to-orange-400 h-3 rounded-full relative overflow-hidden"
-                    style={{ width: `${Math.min(100, (product.stock / 50) * 100)}%` }}
+                    className="h-3 rounded-full relative overflow-hidden"
+                    style={{
+                      width: `${Math.min(100, (product.stock / 50) * 100)}%`,
+                      background: "linear-gradient(to left, rgb(var(--store-primary)), rgb(var(--store-primary) / 0.65))",
+                    }}
                   >
                     <div
                       className="absolute inset-0 bg-white/30 animate-[stripes_1s_linear_infinite] background-size-[1rem_1rem]"
@@ -192,9 +201,13 @@ export default function ProductHero({
 
           <div
             id="order-form"
-            className="bg-white border-2 border-store-primary/20 shadow-[0_8px_30px_rgba(220,53,69,0.1)] rounded-3xl p-5 md:p-7 mt-auto relative overflow-hidden"
+            className="bg-white border-2 border-store-primary/20 rounded-3xl p-5 md:p-7 mt-auto relative overflow-hidden"
+            style={{ boxShadow: "0 8px 30px rgb(var(--store-primary) / 0.10)" }}
           >
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-store-primary to-orange-400" />
+            <div
+              className="absolute top-0 left-0 right-0 h-1.5"
+              style={{ background: "linear-gradient(to right, rgb(var(--store-primary)), rgb(var(--store-button)))" }}
+            />
 
             {submitted ? (
               <div className="py-6">
@@ -213,7 +226,13 @@ export default function ProductHero({
 
                 <form id="product-order-form" onSubmit={onSubmit} className="space-y-4" autoComplete="on">
                   {productOptions.length > 0 && (
-                    <div className="rounded-[1.75rem] border border-store-primary/15 bg-gradient-to-b from-rose-50/80 via-white to-white p-4 sm:p-5 shadow-[0_12px_40px_rgba(220,53,69,0.08)] space-y-4">
+                    <div
+                      className="rounded-[1.75rem] border border-store-primary/15 p-4 sm:p-5 space-y-4"
+                      style={{
+                        background: "linear-gradient(to bottom, rgb(var(--store-primary) / 0.06), #ffffff 38%)",
+                        boxShadow: "0 12px 40px rgb(var(--store-primary) / 0.08)",
+                      }}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <h3 className="text-sm font-black text-gray-900">خيارات المنتج</h3>
@@ -235,9 +254,10 @@ export default function ProductHero({
                             tabIndex={-1}
                             className={`rounded-2xl p-3 shadow-sm space-y-3 outline-none transition-all duration-300 ${
                               isMissing
-                                ? "border-2 border-store-primary bg-store-primary/5 shadow-[0_0_0_4px_rgba(220,53,69,0.12)]"
+                                ? "border-2 border-store-primary bg-store-primary/5"
                                 : "border border-white/80 bg-white/90"
                             }`}
+                            style={isMissing ? { boxShadow: "0 0 0 4px rgb(var(--store-primary) / 0.12)" } : undefined}
                           >
                             <div className="flex items-center justify-between gap-3">
                               <div>
@@ -262,9 +282,10 @@ export default function ProductHero({
                                     onClick={() => onSelectedOptionsChange(group.name, value)}
                                     className={`rounded-xl px-3 py-1.5 text-xs font-black transition-all duration-200 ${
                                       active
-                                        ? "bg-store-primary text-white shadow-[0_6px_16px_rgba(220,53,69,0.22)] ring-2 ring-store-primary/15"
-                                        : "border border-rose-100 bg-rose-50/40 text-gray-700 hover:border-store-primary/30 hover:bg-rose-50"
+                                        ? "bg-store-primary text-white ring-2 ring-store-primary/15"
+                                        : "border border-store-primary/10 bg-store-primary/5 text-gray-700 hover:border-store-primary/30 hover:bg-store-primary/10"
                                     }`}
+                                    style={active ? { boxShadow: "0 6px 16px rgb(var(--store-primary) / 0.22)" } : undefined}
                                   >
                                     {value}
                                   </button>
@@ -275,8 +296,8 @@ export default function ProductHero({
                         )})}
                       </div>
                       {formatSelectedOptions(selectedOptions) && (
-                        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs font-medium text-emerald-700">
-                          الاختيارات الحالية: <span className="font-black text-emerald-900">{formatSelectedOptions(selectedOptions)}</span>
+                        <div className="rounded-2xl border border-store-primary/15 bg-store-primary/5 px-4 py-3 text-xs font-medium text-store-primary">
+                          الاختيارات الحالية: <span className="font-black text-gray-900">{formatSelectedOptions(selectedOptions)}</span>
                         </div>
                       )}
                     </div>
@@ -383,19 +404,19 @@ export default function ProductHero({
                   </div>
 
                   {selectedWilaya ? (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                    <div className="rounded-xl p-3 bg-store-primary/5 border border-store-primary/15">
                       <div className="flex items-center gap-2 mb-2">
-                        <Truck className="w-4 h-4 text-blue-600" />
-                        <h3 className="font-bold text-blue-900 text-xs">أسعار التوصيل - {selectedWilaya.name}</h3>
+                        <Truck className="w-4 h-4 text-store-primary" />
+                        <h3 className="font-bold text-gray-900 text-xs">أسعار التوصيل - {selectedWilaya.name}</h3>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="flex justify-between">
-                          <span className="text-blue-700">🏠 للمنزل:</span>
-                          <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.homePrice)}</span>
+                          <span className="text-gray-700">🏠 للمنزل:</span>
+                          <span className="font-bold text-gray-900">{formatPrice(selectedWilaya.homePrice)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-blue-700">🏢 للمكتب:</span>
-                          <span className="font-bold text-blue-900">{formatPrice(selectedWilaya.deskPrice)}</span>
+                          <span className="text-gray-700">🏢 للمكتب:</span>
+                          <span className="font-bold text-gray-900">{formatPrice(selectedWilaya.deskPrice)}</span>
                         </div>
                       </div>
                     </div>
@@ -513,14 +534,21 @@ export default function ProductHero({
                         disabled
                         className="bg-gray-100 border border-gray-200 text-gray-500 font-bold py-4 rounded-2xl flex justify-center items-center cursor-not-allowed"
                       >
-                        <CheckCircle2 size={22} className="ml-2 text-green-500" /> تمت الإضافة للسلة
+                        <CheckCircle2 size={22} className="ml-2 text-store-primary" /> تمت الإضافة للسلة
                       </button>
                     ) : (
                       <button
                         type="button"
                         onClick={onAddToCart}
                         disabled={isAdding || product.stock <= 0}
-                        className="bg-white border-2 border-store-primary text-store-primary font-black py-4 rounded-2xl hover:bg-store-primary hover:text-white transition-all duration-300 flex justify-center items-center disabled:opacity-50 hover:shadow-[0_8px_25px_rgba(220,53,69,0.2)] hover:-translate-y-1"
+                        className="bg-white border-2 border-store-primary text-store-primary font-black py-4 rounded-2xl hover:bg-store-primary hover:text-white transition-all duration-300 flex justify-center items-center disabled:opacity-50 hover:-translate-y-1"
+                        style={{}}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = "0 8px 25px rgb(var(--store-primary) / 0.20)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = "";
+                        }}
                       >
                         {isAdding ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -535,7 +563,11 @@ export default function ProductHero({
                     <button
                       type="submit"
                       disabled={isSubmitting || product.stock <= 0}
-                      className="bg-gradient-to-r from-store-primary to-[#ff4b5c] text-white font-black py-4 rounded-2xl shadow-[0_8px_25px_rgba(220,53,69,0.3)] hover:shadow-[0_15px_35px_rgba(220,53,69,0.4)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50"
+                      className="text-white font-black py-4 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50"
+                      style={{
+                        background: "linear-gradient(to right, rgb(var(--store-button)), rgb(var(--store-primary)))",
+                        boxShadow: "0 8px 25px rgb(var(--store-primary) / 0.30)",
+                      }}
                     >
                       {isSubmitting ? (
                         <Loader2 className="w-5 h-5 animate-spin" />

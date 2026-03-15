@@ -62,21 +62,6 @@ export const defaultAppearance: AppearanceSettings = {
 };
 const APPEARANCE_CACHE_KEY = "etk:appearance-settings-cache";
 
-function getCachedAppearance(): AppearanceSettings {
-  if (typeof window === "undefined") {
-    return defaultAppearance;
-  }
-
-  try {
-    const raw = localStorage.getItem(APPEARANCE_CACHE_KEY);
-    if (!raw) return defaultAppearance;
-    const parsed = JSON.parse(raw) as Partial<AppearanceSettings>;
-    return { ...defaultAppearance, ...parsed };
-  } catch {
-    return defaultAppearance;
-  }
-}
-
 function normalizeSlides(value: unknown): AppearanceSlide[] {
   if (!Array.isArray(value)) {
     return [];
@@ -99,7 +84,7 @@ function normalizeSlides(value: unknown): AppearanceSlide[] {
 }
 
 export function useAppearanceSettings() {
-  const store = useStoreSettings<AppearanceSettings>("appearance", getCachedAppearance());
+  const store = useStoreSettings<AppearanceSettings>("appearance", defaultAppearance);
   const normalizedSettings = useMemo(
     () => ({
       ...store.settings,
@@ -112,11 +97,11 @@ export function useAppearanceSettings() {
     if (typeof window === "undefined") return;
 
     try {
-      localStorage.setItem(APPEARANCE_CACHE_KEY, JSON.stringify(normalizedSettings));
+      localStorage.removeItem(APPEARANCE_CACHE_KEY);
     } catch {
-      // Ignore storage write failures; app continues with API values.
+      // Ignore storage failures; app continues with API values.
     }
-  }, [normalizedSettings]);
+  }, []);
 
   return {
     ...store,

@@ -3,7 +3,7 @@ import { ShoppingBag, Check } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useTracking } from "@/hooks/useTracking";
 import type { AppearanceSettings } from "@/hooks/useAppearanceSettings";
-import { getStoreThemeTokens, hexToRgba, isDarkColor } from "@/lib/storeTheme";
+import { getStoreThemeTokens, hexToRgba } from "@/lib/storeTheme";
 import { toast } from "sonner";
 import type { ProductOptionGroup } from "@/lib/productOptions";
 
@@ -29,7 +29,6 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
   const inCart = !requiresOptions && items.some(item => item.product_id === id);
   const outOfStock = stock <= 0;
   const tokens = getStoreThemeTokens(theme);
-  const buttonIsDark = isDarkColor(theme.button_color);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,7 +60,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
 
   return (
     <div
-      className="rounded-3xl overflow-hidden group transition-all duration-500 relative hover:-translate-y-1"
+      className="group relative flex h-full flex-col overflow-hidden rounded-3xl transition-all duration-500 hover:-translate-y-1"
       style={{
         backgroundColor: tokens.surface,
         border: `1px solid ${tokens.border}`,
@@ -69,7 +68,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
         color: tokens.textPrimary,
       }}
     >
-      <Link to={`/product/${id}`} className="block">
+      <Link to={`/product/${id}`} className="flex flex-1 flex-col">
         {/* Image */}
         <div className="relative overflow-hidden aspect-[4/4.15] sm:aspect-[4/4.25]" style={{ backgroundColor: tokens.surfaceSoft }}>
           {hasDiscount && (
@@ -111,7 +110,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
         </div>
 
         {/* Content */}
-        <div className="flex flex-col items-center px-3 pt-2.5 pb-1 text-center sm:px-4">
+        <div className="flex flex-1 flex-col items-center px-3 pt-2.5 pb-1 text-center sm:px-4">
           {category_name && (
             <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: tokens.textSoft }}>{category_name}</p>
           )}
@@ -156,7 +155,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
              className="w-full py-2.5 rounded-xl text-[13px] sm:text-sm font-bold flex justify-center items-center cursor-not-allowed"
              style={{ backgroundColor: tokens.surfaceSoft, color: tokens.textMuted, border: `1px solid ${tokens.border}` }}
            >
-             <Check size={18} className="ml-1.5 text-green-500" /> تمت الإضافة
+             <Check size={18} className="ml-1.5" style={{ color: theme.button_color }} /> تمت الإضافة
            </button>
         ) : (
           <div className="flex gap-2">

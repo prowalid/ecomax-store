@@ -18,7 +18,10 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
       }
       return defaultValue;
     },
-    staleTime: 5 * 60 * 1000, // Cache settings for 5 minutes
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const { mutateAsync: saveSettings, isPending: saving } = useMutation({

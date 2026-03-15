@@ -1,8 +1,16 @@
 {
   "latest": {
-    "stable": "v1.0.25"
+    "stable": "v1.0.26"
   },
   "releases": [
+    {
+      "version": "v1.0.26",
+      "channel": "stable",
+      "released_at": "2026-03-15T00:00:00Z",
+      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.26",
+      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.26",
+      "notes": "Storefront theme consistency fixes, fresh-store appearance reset hardening, Yalidine local wilaya sync, and verified Meta CAPI delivery."
+    },
     {
       "version": "v1.0.25",
       "channel": "stable",

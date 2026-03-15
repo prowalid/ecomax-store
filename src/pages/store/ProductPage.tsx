@@ -12,7 +12,7 @@ import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useCart } from "@/hooks/useCart";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
-import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { ALGERIA_WILAYAS, normalizeAlgeriaLocationName } from "@/data/algeriaWilayas";
 import ProductCard from "@/components/store/ProductCard";
 import { toast } from "sonner";
 import { useTracking } from "@/hooks/useTracking";
@@ -119,9 +119,11 @@ const ProductPage = () => {
 
   // Merge shipping settings prices with ALGERIA_WILAYAS defaults
   const wilayasWithPrices = useMemo(() => {
-    const settingsMap = new Map(shippingSettings.wilayas?.map((w) => [w.name, w]) ?? []);
+    const settingsMap = new Map(
+      shippingSettings.wilayas?.map((w) => [normalizeAlgeriaLocationName(w.name), w]) ?? []
+    );
     return ALGERIA_WILAYAS.map((w) => {
-      const override = settingsMap.get(w.name);
+      const override = settingsMap.get(normalizeAlgeriaLocationName(w.name));
       return {
         ...w,
         homePrice: override?.homePrice ?? w.priceHome,

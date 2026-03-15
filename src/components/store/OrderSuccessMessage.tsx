@@ -22,12 +22,16 @@ export default function OrderSuccessMessage({
 }: OrderSuccessMessageProps) {
   return (
     <div
-      className={`mx-auto rounded-3xl border border-green-200 bg-white text-center shadow-[0_20px_60px_rgba(16,185,129,0.08)] ${
+      className={`mx-auto rounded-3xl bg-white text-center ${
         compact ? "p-6" : "max-w-2xl p-8"
       }`}
+      style={{
+        border: "1px solid rgb(var(--store-primary) / 0.18)",
+        boxShadow: `0 20px 60px rgb(var(--store-primary) / 0.10)`,
+      }}
       dir="rtl"
     >
-      <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-green-500" />
+      <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-store-primary" />
       <h2 className="text-2xl font-black text-gray-900">{title}</h2>
       {orderNumber ? (
         <p className="mt-3 text-sm text-gray-600">
