@@ -1,8 +1,16 @@
 {
   "latest": {
-    "stable": "v1.0.24"
+    "stable": "v1.0.25"
   },
   "releases": [
+    {
+      "version": "v1.0.25",
+      "channel": "stable",
+      "released_at": "2026-03-15T00:00:00Z",
+      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.25",
+      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.25",
+      "notes": "Hardened client store provisioning defaults and blocked stepdz-test tags from entering client deployment flow."
+    },
     {
       "version": "v1.0.24",
       "channel": "stable",
