@@ -1,0 +1,23 @@
+{
+  "latest": {
+    "stable": "v1.0.24"
+  },
+  "releases": [
+    {
+      "version": "v1.0.24",
+      "channel": "stable",
+      "released_at": "2026-03-15T00:00:00Z",
+      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.24",
+      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.24",
+      "notes": "Trusted version metadata, lighter admin version badge, mobile admin polish, and load-more pagination on the storefront."
+    },
+    {
+      "version": "v1.0.23",
+      "channel": "stable",
+      "released_at": "2026-03-15T00:00:00Z",
+      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.23",
+      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.23",
+      "notes": "Shipping labels, appearance fixes, add-product image UX, and unpublished default pages for new stores."
+    }
+  ]
+}

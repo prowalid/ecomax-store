@@ -149,9 +149,9 @@ const Appearance = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Logos & Brand Assets */}
-        <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-7 space-y-6">
+        <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-5 sm:p-7 space-y-5 sm:space-y-6">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
             <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
               <Image className="w-4 h-4 text-orange-500" />
@@ -161,7 +161,7 @@ const Appearance = () => {
           
           <div className="space-y-3">
             <label className="block text-[13px] font-semibold text-slate-500">شعار الهيدر (رئيسي)</label>
-            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
               {draft.logo_url ? (
                 <div className="relative group shrink-0">
                   <img src={draft.logo_url} alt="شعار" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-1 bg-white shadow-sm" />
@@ -194,7 +194,7 @@ const Appearance = () => {
           
           <div className="space-y-3 pt-2">
             <label className="block text-[13px] font-semibold text-slate-500">شعار الفوتر (أسفل الصفحة)</label>
-            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
               {draft.footer_logo_url ? (
                 <div className="relative group shrink-0">
                   <img src={draft.footer_logo_url} alt="شعار الفوتر" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-1 bg-white shadow-sm" />
@@ -226,7 +226,7 @@ const Appearance = () => {
           </div>
           <div className="space-y-3 pt-2">
             <label className="block text-[13px] font-semibold text-slate-500">Favicon المتجر</label>
-            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
               {draft.favicon_url ? (
                 <div className="relative group shrink-0">
                   <img src={draft.favicon_url} alt="Favicon" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-2 bg-white shadow-sm" />
@@ -304,7 +304,7 @@ const Appearance = () => {
         />
 
         {/* Fonts */}
-        <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-7 space-y-6">
+        <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-5 sm:p-7 space-y-5 sm:space-y-6">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
             <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
               <Type className="w-4 h-4 text-teal-600" />

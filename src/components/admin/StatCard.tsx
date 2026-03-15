@@ -26,44 +26,44 @@ const StatCard = ({ title, value, change, changeType = "neutral", icon, subtitle
   const bgStyle = variantStyles[variant];
 
   return (
-    <div className="bg-white rounded-[20px] p-6 shadow-sm border border-slate-100/50 hover:shadow-md transition-shadow flex flex-col justify-between">
+    <div className="bg-white rounded-[20px] p-4 sm:p-6 shadow-sm border border-slate-100/50 hover:shadow-md transition-shadow flex flex-col justify-between">
       
       {/* Top section: Icon and Value */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 sm:gap-4">
         {icon && (
-          <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", bgStyle)}>
+          <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0", bgStyle)}>
              {icon}
           </div>
         )}
         
         <div>
-           <p className="text-[28px] font-bold text-sidebar-heading tracking-tight leading-none mb-2">{value}</p>
-           <h3 className="text-[15px] font-semibold text-slate-600">{title}</h3>
+           <p className="text-xl sm:text-[28px] font-bold text-sidebar-heading tracking-tight leading-none mb-1 sm:mb-2">{value}</p>
+           <h3 className="text-xs sm:text-[15px] font-semibold text-slate-600">{title}</h3>
         </div>
       </div>
 
       {/* Bottom section: Trend and Subtitle */}
-      <div className="mt-4 pt-4 border-t border-slate-50">
+      <div className="mt-3 pt-3 sm:mt-4 sm:pt-4 border-t border-slate-50">
         <div className="flex items-center gap-1.5 flex-wrap">
           {change && changeType !== "neutral" && (
             <div className={cn(
-              "flex items-center text-[12px] font-bold",
+              "flex items-center text-[10px] sm:text-[12px] font-bold",
               changeType === "positive" ? "text-success" : "text-destructive"
             )}>
-              {changeType === "positive" ? <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />}
+              {changeType === "positive" ? <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />}
               {change}
             </div>
           )}
           
           {change && changeType === "neutral" && (
-             <div className="flex items-center text-[12px] font-bold text-slate-400">
-               <Minus className="w-3.5 h-3.5 mr-0.5" />
+             <div className="flex items-center text-[10px] sm:text-[12px] font-bold text-slate-400">
+               <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />
                {change}
              </div>
           )}
 
           {subtitle && (
-            <span className="text-[12px] text-slate-400 font-medium whitespace-nowrap">{subtitle}</span>
+            <span className="text-[10px] sm:text-[12px] text-slate-400 font-medium whitespace-nowrap">{subtitle}</span>
           )}
         </div>
       </div>

@@ -58,6 +58,7 @@ API_IMAGE="ghcr.io/walid733/express-trade-kit-api:${VERSION}"
 WEB_IMAGE="ghcr.io/walid733/express-trade-kit-web:${VERSION}"
 API_IMAGE_LATEST="ghcr.io/walid733/express-trade-kit-api:latest"
 WEB_IMAGE_LATEST="ghcr.io/walid733/express-trade-kit-web:latest"
+MANIFEST_FILE="${REPO_ROOT}/deploy/releases.json"
 ENV_FILE="${CLIENT_DIR}/.env.registry"
 COMPOSE_FILE="${CLIENT_DIR}/docker-compose.yml"
 
@@ -85,13 +86,58 @@ if [[ "${SKIP_GIT}" == "false" ]]; then
   fi
 fi
 
+if [[ ! -f "${MANIFEST_FILE}" ]]; then
+  echo "Missing release manifest: ${MANIFEST_FILE}" >&2
+  exit 1
+fi
+
+if ! node -e "
+const fs = require('fs');
+const manifest = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+const version = process.argv[2];
+const entry = manifest.releases?.find((item) => item.version === version);
+const stable = manifest.latest?.stable;
+if (!entry) {
+  console.error('Release manifest does not contain an entry for ' + version);
+  process.exit(1);
+}
+if (stable !== version) {
+  console.error('Release manifest latest.stable must match ' + version + ', found ' + stable);
+  process.exit(1);
+}
+if (entry.api_image !== process.argv[3] || entry.web_image !== process.argv[4]) {
+  console.error('Release manifest image refs do not match this release version.');
+  process.exit(1);
+}
+" "${MANIFEST_FILE}" "${VERSION}" "${API_IMAGE}" "${WEB_IMAGE}"; then
+  exit 1
+fi
+
+GIT_COMMIT="$(git -C "${REPO_ROOT}" rev-parse --short HEAD)"
+BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
 if docker manifest inspect "${API_IMAGE}" >/dev/null 2>&1 || docker manifest inspect "${WEB_IMAGE}" >/dev/null 2>&1; then
   echo "Version ${VERSION} already exists in GHCR. Use a new version." >&2
   exit 1
 fi
 
-docker build -f "${REPO_ROOT}/server/Dockerfile" -t "${API_IMAGE}" "${REPO_ROOT}/server"
-docker build -f "${REPO_ROOT}/Dockerfile.web" -t "${WEB_IMAGE}" "${REPO_ROOT}"
+docker build \
+  -f "${REPO_ROOT}/server/Dockerfile" \
+  --build-arg ETK_API_VERSION="${VERSION}" \
+  --build-arg ETK_WEB_VERSION="${VERSION}" \
+  --build-arg ETK_GIT_COMMIT="${GIT_COMMIT}" \
+  --build-arg ETK_BUILD_TIME="${BUILD_TIME}" \
+  --build-arg ETK_RELEASE_CHANNEL="stable" \
+  --build-arg ETK_API_IMAGE_REF="${API_IMAGE}" \
+  --build-arg ETK_WEB_IMAGE_REF="${WEB_IMAGE}" \
+  -t "${API_IMAGE}" "${REPO_ROOT}"
+docker build \
+  -f "${REPO_ROOT}/Dockerfile.web" \
+  --build-arg ETK_WEB_VERSION="${VERSION}" \
+  --build-arg ETK_GIT_COMMIT="${GIT_COMMIT}" \
+  --build-arg ETK_BUILD_TIME="${BUILD_TIME}" \
+  --build-arg ETK_RELEASE_CHANNEL="stable" \
+  -t "${WEB_IMAGE}" "${REPO_ROOT}"
 
 docker tag "${API_IMAGE}" "${API_IMAGE_LATEST}"
 docker tag "${WEB_IMAGE}" "${WEB_IMAGE_LATEST}"

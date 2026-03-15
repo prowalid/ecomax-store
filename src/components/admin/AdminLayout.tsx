@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { defaultAppearance, useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { useVersionInfo } from "@/hooks/useVersionInfo";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -77,8 +78,10 @@ const AdminLayout = () => {
     store_name: "ECOMAX",
     meta_title: "",
   });
+  const { data: versionInfo } = useVersionInfo();
   const effectiveBrandTitle = generalSettings.meta_title?.trim() || generalSettings.store_name?.trim() || "ECOMAX";
   const adminAppearance = appearance || defaultAppearance;
+  const adminVersion = versionInfo?.current.api_version?.trim() || null;
 
   const adminThemeVars = useMemo(() => {
     const accent = adminAppearance.accent_color;
@@ -213,6 +216,11 @@ const AdminLayout = () => {
           />
         </SheetContent>
       </Sheet>
+      {adminVersion ? (
+        <div className="pointer-events-none fixed bottom-3 left-3 z-40 rounded-full border border-slate-200/80 bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-500 shadow-sm backdrop-blur-sm">
+          {adminVersion}
+        </div>
+      ) : null}
     </div>
   );
 };

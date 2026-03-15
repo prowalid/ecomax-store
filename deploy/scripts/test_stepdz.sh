@@ -47,6 +47,8 @@ CLIENT_CADDY_FILE="${CLIENT_DIR}/Caddyfile.client"
 SOURCE_CLIENT_CADDY_FILE="${REPO_ROOT}/deploy/Caddyfile.client-internal"
 WEB_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-web:stepdz-test"
 API_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-api:stepdz-test"
+GIT_COMMIT="$(git -C "${REPO_ROOT}" rev-parse --short HEAD)"
+BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 if [[ ! -f "${ENV_FILE}" || ! -f "${COMPOSE_FILE}" || ! -f "${SOURCE_CLIENT_CADDY_FILE}" ]]; then
   echo "Missing stepdz stack files under ${CLIENT_DIR}" >&2
@@ -70,11 +72,26 @@ rollback_on_error() {
 trap rollback_on_error EXIT
 
 if [[ "${BUILD_API}" == "true" ]]; then
-  docker build -f "${REPO_ROOT}/server/Dockerfile" -t "${API_TEST_IMAGE}" "${REPO_ROOT}/server"
+  docker build \
+    -f "${REPO_ROOT}/server/Dockerfile" \
+    --build-arg ETK_API_VERSION="stepdz-test" \
+    --build-arg ETK_WEB_VERSION="stepdz-test" \
+    --build-arg ETK_GIT_COMMIT="${GIT_COMMIT}" \
+    --build-arg ETK_BUILD_TIME="${BUILD_TIME}" \
+    --build-arg ETK_RELEASE_CHANNEL="test" \
+    --build-arg ETK_API_IMAGE_REF="${API_TEST_IMAGE}" \
+    --build-arg ETK_WEB_IMAGE_REF="${WEB_TEST_IMAGE}" \
+    -t "${API_TEST_IMAGE}" "${REPO_ROOT}"
 fi
 
 if [[ "${BUILD_WEB}" == "true" ]]; then
-  docker build -f "${REPO_ROOT}/Dockerfile.web" -t "${WEB_TEST_IMAGE}" "${REPO_ROOT}"
+  docker build \
+    -f "${REPO_ROOT}/Dockerfile.web" \
+    --build-arg ETK_WEB_VERSION="stepdz-test" \
+    --build-arg ETK_GIT_COMMIT="${GIT_COMMIT}" \
+    --build-arg ETK_BUILD_TIME="${BUILD_TIME}" \
+    --build-arg ETK_RELEASE_CHANNEL="test" \
+    -t "${WEB_TEST_IMAGE}" "${REPO_ROOT}"
 fi
 
 cp "${ENV_FILE}" "${BACKUP_FILE}"

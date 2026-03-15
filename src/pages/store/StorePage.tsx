@@ -26,6 +26,7 @@ const StorePage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [failedSlideIndexes, setFailedSlideIndexes] = useState<number[]>([]);
+  const [visibleCount, setVisibleCount] = useState(12);
   const activeSlides = (theme.slides || []).filter((slide): slide is AppearanceSlide => Boolean(slide?.image_url));
   const resolvedSlides = activeSlides.length > 0 ? activeSlides : defaultAppearance.slides;
   useEffect(() => {
@@ -35,6 +36,7 @@ const StorePage = () => {
   useEffect(() => {
     const categoryFromUrl = searchParams.get("category");
     setSelectedCategory(categoryFromUrl || null);
+    setVisibleCount(12);
   }, [searchParams]);
 
   useEffect(() => {
@@ -283,22 +285,46 @@ const StorePage = () => {
         )}
 
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
-            {filteredProducts.map(product => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                price={Number(product.price)}
-                stock={Number(product.stock)}
-                compare_price={product.compare_price ? Number(product.compare_price) : null}
-                image_url={product.image_url}
-                category_name={product.category_name}
-                custom_options={product.custom_options}
-                theme={theme}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
+              {filteredProducts.slice(0, visibleCount).map(product => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={Number(product.price)}
+                  stock={Number(product.stock)}
+                  compare_price={product.compare_price ? Number(product.compare_price) : null}
+                  image_url={product.image_url}
+                  category_name={product.category_name}
+                  custom_options={product.custom_options}
+                  theme={theme}
+                />
+              ))}
+            </div>
+
+            {visibleCount < filteredProducts.length && (
+              <div className="mt-10 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full bg-white px-8 py-3.5 text-sm font-bold shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:shadow-md hover:ring-gray-300 active:scale-95"
+                  style={{ color: tokens.textPrimary }}
+                >
+                  <div 
+                    className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-[0.04]" 
+                    style={{ backgroundColor: theme.accent_color }} 
+                  />
+                  <span>عرض المزيد من المنتجات</span>
+                  <span 
+                    className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-gray-100 px-1.5 text-[11px] font-black text-gray-500 transition-colors duration-300 group-hover:bg-gray-200 group-hover:text-gray-900"
+                  >
+                    +{filteredProducts.length - visibleCount}
+                  </span>
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-20">
             <ShoppingBag className="w-16 h-16 mx-auto mb-4" style={{ color: tokens.textSoft }} />

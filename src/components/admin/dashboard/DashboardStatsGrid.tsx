@@ -22,7 +22,7 @@ export default function DashboardStatsGrid({
   avgOrder,
 }: DashboardStatsGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
       <StatCard
         title="اجمالي المبيعات"
         value={formatPrice(totalSales)}
@@ -30,7 +30,7 @@ export default function DashboardStatsGrid({
         changeType="neutral"
         subtitle=""
         variant="red"
-        icon={<DollarSign className="w-6 h-6" />}
+        icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />}
       />
       <StatCard
         title="إجمالي الطلبات"
@@ -39,7 +39,7 @@ export default function DashboardStatsGrid({
         changeType="neutral"
         subtitle=""
         variant="orange"
-        icon={<PackageOpen className="w-6 h-6" />}
+        icon={<PackageOpen className="w-5 h-5 sm:w-6 sm:h-6" />}
       />
       <StatCard
         title="الطلبات الجديدة"
@@ -48,7 +48,7 @@ export default function DashboardStatsGrid({
         changeType="neutral"
         subtitle=""
         variant="green"
-        icon={<Users2 className="w-6 h-6" />}
+        icon={<Users2 className="w-5 h-5 sm:w-6 sm:h-6" />}
       />
       <StatCard
         title="متوسط سلة المشتريات"
@@ -57,7 +57,7 @@ export default function DashboardStatsGrid({
         changeType="neutral"
         subtitle=""
         variant="purple"
-        icon={<TrendingUp className="w-6 h-6" />}
+        icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />}
       />
     </div>
   );

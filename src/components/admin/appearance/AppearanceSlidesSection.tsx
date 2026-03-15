@@ -34,8 +34,8 @@ export default function AppearanceSlidesSection({
   onLinkChange,
 }: AppearanceSlidesSectionProps) {
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-7 space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+    <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-5 sm:p-7 space-y-5 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div className="flex items-center gap-3">
           {icon}
           <div>

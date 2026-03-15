@@ -25,6 +25,7 @@ const { ensureDefaultCategoryImages } = require('./utils/categoryDefaults');
 const { ensurePagesSlugIntegrity } = require('./utils/pagesIntegrity');
 const { ensureOrderSecuritySchema, ensureUserAccountSchema } = require('./utils/schemaMigrations');
 const { startCartCleanupJob } = require('./utils/cartCleanup');
+const { getVersionPayload } = require('./utils/versionInfo');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -90,6 +91,10 @@ app.get('/api/health', async (req, res) => {
   } catch (err) {
     res.status(500).json({ status: 'error', database: 'disconnected' });
   }
+});
+
+app.get('/api/health/version', (req, res) => {
+  res.json(getVersionPayload());
 });
 
 // ─── Global Error Handler ───

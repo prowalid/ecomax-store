@@ -40,14 +40,14 @@ const Analytics = () => {
         meta="محدّثة من الخادم"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="إجمالي الإيرادات" value={formatPrice(data.sales.totalRevenue)} change="" changeType="neutral" subtitle="الطلبات المسلّمة" />
         <StatCard title="إيرادات آخر 30 يوم" value={formatPrice(data.sales.monthRevenue)} change="" changeType="neutral" subtitle="من الطلبات المسلّمة" />
         <StatCard title="نسبة التأكيد" value={`${data.orders.confirmRate}%`} change="" changeType="neutral" subtitle={`من ${data.orders.total} طلب`} />
         <StatCard title="متوسط قيمة الطلب" value={formatPrice(data.sales.avgDeliveredOrderValue)} change="" changeType="neutral" subtitle="للطلبات المسلّمة" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="طلبات اليوم" value={String(data.orders.today)} change="" changeType="neutral" subtitle="بتوقيت الجزائر" />
         <StatCard title="طلبات الأسبوع" value={String(data.orders.week)} change="" changeType="neutral" subtitle="آخر 7 أيام" />
         <StatCard title="طلبات الشهر" value={String(data.orders.month)} change="" changeType="neutral" subtitle="آخر 30 يوم" />
