@@ -11,8 +11,8 @@ Options:
   --domain          Client domain, e.g. client-a.com
   --base-dir        Base directory for client stacks (default: /opt/client-stores)
   --edge-dir        Edge proxy directory (default: /opt/edge-proxy)
-  --api-image       API image tag (default: ghcr.io/walid733/express-trade-kit-api:v1.0.19)
-  --web-image       Web image tag (default: ghcr.io/walid733/express-trade-kit-web:v1.0.19)
+  --api-image       API image tag (default: ghcr.io/walid733/express-trade-kit-api:v1.0.24)
+  --web-image       Web image tag (default: ghcr.io/walid733/express-trade-kit-web:v1.0.24)
   --db-password     Database password (auto-generated if omitted)
   --jwt-secret      JWT secret (auto-generated if omitted)
   --up              Start the client stack after generating files
@@ -27,8 +27,8 @@ CLIENT_SLUG=""
 APP_DOMAIN=""
 BASE_DIR="/opt/client-stores"
 EDGE_DIR="/opt/edge-proxy"
-API_IMAGE="ghcr.io/walid733/express-trade-kit-api:v1.0.19"
-WEB_IMAGE="ghcr.io/walid733/express-trade-kit-web:v1.0.19"
+API_IMAGE="ghcr.io/walid733/express-trade-kit-api:v1.0.24"
+WEB_IMAGE="ghcr.io/walid733/express-trade-kit-web:v1.0.24"
 POSTGRES_PASSWORD=""
 JWT_SECRET=""
 START_STACK="false"
@@ -52,6 +52,11 @@ done
 
 if [[ -z "${CLIENT_SLUG}" || -z "${APP_DOMAIN}" ]]; then
   usage
+  exit 1
+fi
+
+if [[ "${API_IMAGE}" == *":stepdz-test" || "${WEB_IMAGE}" == *":stepdz-test" ]]; then
+  echo "Refusing test images for client stores. Use a released vX.Y.Z image instead." >&2
   exit 1
 fi
 
