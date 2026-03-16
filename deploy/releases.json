@@ -1,8 +1,16 @@
 {
   "latest": {
-    "stable": "v1.0.26"
+    "stable": "v1.0.27"
   },
   "releases": [
+    {
+      "version": "v1.0.27",
+      "channel": "stable",
+      "released_at": "2026-03-16T00:00:00Z",
+      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.27",
+      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.27",
+      "notes": "Admin settings drafts now survive tab switches and window refocus without wiping unsaved form input."
+    },
     {
       "version": "v1.0.26",
       "channel": "stable",
