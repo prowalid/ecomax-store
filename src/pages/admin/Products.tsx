@@ -308,6 +308,7 @@ const Products = () => {
             </button>
             <button
               onClick={openAdd}
+              data-testid="products-add-button"
               className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground shadow-button transition-opacity hover:opacity-95"
             >
               <Plus className="w-4 h-4" />
@@ -345,6 +346,7 @@ const Products = () => {
           placeholder="بحث عن منتج..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          data-testid="products-search-input"
           className="w-full h-9 pr-9 pl-3 rounded-lg border border-input bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
         />
       </div>

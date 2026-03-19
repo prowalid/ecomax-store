@@ -27,7 +27,10 @@ const DEFAULT: MarketingSettings = {
   },
 };
 
-type MarketingSettingsPayload = Partial<MarketingSettings>;
+type MarketingSettingsPayload = Partial<MarketingSettings> & {
+  facebook_pixel_id?: string;
+  access_token?: string;
+};
 
 export function useMarketingSettings() {
   const [settings, setSettings] = useState<MarketingSettings>(DEFAULT);

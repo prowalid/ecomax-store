@@ -40,6 +40,7 @@ export default function ProductDeleteDialog({
           <button
             onClick={onConfirm}
             disabled={pending}
+            data-testid="product-delete-confirm"
             className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حذف"}

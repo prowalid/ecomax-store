@@ -1,8 +1,16 @@
 {
   "latest": {
-    "stable": "v1.0.27"
+    "stable": "v1.0.28"
   },
   "releases": [
+    {
+      "version": "v1.0.28",
+      "channel": "stable",
+      "released_at": "2026-03-19T00:00:00Z",
+      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.28",
+      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.28",
+      "notes": "Cloud-readiness hardening, OpenAPI exposure, Grafana monitoring assets, structured deployment checklist, and production deployment verification improvements."
+    },
     {
       "version": "v1.0.27",
       "channel": "stable",

@@ -1,0 +1,263 @@
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Stable release version in the form vX.Y.Z"
+        required: true
+        type: string
+      deploy_stepdz:
+        description: "Deploy the released images to stepdz after publishing"
+        required: true
+        type: boolean
+        default: true
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/express-trade-kit-api
+  WEB_IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/express-trade-kit-web
+
+jobs:
+  release:
+    name: Build And Publish Release Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      release_version: ${{ steps.meta.outputs.release_version }}
+      api_image: ${{ steps.meta.outputs.api_image }}
+      web_image: ${{ steps.meta.outputs.web_image }}
+      build_time: ${{ steps.meta.outputs.build_time }}
+      git_commit: ${{ steps.meta.outputs.git_commit }}
+      should_deploy_stepdz: ${{ steps.meta.outputs.should_deploy_stepdz }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release metadata
+        id: meta
+        env:
+          INPUT_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
+          INPUT_DEPLOY_STEPDZ: ${{ github.event.inputs.deploy_stepdz }}
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            RELEASE_VERSION="${GITHUB_REF_NAME}"
+          else
+            RELEASE_VERSION="${INPUT_RELEASE_VERSION}"
+          fi
+
+          if [[ -z "${RELEASE_VERSION}" ]]; then
+            echo "release_version is required" >&2
+            exit 1
+          fi
+
+          if [[ ! "${RELEASE_VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release version: ${RELEASE_VERSION}" >&2
+            exit 1
+          fi
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" != "${RELEASE_VERSION}" ]]; then
+            echo "Tag name and release version input do not match" >&2
+            exit 1
+          fi
+
+          BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          GIT_COMMIT="$(git rev-parse --short HEAD)"
+          API_IMAGE="${API_IMAGE_REPO}:${RELEASE_VERSION}"
+          WEB_IMAGE="${WEB_IMAGE_REPO}:${RELEASE_VERSION}"
+
+          SHOULD_DEPLOY_STEPDZ="${INPUT_DEPLOY_STEPDZ:-true}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && -z "${INPUT_DEPLOY_STEPDZ}" ]]; then
+            SHOULD_DEPLOY_STEPDZ="true"
+          fi
+
+          echo "release_version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "build_time=${BUILD_TIME}" >> "$GITHUB_OUTPUT"
+          echo "git_commit=${GIT_COMMIT}" >> "$GITHUB_OUTPUT"
+          echo "api_image=${API_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "web_image=${WEB_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "should_deploy_stepdz=${SHOULD_DEPLOY_STEPDZ}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release manifest
+        env:
+          RELEASE_VERSION: ${{ steps.meta.outputs.release_version }}
+          API_IMAGE: ${{ steps.meta.outputs.api_image }}
+          WEB_IMAGE: ${{ steps.meta.outputs.web_image }}
+        run: |
+          node -e "
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('deploy/releases.json', 'utf8'));
+          const version = process.env.RELEASE_VERSION;
+          const apiImage = process.env.API_IMAGE;
+          const webImage = process.env.WEB_IMAGE;
+          const entry = manifest.releases?.find((item) => item.version === version);
+          const stable = manifest.latest?.stable;
+          if (!entry) {
+            console.error('Release manifest does not contain an entry for ' + version);
+            process.exit(1);
+          }
+          if (stable !== version) {
+            console.error('Release manifest latest.stable must match ' + version + ', found ' + stable);
+            process.exit(1);
+          }
+          if (entry.api_image !== apiImage || entry.web_image !== webImage) {
+            console.error('Release manifest image refs do not match this release version.');
+            process.exit(1);
+          }
+          "
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install server dependencies
+        run: npm ci --prefix server
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Run frontend tests
+        run: npm test
+
+      - name: Run server syntax checks
+        run: find server/src -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./server/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.api_image }}
+            ${{ env.API_IMAGE_REPO }}:latest
+          build-args: |
+            ETK_API_VERSION=${{ steps.meta.outputs.release_version }}
+            ETK_WEB_VERSION=${{ steps.meta.outputs.release_version }}
+            ETK_GIT_COMMIT=${{ steps.meta.outputs.git_commit }}
+            ETK_BUILD_TIME=${{ steps.meta.outputs.build_time }}
+            ETK_RELEASE_CHANNEL=stable
+            ETK_API_IMAGE_REF=${{ steps.meta.outputs.api_image }}
+            ETK_WEB_IMAGE_REF=${{ steps.meta.outputs.web_image }}
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.web
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.web_image }}
+            ${{ env.WEB_IMAGE_REPO }}:latest
+          build-args: |
+            ETK_WEB_VERSION=${{ steps.meta.outputs.release_version }}
+            ETK_GIT_COMMIT=${{ steps.meta.outputs.git_commit }}
+            ETK_BUILD_TIME=${{ steps.meta.outputs.build_time }}
+            ETK_RELEASE_CHANNEL=stable
+
+  deploy-stepdz:
+    name: Deploy Release To stepdz
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.should_deploy_stepdz == 'true'
+    environment: stepdz
+
+    steps:
+      - name: Deploy to stepdz over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          API_IMAGE: ${{ needs.release.outputs.api_image }}
+          WEB_IMAGE: ${{ needs.release.outputs.web_image }}
+          PROJECT_NAME: ${{ vars.STEPDZ_PROJECT_NAME || 'stepdz' }}
+          CLIENT_DIR: ${{ vars.STEPDZ_CLIENT_DIR || '/opt/client-stores/stepdz' }}
+        with:
+          host: ${{ secrets.STEPDZ_SERVER_HOST }}
+          username: ${{ secrets.STEPDZ_SERVER_USER }}
+          key: ${{ secrets.STEPDZ_SSH_PRIVATE_KEY }}
+          envs: API_IMAGE,WEB_IMAGE,PROJECT_NAME,CLIENT_DIR
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            ENV_FILE="${CLIENT_DIR}/.env.registry"
+            COMPOSE_FILE="${CLIENT_DIR}/docker-compose.yml"
+
+            if [[ ! -f "${ENV_FILE}" || ! -f "${COMPOSE_FILE}" ]]; then
+              echo "Missing stepdz stack files under ${CLIENT_DIR}" >&2
+              exit 1
+            fi
+
+            BACKUP_FILE="${ENV_FILE}.bak.$(date +%Y%m%d%H%M%S)"
+            cp "${ENV_FILE}" "${BACKUP_FILE}"
+
+            rollback() {
+              local exit_code=$?
+              if [[ $exit_code -ne 0 ]]; then
+                cp "${BACKUP_FILE}" "${ENV_FILE}"
+                docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d >/dev/null 2>&1 || true
+                echo "Deployment failed. Restored ${ENV_FILE} from backup." >&2
+                docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps >&2 || true
+                docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" logs --tail 80 api web >&2 || true
+              fi
+              return $exit_code
+            }
+
+            trap rollback EXIT
+
+            sed -i \
+              -e "s|^ETK_API_IMAGE=.*|ETK_API_IMAGE=${API_IMAGE}|" \
+              -e "s|^ETK_WEB_IMAGE=.*|ETK_WEB_IMAGE=${WEB_IMAGE}|" \
+              "${ENV_FILE}"
+
+            APP_DOMAIN="$(grep -E '^APP_DOMAIN=' "${ENV_FILE}" | cut -d'=' -f2- || true)"
+            EXPECTED_VERSION="${API_IMAGE##*:}"
+
+            docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" pull api web
+            docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --force-recreate api web
+
+            for i in $(seq 1 30); do
+              API_STATUS="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${PROJECT_NAME}-api-1" 2>/dev/null || true)"
+              HEALTH_OK="$(curl -fsS "https://${APP_DOMAIN}/api/health" 2>/dev/null || true)"
+              READY_OK="$(curl -fsS "https://${APP_DOMAIN}/api/health/ready" 2>/dev/null || true)"
+              VERSION_OK="$(curl -fsS "https://${APP_DOMAIN}/api/health/version" 2>/dev/null || true)"
+              OPENAPI_OK="$(curl -fsS "https://${APP_DOMAIN}/api/openapi.json" 2>/dev/null || true)"
+              if [[ "${API_STATUS}" == "healthy" ]] && [[ "${HEALTH_OK}" == *'"status":"ok"'* ]] && [[ "${READY_OK}" == *'"status":"ok"'* ]] && [[ "${VERSION_OK}" == *"\"api_version\":\"${EXPECTED_VERSION}\""* ]] && [[ "${OPENAPI_OK}" == *'"openapi":"3.0.3"'* || "${OPENAPI_OK}" == *'"openapi": "3.0.3"'* ]]; then
+                trap - EXIT
+                echo "stepdz deployment verified."
+                echo "${HEALTH_OK}"
+                echo "${VERSION_OK}"
+                echo "${OPENAPI_OK}"
+                docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
+                exit 0
+              fi
+              sleep 2
+            done
+
+            echo "Timed out waiting for stepdz readiness." >&2
+            exit 1

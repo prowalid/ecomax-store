@@ -11,7 +11,7 @@ import { useCreateOrder } from "@/hooks/useOrders";
 import { useCreateCustomer } from "@/hooks/useCustomers";
 import { useCart } from "@/hooks/useCart";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
-import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
+import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { ALGERIA_WILAYAS, normalizeAlgeriaLocationName } from "@/data/algeriaWilayas";
 import ProductCard from "@/components/store/ProductCard";
 import { toast } from "sonner";
@@ -105,8 +105,7 @@ const ProductPage = () => {
   const createCustomer = useCreateCustomer();
   const { addItem, isAdding, items, removeItemAsync } = useCart();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
-  const { settings: rawTheme, loading: themeLoading } = useAppearanceSettings();
-  const theme = themeLoading ? defaultAppearance : rawTheme;
+  const { settings: theme } = useAppearanceSettings();
   const tokens = getStoreThemeTokens(theme);
   const { track } = useTracking();
   const leadTrackedRef = useRef(false);

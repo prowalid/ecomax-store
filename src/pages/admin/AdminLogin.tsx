@@ -91,20 +91,24 @@ export default function AdminLogin() {
       title="لوحة التحكم"
       description="سجّل دخولك للوصول إلى لوحة الإدارة"
     >
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-4" autoComplete="on" noValidate>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500">رقم الهاتف</label>
+            <label htmlFor="admin-login-username" className="text-xs font-medium text-gray-500">رقم الهاتف</label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                 <Phone size={18} />
               </div>
               <input
+                id="admin-login-username"
+                name="username"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 required
                 disabled={requires2fa}
                 placeholder="0555123456"
+                autoComplete="username"
+                inputMode="tel"
                 dir="ltr"
                 className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)] disabled:opacity-50"
               />
@@ -113,7 +117,7 @@ export default function AdminLogin() {
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-gray-500">كلمة المرور</label>
+              <label htmlFor="admin-login-password" className="text-xs font-medium text-gray-500">كلمة المرور</label>
               <Link to="/admin/recover-password" className="text-[11px] font-bold text-[var(--auth-accent)] hover:underline">
                 نسيت كلمة المرور؟
               </Link>
@@ -123,12 +127,15 @@ export default function AdminLogin() {
                 <Lock size={18} />
               </div>
               <input
+                id="admin-login-password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={requires2fa}
                 placeholder="••••••••"
+                autoComplete="current-password"
                 dir="ltr"
                 className="w-full h-11 rounded-xl border border-slate-300 bg-white/80 pr-10 pl-4 text-slate-800 outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)] disabled:opacity-50"
               />
@@ -137,18 +144,22 @@ export default function AdminLogin() {
 
           {requires2fa && (
             <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-              <label className="text-xs font-medium text-[var(--auth-accent)]">كود المصادقة الثنائية من التطبيق</label>
+              <label htmlFor="admin-login-otp" className="text-xs font-medium text-[var(--auth-accent)]">كود المصادقة الثنائية من التطبيق</label>
               <div className="relative">
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--auth-accent)]/50 pointer-events-none">
                   <ShieldCheck size={18} />
                 </div>
                 <input
+                  id="admin-login-otp"
+                  name="one-time-code"
                   type="text"
                   value={twoFactorCode}
                   onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
                   required
                   placeholder="123456"
                   maxLength={6}
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
                   dir="ltr"
                   className="h-11 w-full rounded-xl border border-[var(--auth-accent-soft)] bg-[var(--auth-accent-softest)] pr-10 pl-4 text-center text-lg font-bold tracking-widest text-[var(--auth-accent)] outline-none transition-all focus:border-[var(--auth-accent)] focus:ring-2 focus:ring-[var(--auth-accent-soft)]"
                 />

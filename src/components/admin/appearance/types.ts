@@ -1,6 +1,21 @@
 import type { AppearanceSettings } from "@/hooks/useAppearanceSettings";
 
-export const colorFields: { key: keyof AppearanceSettings; label: string; group: string }[] = [
+export type AppearanceColorKey =
+  | "accent_color"
+  | "top_bar_bg"
+  | "top_bar_text"
+  | "header_bg"
+  | "header_text"
+  | "button_color"
+  | "button_text"
+  | "badge_bg"
+  | "badge_text"
+  | "body_bg"
+  | "footer_bg"
+  | "footer_text"
+  | "footer_accent";
+
+export const colorFields: { key: AppearanceColorKey; label: string; group: string }[] = [
   { key: "accent_color", label: "اللون الرئيسي (Accent)", group: "عام" },
   { key: "top_bar_bg", label: "خلفية الشريط العلوي", group: "الشريط العلوي" },
   { key: "top_bar_text", label: "نص الشريط العلوي", group: "الشريط العلوي" },
@@ -22,19 +37,7 @@ export interface AppearancePreset {
   description: string;
   colors: Pick<
     AppearanceSettings,
-    | "accent_color"
-    | "top_bar_bg"
-    | "top_bar_text"
-    | "header_bg"
-    | "header_text"
-    | "button_color"
-    | "button_text"
-    | "badge_bg"
-    | "badge_text"
-    | "body_bg"
-    | "footer_bg"
-    | "footer_text"
-    | "footer_accent"
+    AppearanceColorKey
   >;
 }
 

@@ -1,0 +1,800 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Express Trade Kit API",
+    "description": "OpenAPI contract for the stable HTTP surface exposed by the Express Trade Kit backend.",
+    "version": "1.1.0"
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "Current server API prefix"
+    }
+  ],
+  "tags": [
+    { "name": "Health" },
+    { "name": "Auth" },
+    { "name": "Orders" },
+    { "name": "Products" },
+    { "name": "Categories" },
+    { "name": "Settings" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "etk_access_token"
+      },
+      "metricsBearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Token"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Validation failed" },
+          "code": { "type": "string", "example": "VALIDATION_ERROR" },
+          "retryAfterSeconds": { "type": "integer", "nullable": true }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "time": { "type": "string", "format": "date-time" },
+          "database": { "type": "string", "example": "connected" },
+          "cache": { "type": "string", "example": "connected" },
+          "queue": { "type": "string", "example": "connected" },
+          "requestId": { "type": "string" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "phone": { "type": "string", "example": "0555123456" },
+          "role": { "type": "string", "example": "admin" },
+          "twoFactorEnabled": { "type": "boolean" }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "slug": { "type": "string", "nullable": true },
+          "sort_order": { "type": "integer" },
+          "image_url": { "type": "string", "nullable": true }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "price": { "type": "number" },
+          "compare_price": { "type": "number", "nullable": true },
+          "stock": { "type": "integer" },
+          "category_id": { "type": "string", "format": "uuid", "nullable": true },
+          "category_name": { "type": "string", "nullable": true },
+          "image_url": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["active", "draft", "archived"] }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "order_number": { "type": "integer" },
+          "customer_name": { "type": "string" },
+          "customer_phone": { "type": "string" },
+          "wilaya": { "type": "string", "nullable": true },
+          "commune": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true },
+          "delivery_type": { "type": "string", "enum": ["home", "desk"] },
+          "status": {
+            "type": "string",
+            "enum": ["new", "attempt", "no_answer", "confirmed", "ready", "shipped", "delivered", "returned", "cancelled"]
+          },
+          "subtotal": { "type": "number" },
+          "shipping_cost": { "type": "number" },
+          "total": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "order_id": { "type": "string", "format": "uuid" },
+          "product_id": { "type": "string", "format": "uuid", "nullable": true },
+          "product_name": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "unit_price": { "type": "number" },
+          "total": { "type": "number" },
+          "selected_options": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "SettingsEnvelope": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["phone", "password"],
+        "properties": {
+          "phone": { "type": "string", "example": "0555123456" },
+          "password": { "type": "string", "example": "secret123" },
+          "twoFactorCode": { "type": "string", "example": "123456" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["name", "phone", "password"],
+        "properties": {
+          "name": { "type": "string", "example": "Store Admin" },
+          "phone": { "type": "string", "example": "0555123456" },
+          "password": { "type": "string", "example": "secret123" }
+        }
+      },
+      "CreateProductRequest": {
+        "type": "object",
+        "required": ["name", "price"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "price": { "type": "number" },
+          "compare_price": { "type": "number", "nullable": true },
+          "stock": { "type": "integer" },
+          "category_id": { "type": "string", "format": "uuid", "nullable": true },
+          "status": { "type": "string", "enum": ["active", "draft", "archived"] },
+          "custom_options": {
+            "type": "array",
+            "items": { "type": "object", "additionalProperties": true }
+          }
+        }
+      },
+      "CreateCategoryRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string", "nullable": true },
+          "sort_order": { "type": "integer" },
+          "image_url": { "type": "string", "nullable": true }
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": ["customer_name", "customer_phone", "wilaya", "commune", "subtotal", "shipping_cost", "total", "items"],
+        "properties": {
+          "customer_name": { "type": "string" },
+          "customer_phone": { "type": "string" },
+          "customer_id": { "type": "string", "format": "uuid", "nullable": true },
+          "wilaya": { "type": "string" },
+          "commune": { "type": "string" },
+          "address": { "type": "string", "nullable": true },
+          "delivery_type": { "type": "string", "enum": ["home", "desk"] },
+          "subtotal": { "type": "number" },
+          "shipping_cost": { "type": "number" },
+          "total": { "type": "number" },
+          "note": { "type": "string", "nullable": true },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["product_id", "product_name", "quantity", "unit_price", "total"],
+              "properties": {
+                "product_id": { "type": "string", "format": "uuid" },
+                "product_name": { "type": "string" },
+                "quantity": { "type": "integer" },
+                "unit_price": { "type": "number" },
+                "total": { "type": "number" },
+                "selected_options": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/openapi.json": {
+      "get": {
+        "summary": "Get raw OpenAPI specification",
+        "tags": ["Health"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OpenAPI document"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Get full health status",
+        "tags": ["Health"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "Degraded response"
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "summary": "Get liveness probe",
+        "tags": ["Health"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Service process is alive" }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": "Get readiness probe",
+        "tags": ["Health"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Dependencies are ready" },
+          "503": { "description": "Dependencies are not ready" }
+        }
+      }
+    },
+    "/health/version": {
+      "get": {
+        "summary": "Get version payload",
+        "tags": ["Health"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Current and latest release metadata" }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Get Prometheus metrics",
+        "tags": ["Health"],
+        "security": [
+          { "metricsBearerAuth": [] }
+        ],
+        "responses": {
+          "200": { "description": "Prometheus metrics payload" },
+          "401": { "description": "Unauthorized metrics access" }
+        }
+      }
+    },
+    "/auth/setup-status": {
+      "get": {
+        "summary": "Check whether admin setup is complete",
+        "tags": ["Auth"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Setup status response" }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register the initial admin account",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Admin user created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Phone already exists",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Log in as admin",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Two-factor authentication required or forbidden"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh auth session from cookies",
+        "tags": ["Auth"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Session refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Log out current session",
+        "tags": ["Auth"],
+        "security": [],
+        "responses": {
+          "204": { "description": "Logged out" }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "summary": "List products",
+        "tags": ["Products"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "List of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Product" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create product",
+        "tags": ["Products"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateProductRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Product" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/products/{id}": {
+      "patch": {
+        "summary": "Update product",
+        "tags": ["Products"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateProductRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated product",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Product" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete product",
+        "tags": ["Products"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Product deleted" }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "summary": "List orders",
+        "tags": ["Orders"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Order" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create order",
+        "tags": ["Orders"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateOrderRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}/items": {
+      "get": {
+        "summary": "Get order items",
+        "tags": ["Orders"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order item list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/OrderItem" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}/status": {
+      "patch": {
+        "summary": "Update order status",
+        "tags": ["Orders"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["new", "attempt", "no_answer", "confirmed", "ready", "shipped", "delivered", "returned", "cancelled"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "List categories",
+        "tags": ["Categories"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "List of categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Category" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create category",
+        "tags": ["Categories"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCategoryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "patch": {
+        "summary": "Update category",
+        "tags": ["Categories"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCategoryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete category",
+        "tags": ["Categories"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Category deleted" }
+        }
+      }
+    },
+    "/settings/{key}": {
+      "get": {
+        "summary": "Get settings by key",
+        "tags": ["Settings"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "appearance" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SettingsEnvelope" }
+              }
+            }
+          },
+          "403": { "description": "Forbidden for sensitive key" }
+        }
+      },
+      "put": {
+        "summary": "Save settings by key",
+        "tags": ["Settings"],
+        "security": [
+          { "cookieAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "appearance" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SettingsEnvelope" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated settings envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SettingsEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

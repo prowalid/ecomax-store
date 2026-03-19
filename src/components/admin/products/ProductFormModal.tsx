@@ -85,6 +85,7 @@ export default function ProductFormModal({
       onClick={onClose}
     >
       <div
+        data-testid="product-form-modal"
         className="bg-white rounded-[24px] shadow-2xl border border-slate-100 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -159,6 +160,7 @@ export default function ProductFormModal({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
+                data-testid="product-upload-images-button"
                 className="h-9 px-4 flex items-center gap-2 rounded-lg border border-dashed border-input text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
               >
                 <Upload className="w-4 h-4" />
@@ -174,6 +176,7 @@ export default function ProductFormModal({
               value={form.name}
               onChange={(e) => onFieldChange("name", e.target.value)}
               placeholder="مثال: حذاء رياضي..."
+              data-testid="product-name-input"
               className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
             />
           </div>
@@ -195,6 +198,7 @@ export default function ProductFormModal({
                 onChange={(e) => onFieldChange("price", e.target.value)}
                 placeholder="0"
                 dir="ltr"
+                data-testid="product-price-input"
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               />
             </div>
@@ -213,14 +217,15 @@ export default function ProductFormModal({
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">المخزون</label>
-            <input
-              type="number"
-              value={form.stock}
-              onChange={(e) => onFieldChange("stock", e.target.value)}
-              placeholder="0"
-              dir="ltr"
-              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-            />
+              <input
+                type="number"
+                value={form.stock}
+                onChange={(e) => onFieldChange("stock", e.target.value)}
+                placeholder="0"
+                dir="ltr"
+                data-testid="product-stock-input"
+                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+              />
           </div>
 
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -307,6 +312,7 @@ export default function ProductFormModal({
               <select
                 value={form.category_id}
                 onChange={(e) => onFieldChange("category_id", e.target.value)}
+                data-testid="product-category-select"
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               >
                 <option value="">بدون تصنيف</option>
@@ -322,6 +328,7 @@ export default function ProductFormModal({
               <select
                 value={form.status}
                 onChange={(e) => onFieldChange("status", e.target.value)}
+                data-testid="product-status-select"
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               >
                 <option value="active">نشط</option>
@@ -342,6 +349,7 @@ export default function ProductFormModal({
           <button
             onClick={onSave}
             disabled={isSaving || !form.name.trim()}
+            data-testid="product-save-button"
             className="h-9 px-5 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

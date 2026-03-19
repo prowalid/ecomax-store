@@ -24,22 +24,28 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
   const [settings, setLocalSettings] = useState<T>(defaultValue);
   const [dirty, setDirty] = useState(false);
   const hydratedRef = useRef(false);
+  const settingsRef = useRef<T>(defaultValue);
 
   useEffect(() => {
     // Keep a local draft for forms so tab focus/refetches don't wipe unsaved edits.
     if (!hydratedRef.current || !dirty) {
       setLocalSettings(serverSettings);
+      settingsRef.current = serverSettings;
       hydratedRef.current = true;
     }
   }, [serverSettings, dirty]);
 
-  const { mutateAsync: saveSettings, isPending: saving } = useMutation({
+  const { mutateAsync: persistSettings, isPending: saving } = useMutation({
     mutationFn: async (newSettings: T) => {
-      await api.put(`/settings/${key}`, { value: newSettings });
+      const response = await api.put(`/settings/${key}`, { value: newSettings });
+      if (response && typeof response === "object" && "value" in response) {
+        return response.value as T;
+      }
       return newSettings;
     },
     onSuccess: (newSettings) => {
       qc.setQueryData(["store_settings", key], newSettings);
+      settingsRef.current = newSettings;
       setLocalSettings(newSettings);
       setDirty(false);
       toast.success("تم حفظ الإعدادات");
@@ -51,7 +57,15 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
 
   const setSettings = (val: T | ((prev: T) => T)) => {
     setDirty(true);
-    setLocalSettings((prev) => (typeof val === "function" ? (val as (prev: T) => T)(prev) : val));
+    const next = typeof val === "function" ? (val as (prev: T) => T)(settingsRef.current) : val;
+    settingsRef.current = next;
+    setLocalSettings(next);
+  };
+
+  const saveSettings = async (nextSettings?: T) => {
+    const valueToSave = nextSettings ?? settingsRef.current;
+    settingsRef.current = valueToSave;
+    return persistSettings(valueToSave);
   };
 
   return { settings, setSettings, loading, saving, saveSettings };

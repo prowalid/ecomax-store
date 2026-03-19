@@ -18,8 +18,7 @@ const StorePage = () => {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
   const { addItem, isAdding } = useCart();
-  const { settings: t, loading: themeLoading } = useAppearanceSettings();
-  const theme = themeLoading ? defaultAppearance : t;
+  const { settings: theme } = useAppearanceSettings();
   const tokens = getStoreThemeTokens(theme);
   const [searchParams, setSearchParams] = useSearchParams();
 

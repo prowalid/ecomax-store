@@ -12,6 +12,10 @@ export interface ProductImage {
   created_at: string;
 }
 
+interface UploadResponse {
+  url: string;
+}
+
 export function useProductImages(productId: string | null) {
   return useQuery({
     queryKey: ["product_images", productId],
@@ -28,7 +32,7 @@ export function useUploadProductImage() {
   return useMutation({
     mutationFn: async ({ productId, file }: { productId: string; file: File }) => {
       // 1. Upload file to backend storage
-      const uploadRes = await api.upload('/upload', file);
+      const uploadRes = (await api.upload('/upload', file)) as UploadResponse;
       
       const rootUrl = API_URL.endsWith("/api") ? API_URL.slice(0, -4) : API_URL;
       const fullUrl = rootUrl.startsWith("http")

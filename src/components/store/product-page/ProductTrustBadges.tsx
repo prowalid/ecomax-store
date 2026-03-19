@@ -1,5 +1,5 @@
 import { Globe, Headphones, RotateCcw, ShieldCheck } from "lucide-react";
-import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
+import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { getStoreThemeTokens } from "@/lib/storeTheme";
 
 const badges = [
@@ -10,8 +10,7 @@ const badges = [
 ];
 
 export default function ProductTrustBadges() {
-  const { settings: rawTheme, loading } = useAppearanceSettings();
-  const theme = loading ? defaultAppearance : rawTheme;
+  const { settings: theme } = useAppearanceSettings();
   const tokens = getStoreThemeTokens(theme);
 
   return (

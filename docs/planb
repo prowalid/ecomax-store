@@ -1,0 +1,3462 @@
+
+
+# تحليل شامل وخطة تحويل البنية إلى مستوى إنتاجي احترافي
+
+## أولاً: تشخيص المشاكل الحالية
+
+```
+المشكلة الجوهرية: البنية الحالية "مسطحة" - كل شيء يعرف كل شيء
+```
+
+```mermaid
+flowchart TD
+    subgraph "المشكلة الحالية"
+        R[Route] --> C[Controller]
+        C --> DB[(Database)]
+        C --> U[Utils]
+        C --> S[Services]
+    end
+
+    subgraph "النتيجة"
+        T1[تعديل المنتجات] -.يكسر.-> T2[الطلبات]
+        T2 -.يكسر.-> T3[السلة]
+        T3 -.يكسر.-> T4[الشحن]
+    end
+
+    style T1 fill:#ff6b6b
+    style T2 fill:#ff6b6b
+    style T3 fill:#ff6b6b
+    style T4 fill:#ff6b6b
+```
+
+### المشاكل بالتفصيل:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. التشابك (Tight Coupling)                                    │
+│     - Controller يتحدث مباشرة مع DB                             │
+│     - لا يوجد عقود (Interfaces) بين الطبقات                     │
+│     - تغيير جدول واحد يكسر 5 controllers                       │
+│                                                                  │
+│  2. غياب طبقة Domain                                            │
+│     - منطق الأعمال مبعثر بين Controllers و Utils                │
+│     - لا يوجد validation على مستوى الدومين                      │
+│     - القواعد التجارية مختلطة مع كود الـ HTTP                   │
+│                                                                  │
+│  3. غياب الاختبارات                                              │
+│     - لا unit tests                                              │
+│     - لا integration tests                                       │
+│     - لهذا أنت مضطر لفحص كل شيء يدوياً                         │
+│                                                                  │
+│  4. غياب طبقة Caching                                           │
+│     - كل طلب يذهب مباشرة لقاعدة البيانات                       │
+│     - لن يتحمل آلاف الطلبات                                     │
+│                                                                  │
+│  5. غياب نظام الأحداث (Events)                                  │
+│     - إنشاء طلب يجب أن يُطلق: إشعار + تحديث مخزون + تحليلات   │
+│     - حالياً كل هذا في controller واحد                          │
+│                                                                  │
+│  6. غياب Queue للعمليات الثقيلة                                  │
+│     - إرسال إشعارات WhatsApp                                     │
+│     - Facebook CAPI                                              │
+│     - معالجة الصور                                               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ثانياً: البنية المستهدفة - Clean Architecture
+
+```mermaid
+flowchart TD
+    subgraph "Presentation Layer"
+        HTTP[HTTP Routes + Controllers]
+    end
+
+    subgraph "Application Layer"
+        UC[Use Cases / Application Services]
+        DTO[DTOs - Data Transfer Objects]
+        EVT[Event Bus]
+    end
+
+    subgraph "Domain Layer"
+        ENT[Entities]
+        VO[Value Objects]
+        DR[Domain Rules]
+        RI[Repository Interfaces]
+    end
+
+    subgraph "Infrastructure Layer"
+        REPO[Repository Implementations]
+        CACHE[Cache - Redis]
+        QUEUE[Queue - BullMQ]
+        DB[(PostgreSQL)]
+        STORAGE[File Storage]
+        EXT[External APIs]
+    end
+
+    HTTP --> UC
+    UC --> ENT
+    UC --> RI
+    UC --> EVT
+    RI -.implemented by.-> REPO
+    REPO --> DB
+    REPO --> CACHE
+    EVT --> QUEUE
+    QUEUE --> EXT
+
+    style ENT fill:#4ecdc4,color:#000
+    style VO fill:#4ecdc4,color:#000
+    style DR fill:#4ecdc4,color:#000
+    style RI fill:#4ecdc4,color:#000
+```
+
+**القاعدة الذهبية: الطبقات الداخلية لا تعرف شيئاً عن الطبقات الخارجية**
+
+---
+
+## ثالثاً: هيكل المشروع الجديد
+
+```
+server/
+├── src/
+│   ├── index.js                          # نقطة الدخول
+│   ├── app.js                            # إعداد Express
+│   │
+│   ├── config/                           # الإعدادات
+│   │   ├── index.js                      # تجميع كل الإعدادات
+│   │   ├── database.js
+│   │   ├── redis.js
+│   │   ├── queue.js
+│   │   └── cors.js
+│   │
+│   ├── domain/                           # 💎 قلب النظام
+│   │   ├── entities/
+│   │   │   ├── Product.js
+│   │   │   ├── Order.js
+│   │   │   ├── OrderItem.js
+│   │   │   ├── Customer.js
+│   │   │   ├── Category.js
+│   │   │   ├── Cart.js
+│   │   │   ├── Page.js
+│   │   │   └── User.js
+│   │   │
+│   │   ├── value-objects/
+│   │   │   ├── Money.js
+│   │   │   ├── Email.js
+│   │   │   ├── Phone.js
+│   │   │   ├── Slug.js
+│   │   │   ├── OrderStatus.js
+│   │   │   └── Address.js
+│   │   │
+│   │   ├── errors/
+│   │   │   ├── DomainError.js
+│   │   │   ├── NotFoundError.js
+│   │   │   ├── ValidationError.js
+│   │   │   ├── AuthenticationError.js
+│   │   │   ├── AuthorizationError.js
+│   │   │   ├── ConflictError.js
+│   │   │   └── InsufficientStockError.js
+│   │   │
+│   │   ├── events/
+│   │   │   ├── OrderCreated.js
+│   │   │   ├── OrderStatusChanged.js
+│   │   │   ├── ProductStockUpdated.js
+│   │   │   ├── CustomerRegistered.js
+│   │   │   └── PaymentReceived.js
+│   │   │
+│   │   └── repositories/                 # عقود فقط - Interfaces
+│   │       ├── IProductRepository.js
+│   │       ├── IOrderRepository.js
+│   │       ├── ICustomerRepository.js
+│   │       ├── ICategoryRepository.js
+│   │       ├── ICartRepository.js
+│   │       ├── IPageRepository.js
+│   │       └── ISettingsRepository.js
+│   │
+│   ├── application/                      # 🔧 حالات الاستخدام
+│   │   ├── use-cases/
+│   │   │   ├── products/
+│   │   │   │   ├── CreateProduct.js
+│   │   │   │   ├── UpdateProduct.js
+│   │   │   │   ├── DeleteProduct.js
+│   │   │   │   ├── GetProduct.js
+│   │   │   │   ├── ListProducts.js
+│   │   │   │   └── UpdateStock.js
+│   │   │   │
+│   │   │   ├── orders/
+│   │   │   │   ├── CreateOrder.js
+│   │   │   │   ├── UpdateOrderStatus.js
+│   │   │   │   ├── GetOrder.js
+│   │   │   │   ├── ListOrders.js
+│   │   │   │   └── CancelOrder.js
+│   │   │   │
+│   │   │   ├── cart/
+│   │   │   │   ├── AddToCart.js
+│   │   │   │   ├── RemoveFromCart.js
+│   │   │   │   ├── UpdateCartItem.js
+│   │   │   │   ├── GetCart.js
+│   │   │   │   └── ClearCart.js
+│   │   │   │
+│   │   │   ├── customers/
+│   │   │   │   ├── CreateCustomer.js
+│   │   │   │   ├── GetCustomer.js
+│   │   │   │   └── ListCustomers.js
+│   │   │   │
+│   │   │   ├── auth/
+│   │   │   │   ├── Login.js
+│   │   │   │   ├── Logout.js
+│   │   │   │   ├── RefreshToken.js
+│   │   │   │   └── Setup.js
+│   │   │   │
+│   │   │   ├── categories/
+│   │   │   │   ├── CreateCategory.js
+│   │   │   │   ├── UpdateCategory.js
+│   │   │   │   ├── DeleteCategory.js
+│   │   │   │   └── ListCategories.js
+│   │   │   │
+│   │   │   ├── pages/
+│   │   │   │   ├── CreatePage.js
+│   │   │   │   ├── UpdatePage.js
+│   │   │   │   ├── DeletePage.js
+│   │   │   │   └── GetPage.js
+│   │   │   │
+│   │   │   └── settings/
+│   │   │       ├── GetSettings.js
+│   │   │       └── UpdateSettings.js
+│   │   │
+│   │   ├── dto/
+│   │   │   ├── ProductDTO.js
+│   │   │   ├── OrderDTO.js
+│   │   │   ├── CustomerDTO.js
+│   │   │   └── ...
+│   │   │
+│   │   ├── services/                     # خدمات التطبيق
+│   │   │   ├── EventBus.js
+│   │   │   ├── CacheService.js
+│   │   │   └── FileService.js
+│   │   │
+│   │   └── event-handlers/
+│   │       ├── OnOrderCreated.js
+│   │       ├── OnOrderStatusChanged.js
+│   │       └── OnProductStockUpdated.js
+│   │
+│   ├── infrastructure/                   # 🏗️ التنفيذ الفعلي
+│   │   ├── database/
+│   │   │   ├── connection.js
+│   │   │   ├── migrations/
+│   │   │   │   ├── 001_initial.sql
+│   │   │   │   ├── 002_add_indexes.sql
+│   │   │   │   └── runner.js
+│   │   │   └── seeds/
+│   │   │       └── demo-data.sql
+│   │   │
+│   │   ├── repositories/                 # تنفيذ العقود
+│   │   │   ├── PgProductRepository.js
+│   │   │   ├── PgOrderRepository.js
+│   │   │   ├── PgCustomerRepository.js
+│   │   │   ├── PgCategoryRepository.js
+│   │   │   ├── PgCartRepository.js
+│   │   │   ├── PgPageRepository.js
+│   │   │   └── PgSettingsRepository.js
+│   │   │
+│   │   ├── cache/
+│   │   │   ├── RedisCache.js
+│   │   │   └── InMemoryCache.js
+│   │   │
+│   │   ├── queue/
+│   │   │   ├── QueueManager.js
+│   │   │   └── workers/
+│   │   │       ├── NotificationWorker.js
+│   │   │       ├── AnalyticsWorker.js
+│   │   │       └── ImageProcessingWorker.js
+│   │   │
+│   │   ├── storage/
+│   │   │   ├── LocalStorage.js
+│   │   │   └── S3Storage.js
+│   │   │
+│   │   └── external/
+│   │       ├── WhatsAppService.js
+│   │       ├── FacebookCAPI.js
+│   │       └── ShippingProvider.js
+│   │
+│   ├── presentation/                     # 🌐 طبقة HTTP
+│   │   ├── routes/
+│   │   │   ├── index.js
+│   │   │   ├── auth.routes.js
+│   │   │   ├── product.routes.js
+│   │   │   ├── order.routes.js
+│   │   │   ├── cart.routes.js
+│   │   │   ├── category.routes.js
+│   │   │   ├── customer.routes.js
+│   │   │   ├── page.routes.js
+│   │   │   ├── settings.routes.js
+│   │   │   ├── upload.routes.js
+│   │   │   └── health.routes.js
+│   │   │
+│   │   ├── controllers/
+│   │   │   ├── ProductController.js
+│   │   │   ├── OrderController.js
+│   │   │   ├── CartController.js
+│   │   │   ├── AuthController.js
+│   │   │   ├── CategoryController.js
+│   │   │   ├── CustomerController.js
+│   │   │   ├── PageController.js
+│   │   │   ├── SettingsController.js
+│   │   │   └── UploadController.js
+│   │   │
+│   │   ├── middleware/
+│   │   │   ├── auth.js
+│   │   │   ├── errorHandler.js
+│   │   │   ├── rateLimiter.js
+│   │   │   ├── requestLogger.js
+│   │   │   ├── security.js
+│   │   │   └── validate.js
+│   │   │
+│   │   └── validators/
+│   │       ├── product.validator.js
+│   │       ├── order.validator.js
+│   │       ├── auth.validator.js
+│   │       └── ...
+│   │
+│   └── container.js                      # 🔌 Dependency Injection
+│
+├── tests/
+│   ├── unit/
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── Product.test.js
+│   │   │   │   └── Order.test.js
+│   │   │   └── value-objects/
+│   │   │       ├── Money.test.js
+│   │   │       └── Email.test.js
+│   │   │
+│   │   └── application/
+│   │       ├── CreateOrder.test.js
+│   │       └── UpdateStock.test.js
+│   │
+│   ├── integration/
+│   │   ├── repositories/
+│   │   │   ├── ProductRepo.test.js
+│   │   │   └── OrderRepo.test.js
+│   │   └── api/
+│   │       ├── products.test.js
+│   │       └── orders.test.js
+│   │
+│   ├── e2e/
+│   │   └── checkout-flow.test.js
+│   │
+│   └── helpers/
+│       ├── testDb.js
+│       ├── factories.js
+│       └── mocks.js
+│
+└── package.json
+```
+
+---
+
+## رابعاً: التنفيذ التفصيلي لكل طبقة
+
+### 4.1 طبقة Domain - القلب
+
+هذه الطبقة **لا تعتمد على أي مكتبة خارجية**. فقط JavaScript خالص.
+
+#### Value Objects
+
+```javascript
+// server/src/domain/value-objects/Money.js
+
+class Money {
+  #amount;
+  #currency;
+
+  constructor(amount, currency = 'SAR') {
+    if (typeof amount !== 'number' || isNaN(amount)) {
+      throw new Error('المبلغ يجب أن يكون رقماً صالحاً');
+    }
+    if (amount < 0) {
+      throw new Error('المبلغ لا يمكن أن يكون سالباً');
+    }
+
+    // تخزين بالهللة/السنت لتجنب مشاكل الأرقام العشرية
+    this.#amount = Math.round(amount * 100);
+    this.#currency = currency;
+  }
+
+  get value() {
+    return this.#amount / 100;
+  }
+
+  get currency() {
+    return this.#currency;
+  }
+
+  add(other) {
+    this.#assertSameCurrency(other);
+    return new Money((this.#amount + other.#amount) / 100, this.#currency);
+  }
+
+  subtract(other) {
+    this.#assertSameCurrency(other);
+    const result = this.#amount - other.#amount;
+    if (result < 0) {
+      throw new Error('النتيجة لا يمكن أن تكون سالبة');
+    }
+    return new Money(result / 100, this.#currency);
+  }
+
+  multiply(factor) {
+    return new Money((this.#amount * factor) / 100, this.#currency);
+  }
+
+  equals(other) {
+    return other instanceof Money
+      && this.#amount === other.#amount
+      && this.#currency === other.#currency;
+  }
+
+  isZero() {
+    return this.#amount === 0;
+  }
+
+  format() {
+    return `${this.value.toFixed(2)} ${this.#currency}`;
+  }
+
+  toJSON() {
+    return { amount: this.value, currency: this.#currency };
+  }
+
+  #assertSameCurrency(other) {
+    if (!(other instanceof Money)) {
+      throw new Error('يجب أن يكون الطرف الآخر من نوع Money');
+    }
+    if (this.#currency !== other.#currency) {
+      throw new Error('لا يمكن إجراء عمليات على عملات مختلفة');
+    }
+  }
+}
+
+module.exports = Money;
+```
+
+```javascript
+// server/src/domain/value-objects/Email.js
+
+class Email {
+  #value;
+
+  constructor(value) {
+    if (!value || typeof value !== 'string') {
+      throw new Error('البريد الإلكتروني مطلوب');
+    }
+
+    const normalized = value.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalized)) {
+      throw new Error('صيغة البريد الإلكتروني غير صالحة');
+    }
+
+    this.#value = normalized;
+  }
+
+  get value() {
+    return this.#value;
+  }
+
+  equals(other) {
+    return other instanceof Email && this.#value === other.#value;
+  }
+
+  toString() {
+    return this.#value;
+  }
+}
+
+module.exports = Email;
+```
+
+```javascript
+// server/src/domain/value-objects/Phone.js
+
+class Phone {
+  #value;
+
+  constructor(value) {
+    if (!value || typeof value !== 'string') {
+      throw new Error('رقم الهاتف مطلوب');
+    }
+
+    // تنظيف الرقم
+    const cleaned = value.replace(/[\s\-\(\)]/g, '');
+
+    // التحقق من الصيغة
+    if (!/^\+?\d{9,15}$/.test(cleaned)) {
+      throw new Error('صيغة رقم الهاتف غير صالحة');
+    }
+
+    this.#value = cleaned;
+  }
+
+  get value() {
+    return this.#value;
+  }
+
+  // تحويل لصيغة WhatsApp
+  toWhatsApp() {
+    const num = this.#value.startsWith('+')
+      ? this.#value.slice(1)
+      : this.#value;
+    return num;
+  }
+
+  equals(other) {
+    return other instanceof Phone && this.#value === other.#value;
+  }
+
+  toString() {
+    return this.#value;
+  }
+}
+
+module.exports = Phone;
+```
+
+```javascript
+// server/src/domain/value-objects/OrderStatus.js
+
+class OrderStatus {
+  static PENDING = 'pending';
+  static CONFIRMED = 'confirmed';
+  static PROCESSING = 'processing';
+  static SHIPPED = 'shipped';
+  static DELIVERED = 'delivered';
+  static CANCELLED = 'cancelled';
+  static RETURNED = 'returned';
+
+  // ✅ خريطة الانتقالات المسموحة
+  static #transitions = {
+    [OrderStatus.PENDING]:    [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+    [OrderStatus.CONFIRMED]:  [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+    [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+    [OrderStatus.SHIPPED]:    [OrderStatus.DELIVERED, OrderStatus.RETURNED],
+    [OrderStatus.DELIVERED]:  [OrderStatus.RETURNED],
+    [OrderStatus.CANCELLED]:  [],
+    [OrderStatus.RETURNED]:   [],
+  };
+
+  #value;
+
+  constructor(value) {
+    const allStatuses = Object.values(OrderStatus)
+      .filter(v => typeof v === 'string');
+
+    if (!allStatuses.includes(value)) {
+      throw new Error(`حالة الطلب غير معروفة: ${value}`);
+    }
+
+    this.#value = value;
+  }
+
+  get value() {
+    return this.#value;
+  }
+
+  canTransitionTo(newStatus) {
+    const allowed = OrderStatus.#transitions[this.#value] || [];
+    return allowed.includes(
+      newStatus instanceof OrderStatus ? newStatus.value : newStatus
+    );
+  }
+
+  transitionTo(newStatusValue) {
+    if (!this.canTransitionTo(newStatusValue)) {
+      throw new Error(
+        `لا يمكن تغيير حالة الطلب من "${this.#value}" إلى "${newStatusValue}"`
+      );
+    }
+    return new OrderStatus(newStatusValue);
+  }
+
+  isFinal() {
+    return [OrderStatus.CANCELLED, OrderStatus.RETURNED, OrderStatus.DELIVERED]
+      .includes(this.#value);
+  }
+
+  equals(other) {
+    return other instanceof OrderStatus && this.#value === other.#value;
+  }
+
+  toString() {
+    return this.#value;
+  }
+}
+
+module.exports = OrderStatus;
+```
+
+```javascript
+// server/src/domain/value-objects/Address.js
+
+class Address {
+  constructor({ city, area, street, building, floor, apartment, notes }) {
+    if (!city || !city.trim()) {
+      throw new Error('المدينة مطلوبة');
+    }
+
+    this.city = city.trim();
+    this.area = area?.trim() || '';
+    this.street = street?.trim() || '';
+    this.building = building?.trim() || '';
+    this.floor = floor?.trim() || '';
+    this.apartment = apartment?.trim() || '';
+    this.notes = notes?.trim() || '';
+
+    Object.freeze(this);
+  }
+
+  format() {
+    const parts = [
+      this.city,
+      this.area,
+      this.street,
+      this.building,
+    ].filter(Boolean);
+    return parts.join('، ');
+  }
+
+  toJSON() {
+    return {
+      city: this.city,
+      area: this.area,
+      street: this.street,
+      building: this.building,
+      floor: this.floor,
+      apartment: this.apartment,
+      notes: this.notes,
+    };
+  }
+}
+
+module.exports = Address;
+```
+
+```javascript
+// server/src/domain/value-objects/Slug.js
+
+class Slug {
+  #value;
+
+  constructor(value) {
+    if (!value || typeof value !== 'string') {
+      throw new Error('الرابط المختصر مطلوب');
+    }
+
+    this.#value = Slug.#generate(value);
+  }
+
+  static fromText(text) {
+    return new Slug(text);
+  }
+
+  get value() {
+    return this.#value;
+  }
+
+  static #generate(text) {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\u0621-\u064Aa-z0-9\-]/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
+  equals(other) {
+    return other instanceof Slug && this.#value === other.#value;
+  }
+
+  toString() {
+    return this.#value;
+  }
+}
+
+module.exports = Slug;
+```
+
+#### Entities
+
+```javascript
+// server/src/domain/entities/Product.js
+
+const Money = require('../value-objects/Money');
+
+class Product {
+  #id;
+  #name;
+  #slug;
+  #description;
+  #price;
+  #compareAtPrice;
+  #cost;
+  #sku;
+  #stock;
+  #trackStock;
+  #categoryId;
+  #images;
+  #isActive;
+  #createdAt;
+  #updatedAt;
+
+  constructor({
+    id,
+    name,
+    slug,
+    description,
+    price,
+    compareAtPrice,
+    cost,
+    sku,
+    stock,
+    trackStock,
+    categoryId,
+    images,
+    isActive,
+    createdAt,
+    updatedAt,
+  }) {
+    // ✅ التحقق على مستوى الدومين
+    if (!name || name.trim().length < 2) {
+      throw new Error('اسم المنتج يجب أن يكون حرفين على الأقل');
+    }
+
+    this.#id = id || null;
+    this.#name = name.trim();
+    this.#slug = slug;
+    this.#description = description || '';
+    this.#price = price instanceof Money ? price : new Money(price);
+    this.#compareAtPrice = compareAtPrice
+      ? (compareAtPrice instanceof Money ? compareAtPrice : new Money(compareAtPrice))
+      : null;
+    this.#cost = cost
+      ? (cost instanceof Money ? cost : new Money(cost))
+      : null;
+    this.#sku = sku || null;
+    this.#stock = typeof stock === 'number' ? stock : 0;
+    this.#trackStock = trackStock !== false;
+    this.#categoryId = categoryId || null;
+    this.#images = images || [];
+    this.#isActive = isActive !== false;
+    this.#createdAt = createdAt || new Date();
+    this.#updatedAt = updatedAt || new Date();
+  }
+
+  // Getters
+  get id() { return this.#id; }
+  get name() { return this.#name; }
+  get slug() { return this.#slug; }
+  get description() { return this.#description; }
+  get price() { return this.#price; }
+  get compareAtPrice() { return this.#compareAtPrice; }
+  get cost() { return this.#cost; }
+  get sku() { return this.#sku; }
+  get stock() { return this.#stock; }
+  get trackStock() { return this.#trackStock; }
+  get categoryId() { return this.#categoryId; }
+  get images() { return [...this.#images]; }
+  get isActive() { return this.#isActive; }
+  get createdAt() { return this.#createdAt; }
+  get updatedAt() { return this.#updatedAt; }
+
+  // ✅ سلوكيات الدومين (Business Logic)
+
+  isInStock() {
+    if (!this.#trackStock) return true;
+    return this.#stock > 0;
+  }
+
+  hasEnoughStock(quantity) {
+    if (!this.#trackStock) return true;
+    return this.#stock >= quantity;
+  }
+
+  decreaseStock(quantity) {
+    if (!this.#trackStock) return;
+
+    if (quantity <= 0) {
+      throw new Error('الكمية يجب أن تكون أكبر من صفر');
+    }
+
+    if (!this.hasEnoughStock(quantity)) {
+      throw new Error(
+        `الكمية المطلوبة (${quantity}) أكبر من المتوفر (${this.#stock}) للمنتج "${this.#name}"`
+      );
+    }
+
+    this.#stock -= quantity;
+    this.#updatedAt = new Date();
+  }
+
+  increaseStock(quantity) {
+    if (!this.#trackStock) return;
+
+    if (quantity <= 0) {
+      throw new Error('الكمية يجب أن تكون أكبر من صفر');
+    }
+
+    this.#stock += quantity;
+    this.#updatedAt = new Date();
+  }
+
+  hasDiscount() {
+    return this.#compareAtPrice !== null
+      && this.#compareAtPrice.value > this.#price.value;
+  }
+
+  getDiscountPercentage() {
+    if (!this.hasDiscount()) return 0;
+    return Math.round(
+      (1 - this.#price.value / this.#compareAtPrice.value) * 100
+    );
+  }
+
+  getProfit() {
+    if (!this.#cost) return null;
+    return this.#price.subtract(this.#cost);
+  }
+
+  activate() {
+    this.#isActive = true;
+    this.#updatedAt = new Date();
+  }
+
+  deactivate() {
+    this.#isActive = false;
+    this.#updatedAt = new Date();
+  }
+
+  updateDetails({ name, description, price, compareAtPrice, cost, sku, categoryId }) {
+    if (name !== undefined) {
+      if (!name || name.trim().length < 2) {
+        throw new Error('اسم المنتج يجب أن يكون حرفين على الأقل');
+      }
+      this.#name = name.trim();
+    }
+
+    if (description !== undefined) this.#description = description;
+    if (price !== undefined) this.#price = new Money(price);
+    if (compareAtPrice !== undefined) {
+      this.#compareAtPrice = compareAtPrice ? new Money(compareAtPrice) : null;
+    }
+    if (cost !== undefined) this.#cost = cost ? new Money(cost) : null;
+    if (sku !== undefined) this.#sku = sku;
+    if (categoryId !== undefined) this.#categoryId = categoryId;
+
+    this.#updatedAt = new Date();
+  }
+
+  // تحويل للتخزين
+  toJSON() {
+    return {
+      id: this.#id,
+      name: this.#name,
+      slug: this.#slug,
+      description: this.#description,
+      price: this.#price.value,
+      compare_at_price: this.#compareAtPrice?.value || null,
+      cost: this.#cost?.value || null,
+      sku: this.#sku,
+      stock: this.#stock,
+      track_stock: this.#trackStock,
+      category_id: this.#categoryId,
+      images: this.#images,
+      is_active: this.#isActive,
+      created_at: this.#createdAt,
+      updated_at: this.#updatedAt,
+    };
+  }
+}
+
+module.exports = Product;
+```
+
+```javascript
+// server/src/domain/entities/Order.js
+
+const Money = require('../value-objects/Money');
+const OrderStatus = require('../value-objects/OrderStatus');
+
+class Order {
+  #id;
+  #orderNumber;
+  #customerId;
+  #items;
+  #status;
+  #subtotal;
+  #shippingCost;
+  #discount;
+  #total;
+  #shippingAddress;
+  #notes;
+  #createdAt;
+  #updatedAt;
+
+  constructor({
+    id, orderNumber, customerId, items, status,
+    subtotal, shippingCost, discount, total,
+    shippingAddress, notes, createdAt, updatedAt,
+  }) {
+    if (!items || items.length === 0) {
+      throw new Error('الطلب يجب أن يحتوي على عنصر واحد على الأقل');
+    }
+
+    if (!customerId) {
+      throw new Error('معرف العميل مطلوب');
+    }
+
+    this.#id = id || null;
+    this.#orderNumber = orderNumber || Order.#generateOrderNumber();
+    this.#customerId = customerId;
+    this.#items = items;
+    this.#status = status instanceof OrderStatus
+      ? status
+      : new OrderStatus(status || OrderStatus.PENDING);
+
+    this.#subtotal = subtotal instanceof Money ? subtotal : new Money(subtotal);
+    this.#shippingCost = shippingCost instanceof Money
+      ? shippingCost
+      : new Money(shippingCost || 0);
+    this.#discount = discount instanceof Money
+      ? discount
+      : new Money(discount || 0);
+
+    // حساب الإجمالي
+    if (total) {
+      this.#total = total instanceof Money ? total : new Money(total);
+    } else {
+      this.#total = this.#calculateTotal();
+    }
+
+    this.#shippingAddress = shippingAddress;
+    this.#notes = notes || '';
+    this.#createdAt = createdAt || new Date();
+    this.#updatedAt = updatedAt || new Date();
+  }
+
+  // Getters
+  get id() { return this.#id; }
+  get orderNumber() { return this.#orderNumber; }
+  get customerId() { return this.#customerId; }
+  get items() { return [...this.#items]; }
+  get status() { return this.#status; }
+  get subtotal() { return this.#subtotal; }
+  get shippingCost() { return this.#shippingCost; }
+  get discount() { return this.#discount; }
+  get total() { return this.#total; }
+  get shippingAddress() { return this.#shippingAddress; }
+  get notes() { return this.#notes; }
+  get createdAt() { return this.#createdAt; }
+
+  // ✅ سلوكيات الدومين
+
+  changeStatus(newStatus) {
+    const previous = this.#status.value;
+    this.#status = this.#status.transitionTo(newStatus);
+    this.#updatedAt = new Date();
+
+    // إرجاع معلومات التغيير لأجل الأحداث
+    return {
+      orderId: this.#id,
+      orderNumber: this.#orderNumber,
+      previousStatus: previous,
+      newStatus: this.#status.value,
+    };
+  }
+
+  cancel(reason) {
+    if (this.#status.isFinal()) {
+      throw new Error('لا يمكن إلغاء طلب في حالته النهائية');
+    }
+    this.changeStatus(OrderStatus.CANCELLED);
+    this.#notes = reason
+      ? `${this.#notes}\nسبب الإلغاء: ${reason}`.trim()
+      : this.#notes;
+  }
+
+  isPaid() {
+    return [
+      OrderStatus.CONFIRMED,
+      OrderStatus.PROCESSING,
+      OrderStatus.SHIPPED,
+      OrderStatus.DELIVERED,
+    ].includes(this.#status.value);
+  }
+
+  canBeEdited() {
+    return [OrderStatus.PENDING, OrderStatus.CONFIRMED]
+      .includes(this.#status.value);
+  }
+
+  getItemCount() {
+    return this.#items.reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  #calculateTotal() {
+    return this.#subtotal
+      .add(this.#shippingCost)
+      .subtract(this.#discount);
+  }
+
+  static #generateOrderNumber() {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `ORD-${timestamp}-${random}`;
+  }
+
+  toJSON() {
+    return {
+      id: this.#id,
+      order_number: this.#orderNumber,
+      customer_id: this.#customerId,
+      items: this.#items,
+      status: this.#status.value,
+      subtotal: this.#subtotal.value,
+      shipping_cost: this.#shippingCost.value,
+      discount: this.#discount.value,
+      total: this.#total.value,
+      shipping_address: this.#shippingAddress,
+      notes: this.#notes,
+      created_at: this.#createdAt,
+      updated_at: this.#updatedAt,
+    };
+  }
+}
+
+module.exports = Order;
+```
+
+```javascript
+// server/src/domain/entities/Customer.js
+
+const Email = require('../value-objects/Email');
+const Phone = require('../value-objects/Phone');
+
+class Customer {
+  #id;
+  #name;
+  #email;
+  #phone;
+  #address;
+  #totalOrders;
+  #totalSpent;
+  #notes;
+  #isBlocked;
+  #createdAt;
+
+  constructor({
+    id, name, email, phone, address,
+    totalOrders, totalSpent, notes, isBlocked, createdAt,
+  }) {
+    if (!name || name.trim().length < 2) {
+      throw new Error('اسم العميل يجب أن يكون حرفين على الأقل');
+    }
+    if (!phone) {
+      throw new Error('رقم الهاتف مطلوب');
+    }
+
+    this.#id = id || null;
+    this.#name = name.trim();
+    this.#email = email ? new Email(email) : null;
+    this.#phone = phone instanceof Phone ? phone : new Phone(phone);
+    this.#address = address || null;
+    this.#totalOrders = totalOrders || 0;
+    this.#totalSpent = totalSpent || 0;
+    this.#notes = notes || '';
+    this.#isBlocked = isBlocked || false;
+    this.#createdAt = createdAt || new Date();
+  }
+
+  get id() { return this.#id; }
+  get name() { return this.#name; }
+  get email() { return this.#email; }
+  get phone() { return this.#phone; }
+  get address() { return this.#address; }
+  get totalOrders() { return this.#totalOrders; }
+  get totalSpent() { return this.#totalSpent; }
+  get isBlocked() { return this.#isBlocked; }
+
+  recordOrder(amount) {
+    this.#totalOrders += 1;
+    this.#totalSpent += amount;
+  }
+
+  block() {
+    this.#isBlocked = true;
+  }
+
+  unblock() {
+    this.#isBlocked = false;
+  }
+
+  isVIP(threshold = 1000) {
+    return this.#totalSpent >= threshold;
+  }
+
+  toJSON() {
+    return {
+      id: this.#id,
+      name: this.#name,
+      email: this.#email?.value || null,
+      phone: this.#phone.value,
+      address: this.#address,
+      total_orders: this.#totalOrders,
+      total_spent: this.#totalSpent,
+      notes: this.#notes,
+      is_blocked: this.#isBlocked,
+      created_at: this.#createdAt,
+    };
+  }
+}
+
+module.exports = Customer;
+```
+
+#### Domain Errors
+
+```javascript
+// server/src/domain/errors/DomainError.js
+
+class DomainError extends Error {
+  constructor(message, code = 'DOMAIN_ERROR') {
+    super(message);
+    this.name = this.constructor.name;
+    this.code = code;
+    this.isOperational = true;
+  }
+}
+
+module.exports = DomainError;
+```
+
+```javascript
+// server/src/domain/errors/NotFoundError.js
+
+const DomainError = require('./DomainError');
+
+class NotFoundError extends DomainError {
+  constructor(entity, identifier) {
+    super(`${entity} غير موجود: ${identifier}`, 'NOT_FOUND');
+    this.entity = entity;
+    this.identifier = identifier;
+    this.statusCode = 404;
+  }
+}
+
+module.exports = NotFoundError;
+```
+
+```javascript
+// server/src/domain/errors/ValidationError.js
+
+const DomainError = require('./DomainError');
+
+class ValidationError extends DomainError {
+  constructor(message, errors = []) {
+    super(message, 'VALIDATION_ERROR');
+    this.errors = errors;
+    this.statusCode = 400;
+  }
+}
+
+module.exports = ValidationError;
+```
+
+```javascript
+// server/src/domain/errors/InsufficientStockError.js
+
+const DomainError = require('./DomainError');
+
+class InsufficientStockError extends DomainError {
+  constructor(productName, requested, available) {
+    super(
+      `الكمية المطلوبة (${requested}) من "${productName}" أكبر من المتوفر (${available})`,
+      'INSUFFICIENT_STOCK'
+    );
+    this.productName = productName;
+    this.requested = requested;
+    this.available = available;
+    this.statusCode = 409;
+  }
+}
+
+module.exports = InsufficientStockError;
+```
+
+```javascript
+// server/src/domain/errors/AuthenticationError.js
+
+const DomainError = require('./DomainError');
+
+class AuthenticationError extends DomainError {
+  constructor(message = 'غير مصرح') {
+    super(message, 'AUTHENTICATION_ERROR');
+    this.statusCode = 401;
+  }
+}
+
+module.exports = AuthenticationError;
+```
+
+#### Domain Events
+
+```javascript
+// server/src/domain/events/OrderCreated.js
+
+class OrderCreated {
+  constructor(order, customer) {
+    this.name = 'order.created';
+    this.timestamp = new Date();
+    this.payload = {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerPhone: customer.phone.value,
+      total: order.total.value,
+      itemCount: order.getItemCount(),
+      items: order.items,
+    };
+  }
+}
+
+module.exports = OrderCreated;
+```
+
+```javascript
+// server/src/domain/events/OrderStatusChanged.js
+
+class OrderStatusChanged {
+  constructor({ orderId, orderNumber, previousStatus, newStatus, customerId }) {
+    this.name = 'order.status_changed';
+    this.timestamp = new Date();
+    this.payload = {
+      orderId,
+      orderNumber,
+      previousStatus,
+      newStatus,
+      customerId,
+    };
+  }
+}
+
+module.exports = OrderStatusChanged;
+```
+
+#### Repository Interfaces (العقود)
+
+```javascript
+// server/src/domain/repositories/IProductRepository.js
+
+/**
+ * عقد مستودع المنتجات
+ *
+ * كل implementation يجب أن ينفذ هذه الوظائف
+ */
+class IProductRepository {
+  async findById(id) {
+    throw new Error('يجب تنفيذ findById');
+  }
+
+  async findBySlug(slug) {
+    throw new Error('يجب تنفيذ findBySlug');
+  }
+
+  async findAll({ page, limit, categoryId, search, isActive }) {
+    throw new Error('يجب تنفيذ findAll');
+  }
+
+  async save(product) {
+    throw new Error('يجب تنفيذ save');
+  }
+
+  async delete(id) {
+    throw new Error('يجب تنفيذ delete');
+  }
+
+  async updateStock(id, quantity) {
+    throw new Error('يجب تنفيذ updateStock');
+  }
+
+  async existsBySku(sku, excludeId) {
+    throw new Error('يجب تنفيذ existsBySku');
+  }
+}
+
+module.exports = IProductRepository;
+```
+
+```javascript
+// server/src/domain/repositories/IOrderRepository.js
+
+class IOrderRepository {
+  async findById(id) {
+    throw new Error('يجب تنفيذ findById');
+  }
+
+  async findByOrderNumber(orderNumber) {
+    throw new Error('يجب تنفيذ findByOrderNumber');
+  }
+
+  async findAll({ page, limit, status, customerId, dateFrom, dateTo }) {
+    throw new Error('يجب تنفيذ findAll');
+  }
+
+  async save(order) {
+    throw new Error('يجب تنفيذ save');
+  }
+
+  async updateStatus(id, status) {
+    throw new Error('يجب تنفيذ updateStatus');
+  }
+
+  async countByStatus() {
+    throw new Error('يجب تنفيذ countByStatus');
+  }
+
+  async getRevenueStats(dateFrom, dateTo) {
+    throw new Error('يجب تنفيذ getRevenueStats');
+  }
+}
+
+module.exports = IOrderRepository;
+```
+
+---
+
+### 4.2 طبقة Application - حالات الاستخدام
+
+```javascript
+// server/src/application/use-cases/orders/CreateOrder.js
+
+const Order = require('../../../domain/entities/Order');
+const Customer = require('../../../domain/entities/Customer');
+const OrderCreated = require('../../../domain/events/OrderCreated');
+const NotFoundError = require('../../../domain/errors/NotFoundError');
+const InsufficientStockError = require('../../../domain/errors/InsufficientStockError');
+
+class CreateOrder {
+  #orderRepo;
+  #productRepo;
+  #customerRepo;
+  #cartRepo;
+  #eventBus;
+
+  constructor({ orderRepository, productRepository, customerRepository, cartRepository, eventBus }) {
+    this.#orderRepo = orderRepository;
+    this.#productRepo = productRepository;
+    this.#customerRepo = customerRepository;
+    this.#cartRepo = cartRepository;
+    this.#eventBus = eventBus;
+  }
+
+  async execute({ customerData, items, shippingAddress, notes, sessionId }) {
+    // 1. التحقق من المنتجات والمخزون
+    const orderItems = [];
+    let subtotal = 0;
+
+    for (const item of items) {
+      const product = await this.#productRepo.findById(item.productId);
+
+      if (!product) {
+        throw new NotFoundError('المنتج', item.productId);
+      }
+
+      if (!product.isActive) {
+        throw new Error(`المنتج "${product.name}" غير متاح حالياً`);
+      }
+
+      if (!product.hasEnoughStock(item.quantity)) {
+        throw new InsufficientStockError(
+          product.name, item.quantity, product.stock
+        );
+      }
+
+      const itemTotal = product.price.value * item.quantity;
+      subtotal += itemTotal;
+
+      orderItems.push({
+        productId: product.id,
+        productName: product.name,
+        price: product.price.value,
+        quantity: item.quantity,
+        total: itemTotal,
+      });
+    }
+
+    // 2. إنشاء أو جلب العميل
+    let customer;
+    const existingCustomer = await this.#customerRepo
+      .findByPhone(customerData.phone);
+
+    if (existingCustomer) {
+      customer = existingCustomer;
+    } else {
+      customer = new Customer({
+        name: customerData.name,
+        phone: customerData.phone,
+        email: customerData.email || null,
+        address: shippingAddress,
+      });
+      customer = await this.#customerRepo.save(customer);
+    }
+
+    // 3. إنشاء الطلب
+    const order = new Order({
+      customerId: customer.id,
+      items: orderItems,
+      subtotal,
+      shippingCost: 0, // سيتم حسابه لاحقاً حسب الإعدادات
+      discount: 0,
+      shippingAddress,
+      notes,
+    });
+
+    const savedOrder = await this.#orderRepo.save(order);
+
+    // 4. تحديث المخزون
+    for (const item of items) {
+      const product = await this.#productRepo.findById(item.productId);
+      product.decreaseStock(item.quantity);
+      await this.#productRepo.save(product);
+    }
+
+    // 5. تنظيف السلة
+    if (sessionId) {
+      await this.#cartRepo.clear(sessionId);
+    }
+
+    // 6. تسجيل الطلب لدى العميل
+    customer.recordOrder(savedOrder.total.value);
+    await this.#customerRepo.save(customer);
+
+    // 7. نشر الحدث ✅
+    await this.#eventBus.publish(new OrderCreated(savedOrder, customer));
+
+    return savedOrder;
+  }
+}
+
+module.exports = CreateOrder;
+```
+
+```javascript
+// server/src/application/use-cases/orders/UpdateOrderStatus.js
+
+const OrderStatusChanged = require('../../../domain/events/OrderStatusChanged');
+const NotFoundError = require('../../../domain/errors/NotFoundError');
+
+class UpdateOrderStatus {
+  #orderRepo;
+  #eventBus;
+
+  constructor({ orderRepository, eventBus }) {
+    this.#orderRepo = orderRepository;
+    this.#eventBus = eventBus;
+  }
+
+  async execute({ orderId, newStatus }) {
+    const order = await this.#orderRepo.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundError('الطلب', orderId);
+    }
+
+    // ✅ الدومين يتحقق من صحة الانتقال
+    const transitionInfo = order.changeStatus(newStatus);
+
+    await this.#orderRepo.save(order);
+
+    // نشر الحدث
+    await this.#eventBus.publish(
+      new OrderStatusChanged({
+        ...transitionInfo,
+        customerId: order.customerId,
+      })
+    );
+
+    return order;
+  }
+}
+
+module.exports = UpdateOrderStatus;
+```
+
+```javascript
+// server/src/application/use-cases/products/CreateProduct.js
+
+const Product = require('../../../domain/entities/Product');
+const Slug = require('../../../domain/value-objects/Slug');
+const ValidationError = require('../../../domain/errors/ValidationError');
+const ConflictError = require('../../../domain/errors/ConflictError');
+
+class CreateProduct {
+  #productRepo;
+  #categoryRepo;
+  #cacheService;
+
+  constructor({ productRepository, categoryRepository, cacheService }) {
+    this.#productRepo = productRepository;
+    this.#categoryRepo = categoryRepository;
+    this.#cacheService = cacheService;
+  }
+
+  async execute(data) {
+    // 1. التحقق من الفئة
+    if (data.categoryId) {
+      const category = await this.#categoryRepo.findById(data.categoryId);
+      if (!category) {
+        throw new ValidationError('الفئة المحددة غير موجودة');
+      }
+    }
+
+    // 2. التحقق من تفرد SKU
+    if (data.sku) {
+      const exists = await this.#productRepo.existsBySku(data.sku);
+      if (exists) {
+        throw new ConflictError(`رمز المنتج ${data.sku} مستخدم بالفعل`);
+      }
+    }
+
+    // 3. توليد slug
+    const slug = Slug.fromText(data.name);
+
+    // 4. إنشاء الكيان
+    const product = new Product({
+      name: data.name,
+      slug: slug.value,
+      description: data.description,
+      price: data.price,
+      compareAtPrice: data.compareAtPrice,
+      cost: data.cost,
+      sku: data.sku,
+      stock: data.stock || 0,
+      trackStock: data.trackStock,
+      categoryId: data.categoryId,
+      images: data.images || [],
+      isActive: data.isActive,
+    });
+
+    // 5. حفظ
+    const saved = await this.#productRepo.save(product);
+
+    // 6. مسح الكاش ✅
+    await this.#cacheService.invalidatePattern('products:*');
+
+    return saved;
+  }
+}
+
+module.exports = CreateProduct;
+```
+
+```javascript
+// server/src/application/use-cases/products/ListProducts.js
+
+class ListProducts {
+  #productRepo;
+  #cacheService;
+
+  constructor({ productRepository, cacheService }) {
+    this.#productRepo = productRepository;
+    this.#cacheService = cacheService;
+  }
+
+  async execute({ page = 1, limit = 20, categoryId, search, isActive }) {
+    const cacheKey = `products:list:${page}:${limit}:${categoryId || ''}:${search || ''}:${isActive}`;
+
+    // ✅ جلب من الكاش أولاً
+    const cached = await this.#cacheService.get(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.#productRepo.findAll({
+      page,
+      limit,
+      categoryId,
+      search,
+      isActive,
+    });
+
+    // تخزين في الكاش لمدة 5 دقائق
+    await this.#cacheService.set(cacheKey, result, 300);
+
+    return result;
+  }
+}
+
+module.exports = ListProducts;
+```
+
+#### Event Bus
+
+```javascript
+// server/src/application/services/EventBus.js
+
+class EventBus {
+  #handlers = new Map();
+  #queue;
+
+  constructor(queueManager) {
+    this.#queue = queueManager;
+  }
+
+  subscribe(eventName, handler) {
+    if (!this.#handlers.has(eventName)) {
+      this.#handlers.set(eventName, []);
+    }
+    this.#handlers.get(eventName).push(handler);
+  }
+
+  async publish(event) {
+    const handlers = this.#handlers.get(event.name) || [];
+
+    // تنفيذ المعالجات المتزامنة
+    for (const handler of handlers) {
+      try {
+        await handler(event);
+      } catch (error) {
+        console.error(
+          `خطأ في معالجة الحدث ${event.name}:`,
+          error.message
+        );
+        // لا نوقف العملية بسبب فشل معالج حدث
+      }
+    }
+
+    // إضافة للـ Queue للعمليات الثقيلة
+    if (this.#queue) {
+      await this.#queue.addJob(event.name, event.payload);
+    }
+  }
+}
+
+module.exports = EventBus;
+```
+
+#### Event Handlers
+
+```javascript
+// server/src/application/event-handlers/OnOrderCreated.js
+
+class OnOrderCreated {
+  #settingsRepo;
+
+  constructor({ settingsRepository }) {
+    this.#settingsRepo = settingsRepository;
+  }
+
+  async handle(event) {
+    const { orderNumber, customerName, total, customerPhone } = event.payload;
+
+    console.log(`📦 طلب جديد: ${orderNumber} من ${customerName} بقيمة ${total}`);
+
+    // يمكن إضافة أي منطق متزامن هنا
+    // العمليات الثقيلة مثل WhatsApp تذهب للـ Queue
+  }
+}
+
+module.exports = OnOrderCreated;
+```
+
+#### Cache Service
+
+```javascript
+// server/src/application/services/CacheService.js
+
+class CacheService {
+  #cache;
+
+  constructor(cacheImplementation) {
+    this.#cache = cacheImplementation;
+  }
+
+  async get(key) {
+    try {
+      const data = await this.#cache.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async set(key, value, ttlSeconds = 300) {
+    try {
+      await this.#cache.set(key, JSON.stringify(value), ttlSeconds);
+    } catch (error) {
+      console.error('Cache set error:', error.message);
+    }
+  }
+
+  async delete(key) {
+    try {
+      await this.#cache.delete(key);
+    } catch (error) {
+      console.error('Cache delete error:', error.message);
+    }
+  }
+
+  async invalidatePattern(pattern) {
+    try {
+      await this.#cache.deletePattern(pattern);
+    } catch (error) {
+      console.error('Cache invalidate error:', error.message);
+    }
+  }
+}
+
+module.exports = CacheService;
+```
+
+---
+
+### 4.3 طبقة Infrastructure - التنفيذ
+
+#### Repository Implementation
+
+```javascript
+// server/src/infrastructure/repositories/PgProductRepository.js
+
+const IProductRepository = require('../../domain/repositories/IProductRepository');
+const Product = require('../../domain/entities/Product');
+
+class PgProductRepository extends IProductRepository {
+  #pool;
+
+  constructor(pool) {
+    super();
+    this.#pool = pool;
+  }
+
+  async findById(id) {
+    const { rows } = await this.#pool.query(
+      `SELECT p.*, 
+              COALESCE(
+                json_agg(
+                  json_build_object('id', pi.id, 'url', pi.url, 'sort_order', pi.sort_order)
+                ) FILTER (WHERE pi.id IS NOT NULL),
+                '[]'
+              ) as images
+       FROM products p
+       LEFT JOIN product_images pi ON pi.product_id = p.id
+       WHERE p.id = $1
+       GROUP BY p.id`,
+      [id]
+    );
+
+    if (rows.length === 0) return null;
+
+    return this.#toDomain(rows[0]);
+  }
+
+  async findBySlug(slug) {
+    const { rows } = await this.#pool.query(
+      `SELECT p.*, 
+              COALESCE(
+                json_agg(
+                  json_build_object('id', pi.id, 'url', pi.url, 'sort_order', pi.sort_order)
+                ) FILTER (WHERE pi.id IS NOT NULL),
+                '[]'
+              ) as images
+       FROM products p
+       LEFT JOIN product_images pi ON pi.product_id = p.id
+       WHERE p.slug = $1
+       GROUP BY p.id`,
+      [slug]
+    );
+
+    if (rows.length === 0) return null;
+
+    return this.#toDomain(rows[0]);
+  }
+
+  async findAll({ page = 1, limit = 20, categoryId, search, isActive }) {
+    const conditions = [];
+    const params = [];
+    let paramIndex = 1;
+
+    if (categoryId) {
+      conditions.push(`p.category_id = $${paramIndex++}`);
+      params.push(categoryId);
+    }
+
+    if (search) {
+      conditions.push(`(p.name ILIKE $${paramIndex} OR p.sku ILIKE $${paramIndex})`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (isActive !== undefined) {
+      conditions.push(`p.is_active = $${paramIndex++}`);
+      params.push(isActive);
+    }
+
+    const whereClause = conditions.length > 0
+      ? `WHERE ${conditions.join(' AND ')}`
+      : '';
+
+    const offset = (page - 1) * limit;
+
+    // عدد إجمالي
+    const countQuery = `SELECT COUNT(*) FROM products p ${whereClause}`;
+    const { rows: countRows } = await this.#pool.query(countQuery, params);
+    const total = parseInt(countRows[0].count, 10);
+
+    // البيانات
+    const dataQuery = `
+      SELECT p.*, 
+             COALESCE(
+               json_agg(
+                 json_build_object('id', pi.id, 'url', pi.url, 'sort_order', pi.sort_order)
+               ) FILTER (WHERE pi.id IS NOT NULL),
+               '[]'
+             ) as images
+      FROM products p
+      LEFT JOIN product_images pi ON pi.product_id = p.id
+      ${whereClause}
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `;
+
+    const { rows } = await this.#pool.query(dataQuery, [...params, limit, offset]);
+
+    return {
+      data: rows.map(row => this.#toDomain(row)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async save(product) {
+    const data = product.toJSON();
+
+    if (data.id) {
+      // Update
+      const { rows } = await this.#pool.query(
+        `UPDATE products SET
+           name = $2, slug = $3, description = $4,
+           price = $5, compare_at_price = $6, cost = $7,
+           sku = $8, stock = $9, track_stock = $10,
+           category_id = $11, is_active = $12, updated_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [
+          data.id, data.name, data.slug, data.description,
+          data.price, data.compare_at_price, data.cost,
+          data.sku, data.stock, data.track_stock,
+          data.category_id, data.is_active,
+        ]
+      );
+      return this.#toDomain(rows[0]);
+    } else {
+      // Insert
+      const { rows } = await this.#pool.query(
+        `INSERT INTO products (
+           name, slug, description, price, compare_at_price,
+           cost, sku, stock, track_stock, category_id, is_active
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         RETURNING *`,
+        [
+          data.name, data.slug, data.description,
+          data.price, data.compare_at_price, data.cost,
+          data.sku, data.stock, data.track_stock,
+          data.category_id, data.is_active,
+        ]
+      );
+
+      // حفظ الصور
+      if (data.images?.length > 0) {
+        for (let i = 0; i < data.images.length; i++) {
+          await this.#pool.query(
+            `INSERT INTO product_images (product_id, url, sort_order)
+             VALUES ($1, $2, $3)`,
+            [rows[0].id, data.images[i].url || data.images[i], i]
+          );
+        }
+      }
+
+      return this.#toDomain(rows[0]);
+    }
+  }
+
+  async delete(id) {
+    await this.#pool.query('DELETE FROM product_images WHERE product_id = $1', [id]);
+    const { rowCount } = await this.#pool.query('DELETE FROM products WHERE id = $1', [id]);
+    return rowCount > 0;
+  }
+
+  async existsBySku(sku, excludeId = null) {
+    const query = excludeId
+      ? 'SELECT 1 FROM products WHERE sku = $1 AND id != $2'
+      : 'SELECT 1 FROM products WHERE sku = $1';
+
+    const params = excludeId ? [sku, excludeId] : [sku];
+    const { rows } = await this.#pool.query(query, params);
+    return rows.length > 0;
+  }
+
+  // ✅ تحويل من صف DB إلى Domain Entity
+  #toDomain(row) {
+    return new Product({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      price: parseFloat(row.price),
+      compareAtPrice: row.compare_at_price
+        ? parseFloat(row.compare_at_price) : null,
+      cost: row.cost ? parseFloat(row.cost) : null,
+      sku: row.sku,
+      stock: row.stock,
+      trackStock: row.track_stock,
+      categoryId: row.category_id,
+      images: row.images || [],
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
+  }
+}
+
+module.exports = PgProductRepository;
+```
+
+#### Redis Cache
+
+```javascript
+// server/src/infrastructure/cache/RedisCache.js
+
+const Redis = require('ioredis');
+
+class RedisCache {
+  #client;
+  #prefix;
+
+  constructor(config) {
+    this.#client = new Redis({
+      host: config.host || '127.0.0.1',
+      port: config.port || 6379,
+      password: config.password || undefined,
+      maxRetriesPerRequest: 3,
+      retryDelayOnFailover: 100,
+    });
+
+    this.#prefix = config.prefix || 'store:';
+
+    this.#client.on('error', (err) => {
+      console.error('Redis error:', err.message);
+    });
+
+    this.#client.on('connect', () => {
+      console.log('✅ متصل بـ Redis');
+    });
+  }
+
+  async get(key) {
+    return this.#client.get(this.#prefix + key);
+  }
+
+  async set(key, value, ttlSeconds = 300) {
+    await this.#client.setex(this.#prefix + key, ttlSeconds, value);
+  }
+
+  async delete(key) {
+    await this.#client.del(this.#prefix + key);
+  }
+
+  async deletePattern(pattern) {
+    const keys = await this.#client.keys(this.#prefix + pattern);
+    if (keys.length > 0) {
+      await this.#client.del(...keys);
+    }
+  }
+
+  async disconnect() {
+    await this.#client.disconnect();
+  }
+}
+
+module.exports = RedisCache;
+```
+
+```javascript
+// server/src/infrastructure/cache/InMemoryCache.js
+
+/**
+ * كاش بسيط للتطوير والاختبار
+ */
+class InMemoryCache {
+  #store = new Map();
+  #timers = new Map();
+
+  async get(key) {
+    const entry = this.#store.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      this.#store.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  async set(key, value, ttlSeconds = 300) {
+    if (this.#timers.has(key)) {
+      clearTimeout(this.#timers.get(key));
+    }
+
+    this.#store.set(key, {
+      value,
+      expiresAt: Date.now() + ttlSeconds * 1000,
+    });
+
+    const timer = setTimeout(() => {
+      this.#store.delete(key);
+      this.#timers.delete(key);
+    }, ttlSeconds * 1000);
+
+    this.#timers.set(key, timer);
+  }
+
+  async delete(key) {
+    this.#store.delete(key);
+    if (this.#timers.has(key)) {
+      clearTimeout(this.#timers.get(key));
+      this.#timers.delete(key);
+    }
+  }
+
+  async deletePattern(pattern) {
+    const regex = new RegExp(
+      '^' + pattern.replace(/\*/g, '.*') + '$'
+    );
+    for (const key of this.#store.keys()) {
+      if (regex.test(key)) {
+        await this.delete(key);
+      }
+    }
+  }
+}
+
+module.exports = InMemoryCache;
+```
+
+#### Queue Manager
+
+```javascript
+// server/src/infrastructure/queue/QueueManager.js
+
+const { Queue, Worker } = require('bullmq');
+
+class QueueManager {
+  #queues = new Map();
+  #workers = new Map();
+  #connection;
+
+  constructor(redisConfig) {
+    this.#connection = {
+      host: redisConfig.host || '127.0.0.1',
+      port: redisConfig.port || 6379,
+      password: redisConfig.password || undefined,
+    };
+  }
+
+  createQueue(name) {
+    if (this.#queues.has(name)) return this.#queues.get(name);
+
+    const queue = new Queue(name, {
+      connection: this.#connection,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000,
+        },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 5000 },
+      },
+    });
+
+    this.#queues.set(name, queue);
+    return queue;
+  }
+
+  registerWorker(queueName, processor) {
+    const worker = new Worker(queueName, processor, {
+      connection: this.#connection,
+      concurrency: 5,
+    });
+
+    worker.on('completed', (job) => {
+      console.log(`✅ Job ${job.id} completed in queue ${queueName}`);
+    });
+
+    worker.on('failed', (job, err) => {
+      console.error(`❌ Job ${job?.id} failed in queue ${queueName}:`, err.message);
+    });
+
+    this.#workers.set(queueName, worker);
+    return worker;
+  }
+
+  async addJob(queueName, data, options = {}) {
+    let queue = this.#queues.get(queueName);
+    if (!queue) {
+      queue = this.createQueue(queueName);
+    }
+    return queue.add(queueName, data, options);
+  }
+
+  async shutdown() {
+    for (const worker of this.#workers.values()) {
+      await worker.close();
+    }
+    for (const queue of this.#queues.values()) {
+      await queue.close();
+    }
+  }
+}
+
+module.exports = QueueManager;
+```
+
+#### Queue Workers
+
+```javascript
+// server/src/infrastructure/queue/workers/NotificationWorker.js
+
+class NotificationWorker {
+  #whatsappService;
+  #settingsRepo;
+
+  constructor({ whatsappService, settingsRepository }) {
+    this.#whatsappService = whatsappService;
+    this.#settingsRepo = settingsRepository;
+  }
+
+  async process(job) {
+    const { name, data } = job;
+
+    switch (data.name || name) {
+      case 'order.created':
+        await this.#handleOrderCreated(data);
+        break;
+      case 'order.status_changed':
+        await this.#handleStatusChanged(data);
+        break;
+    }
+  }
+
+  async #handleOrderCreated(data) {
+    const settings = await this.#settingsRepo.findByKey('whatsapp_notifications');
+    if (!settings?.enabled) return;
+
+    const { customerPhone, customerName, orderNumber, total } = data;
+
+    // إشعار للعميل
+    if (settings.notifyCustomer) {
+      await this.#whatsappService.send(customerPhone, {
+        template: 'order_confirmation',
+        params: { customerName, orderNumber, total },
+      });
+    }
+
+    // إشعار للمدير
+    if (settings.notifyAdmin && settings.adminPhone) {
+      await this.#whatsappService.send(settings.adminPhone, {
+        template: 'new_order_admin',
+        params: { customerName, orderNumber, total },
+      });
+    }
+  }
+
+  async #handleStatusChanged(data) {
+    // إشعار تغيير الحالة
+    const { customerPhone, orderNumber, newStatus } = data;
+
+    await this.#whatsappService.send(customerPhone, {
+      template: 'order_status_update',
+      params: { orderNumber, status: newStatus },
+    });
+  }
+}
+
+module.exports = NotificationWorker;
+```
+
+#### Database Migrations
+
+```javascript
+// server/src/infrastructure/database/migrations/runner.js
+
+const fs = require('fs');
+const path = require('path');
+
+class MigrationRunner {
+  #pool;
+  #migrationsPath;
+
+  constructor(pool) {
+    this.#pool = pool;
+    this.#migrationsPath = path.join(__dirname);
+  }
+
+  async run() {
+    // إنشاء جدول التتبع
+    await this.#pool.query(`
+      CREATE TABLE IF NOT EXISTS _migrations (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL UNIQUE,
+        executed_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // جلب المنفذة
+    const { rows: executed } = await this.#pool.query(
+      'SELECT name FROM _migrations ORDER BY id'
+    );
+    const executedNames = new Set(executed.map(r => r.name));
+
+    // جلب ملفات SQL
+    const files = fs.readdirSync(this.#migrationsPath)
+      .filter(f => f.endsWith('.sql'))
+      .sort();
+
+    let count = 0;
+    for (const file of files) {
+      if (executedNames.has(file)) continue;
+
+      console.log(`🔄 تنفيذ migration: ${file}`);
+
+      const sql = fs.readFileSync(
+        path.join(this.#migrationsPath, file),
+        'utf8'
+      );
+
+      const client = await this.#pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(sql);
+        await client.query(
+          'INSERT INTO _migrations (name) VALUES ($1)',
+          [file]
+        );
+        await client.query('COMMIT');
+        count++;
+        console.log(`✅ تم تنفيذ: ${file}`);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(`فشل في migration ${file}: ${error.message}`);
+      } finally {
+        client.release();
+      }
+    }
+
+    console.log(
+      count > 0
+        ? `✅ تم تنفيذ ${count} migration(s)`
+        : '✅ قاعدة البيانات محدّثة'
+    );
+  }
+}
+
+module.exports = MigrationRunner;
+```
+
+---
+
+### 4.4 طبقة Presentation - HTTP
+
+```javascript
+// server/src/presentation/controllers/OrderController.js
+
+class OrderController {
+  #createOrder;
+  #updateOrderStatus;
+  #getOrder;
+  #listOrders;
+  #cancelOrder;
+
+  constructor({
+    createOrderUseCase,
+    updateOrderStatusUseCase,
+    getOrderUseCase,
+    listOrdersUseCase,
+    cancelOrderUseCase,
+  }) {
+    this.#createOrder = createOrderUseCase;
+    this.#updateOrderStatus = updateOrderStatusUseCase;
+    this.#getOrder = getOrderUseCase;
+    this.#listOrders = listOrdersUseCase;
+    this.#cancelOrder = cancelOrderUseCase;
+  }
+
+  // ✅ لاحظ: Controller رقيق جداً - فقط يستقبل ويرسل
+  async create(req, res, next) {
+    try {
+      const order = await this.#createOrder.execute({
+        customerData: req.body.customer,
+        items: req.body.items,
+        shippingAddress: req.body.shippingAddress,
+        notes: req.body.notes,
+        sessionId: req.sessionId,
+      });
+
+      res.status(201).json({
+        success: true,
+        data: order.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getById(req, res, next) {
+    try {
+      const order = await this.#getOrder.execute(req.params.id);
+
+      res.json({
+        success: true,
+        data: order.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async list(req, res, next) {
+    try {
+      const result = await this.#listOrders.execute({
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20,
+        status: req.query.status,
+        customerId: req.query.customerId,
+        dateFrom: req.query.dateFrom,
+        dateTo: req.query.dateTo,
+      });
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateStatus(req, res, next) {
+    try {
+      const order = await this.#updateOrderStatus.execute({
+        orderId: req.params.id,
+        newStatus: req.body.status,
+      });
+
+      res.json({
+        success: true,
+        data: order.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async cancel(req, res, next) {
+    try {
+      const order = await this.#cancelOrder.execute({
+        orderId: req.params.id,
+        reason: req.body.reason,
+      });
+
+      res.json({
+        success: true,
+        data: order.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = OrderController;
+```
+
+```javascript
+// server/src/presentation/routes/order.routes.js
+
+const { Router } = require('express');
+
+function createOrderRoutes(container) {
+  const router = Router();
+  const controller = container.resolve('orderController');
+  const auth = container.resolve('authMiddleware');
+  const validate = container.resolve('validateMiddleware');
+  const { orderSchema } = container.resolve('validators');
+
+  // مسارات المتجر (بدون مصادقة)
+  router.post(
+    '/',
+    validate(orderSchema.create),
+    controller.create.bind(controller)
+  );
+
+  // مسارات الإدارة (تتطلب مصادقة)
+  router.get(
+    '/',
+    auth,
+    controller.list.bind(controller)
+  );
+
+  router.get(
+    '/:id',
+    auth,
+    controller.getById.bind(controller)
+  );
+
+  router.patch(
+    '/:id/status',
+    auth,
+    validate(orderSchema.updateStatus),
+    controller.updateStatus.bind(controller)
+  );
+
+  router.post(
+    '/:id/cancel',
+    auth,
+    validate(orderSchema.cancel),
+    controller.cancel.bind(controller)
+  );
+
+  return router;
+}
+
+module.exports = createOrderRoutes;
+```
+
+#### Error Handler المركزي
+
+```javascript
+// server/src/presentation/middleware/errorHandler.js
+
+const DomainError = require('../../domain/errors/DomainError');
+
+function errorHandler(err, req, res, _next) {
+  // ✅ تسجيل الخطأ
+  console.error(`[${new Date().toISOString()}] ${req.method} ${req.path}`, {
+    error: err.message,
+    code: err.code,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
+
+  // ✅ أخطاء الدومين - نعرف statusCode مسبقاً
+  if (err instanceof DomainError) {
+    return res.status(err.statusCode || 400).json({
+      success: false,
+      error: {
+        code: err.code,
+        message: err.message,
+        ...(err.errors && { details: err.errors }),
+      },
+    });
+  }
+
+  // أخطاء Zod validation
+  if (err.name === 'ZodError') {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'بيانات غير صالحة',
+        details: err.errors.map(e => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      },
+    });
+  }
+
+  // أخطاء PostgreSQL
+  if (err.code === '23505') {
+    return res.status(409).json({
+      success: false,
+      error: {
+        code: 'DUPLICATE_ENTRY',
+        message: 'البيانات موجودة مسبقاً',
+      },
+    });
+  }
+
+  if (err.code === '23503') {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'FOREIGN_KEY_VIOLATION',
+        message: 'مرجع البيانات غير صالح',
+      },
+    });
+  }
+
+  // خطأ غير متوقع
+  res.status(500).json({
+    success: false,
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: process.env.NODE_ENV === 'production'
+        ? 'حدث خطأ داخلي'
+        : err.message,
+    },
+  });
+}
+
+module.exports = errorHandler;
+```
+
+---
+
+### 4.5 Dependency Injection Container
+
+```javascript
+// server/src/container.js
+
+const { Pool } = require('pg');
+
+// Config
+const dbConfig = require('./config/database');
+const redisConfig = require('./config/redis');
+
+// Infrastructure
+const RedisCache = require('./infrastructure/cache/RedisCache');
+const InMemoryCache = require('./infrastructure/cache/InMemoryCache');
+const QueueManager = require('./infrastructure/queue/QueueManager');
+
+// Repositories
+const PgProductRepository = require('./infrastructure/repositories/PgProductRepository');
+const PgOrderRepository = require('./infrastructure/repositories/PgOrderRepository');
+const PgCustomerRepository = require('./infrastructure/repositories/PgCustomerRepository');
+const PgCategoryRepository = require('./infrastructure/repositories/PgCategoryRepository');
+const PgCartRepository = require('./infrastructure/repositories/PgCartRepository');
+const PgPageRepository = require('./infrastructure/repositories/PgPageRepository');
+const PgSettingsRepository = require('./infrastructure/repositories/PgSettingsRepository');
+
+// Application Services
+const EventBus = require('./application/services/EventBus');
+const CacheService = require('./application/services/CacheService');
+
+// Use Cases
+const CreateProduct = require('./application/use-cases/products/CreateProduct');
+const UpdateProduct = require('./application/use-cases/products/UpdateProduct');
+const DeleteProduct = require('./application/use-cases/products/DeleteProduct');
+const GetProduct = require('./application/use-cases/products/GetProduct');
+const ListProducts = require('./application/use-cases/products/ListProducts');
+
+const CreateOrder = require('./application/use-cases/orders/CreateOrder');
+const UpdateOrderStatus = require('./application/use-cases/orders/UpdateOrderStatus');
+const GetOrder = require('./application/use-cases/orders/GetOrder');
+const ListOrders = require('./application/use-cases/orders/ListOrders');
+const CancelOrder = require('./application/use-cases/orders/CancelOrder');
+
+// Event Handlers
+const OnOrderCreated = require('./application/event-handlers/OnOrderCreated');
+
+// Controllers
+const ProductController = require('./presentation/controllers/ProductController');
+const OrderController = require('./presentation/controllers/OrderController');
+
+// Middleware
+const authMiddleware = require('./presentation/middleware/auth');
+
+class Container {
+  #instances = new Map();
+  #factories = new Map();
+
+  register(name, factory) {
+    this.#factories.set(name, factory);
+  }
+
+  resolve(name) {
+    // Singleton
+    if (this.#instances.has(name)) {
+      return this.#instances.get(name);
+    }
+
+    const factory = this.#factories.get(name);
+    if (!factory) {
+      throw new Error(`الخدمة "${name}" غير مسجلة في الحاوية`);
+    }
+
+    const instance = factory(this);
+    this.#instances.set(name, instance);
+    return instance;
+  }
+
+  async shutdown() {
+    const pool = this.#instances.get('pool');
+    const cache = this.#instances.get('cacheImpl');
+    const queue = this.#instances.get('queueManager');
+
+    if (queue) await queue.shutdown();
+    if (cache?.disconnect) await cache.disconnect();
+    if (pool) await pool.end();
+  }
+}
+
+function createContainer() {
+  const container = new Container();
+
+  // ==========================================
+  // Infrastructure
+  // ==========================================
+
+  container.register('pool', () => {
+    return new Pool(dbConfig);
+  });
+
+  container.register('cacheImpl', () => {
+    if (process.env.REDIS_URL || process.env.REDIS_HOST) {
+      return new RedisCache(redisConfig);
+    }
+    console.log('⚠️ Redis غير متاح، يُستخدم InMemoryCache');
+    return new InMemoryCache();
+  });
+
+  container.register('queueManager', () => {
+    if (process.env.REDIS_URL || process.env.REDIS_HOST) {
+      return new QueueManager(redisConfig);
+    }
+    return null;
+  });
+
+  // ==========================================
+  // Repositories
+  // ==========================================
+
+  container.register('productRepository', (c) => {
+    return new PgProductRepository(c.resolve('pool'));
+  });
+
+  container.register('orderRepository', (c) => {
+    return new PgOrderRepository(c.resolve('pool'));
+  });
+
+  container.register('customerRepository', (c) => {
+    return new PgCustomerRepository(c.resolve('pool'));
+  });
+
+  container.register('categoryRepository', (c) => {
+    return new PgCategoryRepository(c.resolve('pool'));
+  });
+
+  container.register('cartRepository', (c) => {
+    return new PgCartRepository(c.resolve('pool'));
+  });
+
+  container.register('pageRepository', (c) => {
+    return new PgPageRepository(c.resolve('pool'));
+  });
+
+  container.register('settingsRepository', (c) => {
+    return new PgSettingsRepository(c.resolve('pool'));
+  });
+
+  // ==========================================
+  // Application Services
+  // ==========================================
+
+  container.register('cacheService', (c) => {
+    return new CacheService(c.resolve('cacheImpl'));
+  });
+
+  container.register('eventBus', (c) => {
+    const bus = new EventBus(c.resolve('queueManager'));
+
+    // تسجيل المعالجات
+    const onOrderCreated = new OnOrderCreated({
+      settingsRepository: c.resolve('settingsRepository'),
+    });
+    bus.subscribe('order.created', (e) => onOrderCreated.handle(e));
+
+    return bus;
+  });
+
+  // ==========================================
+  // Use Cases
+  // ==========================================
+
+  container.register('createProductUseCase', (c) => {
+    return new CreateProduct({
+      productRepository: c.resolve('productRepository'),
+      categoryRepository: c.resolve('categoryRepository'),
+      cacheService: c.resolve('cacheService'),
+    });
+  });
+
+  container.register('listProductsUseCase', (c) => {
+    return new ListProducts({
+      productRepository: c.resolve('productRepository'),
+      cacheService: c.resolve('cacheService'),
+    });
+  });
+
+  container.register('createOrderUseCase', (c) => {
+    return new CreateOrder({
+      orderRepository: c.resolve('orderRepository'),
+      productRepository: c.resolve('productRepository'),
+      customerRepository: c.resolve('customerRepository'),
+      cartRepository: c.resolve('cartRepository'),
+      eventBus: c.resolve('eventBus'),
+    });
+  });
+
+  container.register('updateOrderStatusUseCase', (c) => {
+    return new UpdateOrderStatus({
+      orderRepository: c.resolve('orderRepository'),
+      eventBus: c.resolve('eventBus'),
+    });
+  });
+
+  // ... باقي Use Cases
+
+  // ==========================================
+  // Controllers
+  // ==========================================
+
+  container.register('productController', (c) => {
+    return new ProductController({
+      createProductUseCase: c.resolve('createProductUseCase'),
+      listProductsUseCase: c.resolve('listProductsUseCase'),
+      // ... باقي use cases
+    });
+  });
+
+  container.register('orderController', (c) => {
+    return new OrderController({
+      createOrderUseCase: c.resolve('createOrderUseCase'),
+      updateOrderStatusUseCase: c.resolve('updateOrderStatusUseCase'),
+      // ... باقي use cases
+    });
+  });
+
+  // ==========================================
+  // Middleware
+  // ==========================================
+
+  container.register('authMiddleware', (c) => {
+    return authMiddleware(c.resolve('pool'));
+  });
+
+  return container;
+}
+
+module.exports = createContainer;
+```
+
+#### App Entry Point
+
+```javascript
+// server/src/app.js
+
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
+const errorHandler = require('./presentation/middleware/errorHandler');
+const requestLogger = require('./presentation/middleware/requestLogger');
+
+// Routes
+const createProductRoutes = require('./presentation/routes/product.routes');
+const createOrderRoutes = require('./presentation/routes/order.routes');
+const createAuthRoutes = require('./presentation/routes/auth.routes');
+const createCategoryRoutes = require('./presentation/routes/category.routes');
+const createCartRoutes = require('./presentation/routes/cart.routes');
+const createPageRoutes = require('./presentation/routes/page.routes');
+const createSettingsRoutes = require('./presentation/routes/settings.routes');
+const createUploadRoutes = require('./presentation/routes/upload.routes');
+const createHealthRoutes = require('./presentation/routes/health.routes');
+
+function createApp(container) {
+  const app = express();
+
+  // ==========================================
+  // Global Middleware
+  // ==========================================
+  app.use(helmet());
+  app.use(cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    credentials: true,
+  }));
+  app.use(express.json({ limit: '10mb' }));
+  app.use(cookieParser());
+  app.use(requestLogger);
+
+  // Static files
+  app.use('/uploads', express.static('public/uploads'));
+
+  // ==========================================
+  // API Routes
+  // ==========================================
+  const api = express.Router();
+
+  api.use('/auth',       createAuthRoutes(container));
+  api.use('/products',   createProductRoutes(container));
+  api.use('/orders',     createOrderRoutes(container));
+  api.use('/categories', createCategoryRoutes(container));
+  api.use('/cart',       createCartRoutes(container));
+  api.use('/pages',      createPageRoutes(container));
+  api.use('/settings',   createSettingsRoutes(container));
+  api.use('/upload',     createUploadRoutes(container));
+  api.use('/health',     createHealthRoutes(container));
+
+  app.use('/api', api);
+
+  // ==========================================
+  // Error Handler (يجب أن يكون آخر شيء)
+  // ==========================================
+  app.use(errorHandler);
+
+  return app;
+}
+
+module.exports = createApp;
+```
+
+```javascript
+// server/src/index.js
+
+const createApp = require('./app');
+const createContainer = require('./container');
+const MigrationRunner = require('./infrastructure/database/migrations/runner');
+
+async function main() {
+  try {
+    // 1. إنشاء الحاوية
+    const container = createContainer();
+
+    // 2. تشغيل الترحيلات
+    const pool = container.resolve('pool');
+    const migrator = new MigrationRunner(pool);
+    await migrator.run();
+
+    // 3. إنشاء التطبيق
+    const app = createApp(container);
+
+    // 4. تشغيل الخادم
+    const PORT = process.env.PORT || 3000;
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 الخادم يعمل على المنفذ ${PORT}`);
+    });
+
+    // 5. إغلاق نظيف
+    const shutdown = async (signal) => {
+      console.log(`\n📴 ${signal} - جارٍ الإغلاق...`);
+      server.close(async () => {
+        await container.shutdown();
+        console.log('✅ تم الإغلاق بنجاح');
+        process.exit(0);
+      });
+
+      // إغلاق إجباري بعد 10 ثوانٍ
+      setTimeout(() => {
+        console.error('⚠️ إغلاق إجباري');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+
+  } catch (error) {
+    console.error('❌ فشل في تشغيل الخادم:', error);
+    process.exit(1);
+  }
+}
+
+main();
+```
+
+---
+
+### 4.6 الاختبارات
+
+```javascript
+// tests/unit/domain/entities/Product.test.js
+
+const Product = require('../../../../server/src/domain/entities/Product');
+const Money = require('../../../../server/src/domain/value-objects/Money');
+
+describe('Product Entity', () => {
+  const validData = {
+    id: 1,
+    name: 'قميص أبيض',
+    slug: 'qamis-abyad',
+    description: 'قميص قطني أبيض',
+    price: 99.99,
+    stock: 10,
+    trackStock: true,
+    isActive: true,
+  };
+
+  test('يجب أن ينشئ منتج بشكل صحيح', () => {
+    const product = new Product(validData);
+
+    expect(product.name).toBe('قميص أبيض');
+    expect(product.price.value).toBe(99.99);
+    expect(product.stock).toBe(10);
+    expect(product.isActive).toBe(true);
+  });
+
+  test('يجب أن يرفض اسم أقل من حرفين', () => {
+    expect(() => {
+      new Product({ ...validData, name: 'أ' });
+    }).toThrow('اسم المنتج يجب أن يكون حرفين على الأقل');
+  });
+
+  test('يجب أن يحسب الخصم بشكل صحيح', () => {
+    const product = new Product({
+      ...validData,
+      price: 75,
+      compareAtPrice: 100,
+    });
+
+    expect(product.hasDiscount()).toBe(true);
+    expect(product.getDiscountPercentage()).toBe(25);
+  });
+
+  test('يجب أن ينقص المخزون', () => {
+    const product = new Product(validData);
+
+    product.decreaseStock(3);
+    expect(product.stock).toBe(7);
+  });
+
+  test('يجب أن يرفض طلب أكبر من المخزون', () => {
+    const product = new Product(validData);
+
+    expect(() => {
+      product.decreaseStock(15);
+    }).toThrow(/أكبر من المتوفر/);
+  });
+
+  test('isInStock يجب أن يعيد false عند نفاد المخزون', () => {
+    const product = new Product({ ...validData, stock: 0 });
+
+    expect(product.isInStock()).toBe(false);
+  });
+
+  test('المنتج بدون تتبع مخزون دائماً متوفر', () => {
+    const product = new Product({
+      ...validData,
+      stock: 0,
+      trackStock: false,
+    });
+
+    expect(product.isInStock()).toBe(true);
+    expect(product.hasEnoughStock(999)).toBe(true);
+  });
+});
+```
+
+```javascript
+// tests/unit/domain/value-objects/OrderStatus.test.js
+
+const OrderStatus = require('../../../../server/src/domain/value-objects/OrderStatus');
+
+describe('OrderStatus Value Object', () => {
+  test('يسمح بالانتقال من pending إلى confirmed', () => {
+    const status = new OrderStatus(OrderStatus.PENDING);
+    const newStatus = status.transitionTo(OrderStatus.CONFIRMED);
+
+    expect(newStatus.value).toBe('confirmed');
+  });
+
+  test('يمنع الانتقال من delivered إلى pending', () => {
+    const status = new OrderStatus(OrderStatus.DELIVERED);
+
+    expect(() => {
+      status.transitionTo(OrderStatus.PENDING);
+    }).toThrow(/لا يمكن تغيير حالة الطلب/);
+  });
+
+  test('يمنع الانتقال من cancelled لأي حالة', () => {
+    const status = new OrderStatus(OrderStatus.CANCELLED);
+
+    expect(() => {
+      status.transitionTo(OrderStatus.CONFIRMED);
+    }).toThrow(/لا يمكن تغيير حالة الطلب/);
+  });
+
+  test('isFinal يعيد true للحالات النهائية', () => {
+    expect(new OrderStatus(OrderStatus.CANCELLED).isFinal()).toBe(true);
+    expect(new OrderStatus(OrderStatus.DELIVERED).isFinal()).toBe(true);
+    expect(new OrderStatus(OrderStatus.PENDING).isFinal()).toBe(false);
+  });
+});
+```
+
+```javascript
+// tests/unit/domain/value-objects/Money.test.js
+
+const Money = require('../../../../server/src/domain/value-objects/Money');
+
+describe('Money Value Object', () => {
+  test('يحفظ القيمة بشكل صحيح', () => {
+    const money = new Money(99.99);
+    expect(money.value).toBe(99.99);
+  });
+
+  test('يجمع بشكل صحيح بدون مشاكل عشرية', () => {
+    const a = new Money(0.1);
+    const b = new Money(0.2);
+    const sum = a.add(b);
+
+    expect(sum.value).toBe(0.3);
+  });
+
+  test('يرفض القيمة السالبة', () => {
+    expect(() => new Money(-5)).toThrow();
+  });
+
+  test('يرفض العمليات بين عملات مختلفة', () => {
+    const sar = new Money(100, 'SAR');
+    const usd = new Money(50, 'USD');
+
+    expect(() => sar.add(usd)).toThrow(/عملات مختلفة/);
+  });
+});
+```
+
+```javascript
+// tests/unit/application/CreateOrder.test.js
+
+const CreateOrder = require('../../../../server/src/application/use-cases/orders/CreateOrder');
+const Product = require('../../../../server/src/domain/entities/Product');
+
+describe('CreateOrder Use Case', () => {
+  let useCase;
+  let mockProductRepo;
+  let mockOrderRepo;
+  let mockCustomerRepo;
+  let mockCartRepo;
+  let mockEventBus;
+
+  beforeEach(() => {
+    // ✅ Mock Repositories
+    mockProductRepo = {
+      findById: jest.fn(),
+      save: jest.fn(),
+    };
+
+    mockOrderRepo = {
+      save: jest.fn((order) => {
+        // محاكاة حفظ وإعادة مع id
+        return { ...order, id: 1 };
+      }),
+    };
+
+    mockCustomerRepo = {
+      findByPhone: jest.fn(),
+      save: jest.fn((customer) => {
+        return { ...customer, id: 1 };
+      }),
+    };
+
+    mockCartRepo = {
+      clear: jest.fn(),
+    };
+
+    mockEventBus = {
+      publish: jest.fn(),
+    };
+
+    useCase = new CreateOrder({
+      orderRepository: mockOrderRepo,
+      productRepository: mockProductRepo,
+      customerRepository: mockCustomerRepo,
+      cartRepository: mockCartRepo,
+      eventBus: mockEventBus,
+    });
+  });
+
+  test('يجب أن ينشئ طلب بنجاح', async () => {
+    const product = new Product({
+      id: 1,
+      name: 'منتج تجريبي',
+      slug: 'test',
+      price: 100,
+      stock: 10,
+      trackStock: true,
+      isActive: true,
+    });
+
+    mockProductRepo.findById.mockResolvedValue(product);
+    mockCustomerRepo.findByPhone.mockResolvedValue(null);
+
+    await useCase.execute({
+      customerData: { name: 'أحمد', phone: '+966500000000' },
+      items: [{ productId: 1, quantity: 2 }],
+      shippingAddress: { city: 'الرياض' },
+    });
+
+    expect(mockOrderRepo.save).toHaveBeenCalled();
+    expect(mockEventBus.publish).toHaveBeenCalled();
+  });
+
+  test('يجب أن يرفض إذا المنتج غير موجود', async () => {
+    mockProductRepo.findById.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute({
+        customerData: { name: 'أحمد', phone: '+966500000000' },
+        items: [{ productId: 999, quantity: 1 }],
+        shippingAddress: { city: 'الرياض' },
+      })
+    ).rejects.toThrow(/غير موجود/);
+  });
+
+  test('يجب أن يرفض إذا المخزون غير كافي', async () => {
+    const product = new Product({
+      id: 1,
+      name: 'منتج',
+      slug: 'test',
+      price: 100,
+      stock: 1,
+      trackStock: true,
+      isActive: true,
+    });
+
+    mockProductRepo.findById.mockResolvedValue(product);
+
+    await expect(
+      useCase.execute({
+        customerData: { name: 'أحمد', phone: '+966500000000' },
+        items: [{ productId: 1, quantity: 5 }],
+        shippingAddress: { city: 'الرياض' },
+      })
+    ).rejects.toThrow(/أكبر من المتوفر/);
+  });
+});
+```
+
+---
+
+### 4.7 Health Check
+
+```javascript
+// server/src/presentation/routes/health.routes.js
+
+const { Router } = require('express');
+
+function createHealthRoutes(container) {
+  const router = Router();
+  const pool = container.resolve('pool');
+
+  router.get('/', async (req, res) => {
+    const checks = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      checks: {},
+    };
+
+    // فحص قاعدة البيانات
+    try {
+      const start = Date.now();
+      await pool.query('SELECT 1');
+      checks.checks.database = {
+        status: 'ok',
+        responseTime: `${Date.now() - start}ms`,
+      };
+    } catch (error) {
+      checks.status = 'degraded';
+      checks.checks.database = {
+        status: 'error',
+        message: error.message,
+      };
+    }
+
+    // فحص Redis
+    try {
+      const cache = container.resolve('cacheImpl');
+      if (cache.get) {
+        const start = Date.now();
+        await cache.set('health:check', 'ok', 10);
+        checks.checks.cache = {
+          status: 'ok',
+          responseTime: `${Date.now() - start}ms`,
+        };
+      }
+    } catch (error) {
+      checks.checks.cache = {
+        status: 'error',
+        message: error.message,
+      };
+    }
+
+    const statusCode = checks.status === 'ok' ? 200 : 503;
+    res.status(statusCode).json(checks);
+  });
+
+  return router;
+}
+
+module.exports = createHealthRoutes;
+```
+
+---
+
+## خامساً: بنية Docker المحسّنة
+
+```yaml
+# deploy/docker-compose.client-stack.yml
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  api:
+    image: ghcr.io/your-org/store-api:${VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: https://${DOMAIN}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  web:
+    image: ghcr.io/your-org/store-web:${VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: https://${DOMAIN}/api
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  db_data:
+  redis_data:
+  uploads:
+
+networks:
+  default:
+    name: ${CLIENT_NAME}_network
+```
+
+---
+
+## سادساً: مخطط التحول المرحلي
+
+```
+لا تعيد كتابة كل شيء مرة واحدة
+```
+
+```mermaid
+gantt
+    title خطة التحول - 6 مراحل
+    dateFormat  YYYY-MM-DD
+    
+    section المرحلة 1
+    Domain Layer (Entities + VOs + Errors)     :m1, 2025-01-01, 7d
+    
+    section المرحلة 2
+    Repository Interfaces + Implementations    :m2, after m1, 7d
+    
+    section المرحلة 3
+    Use Cases + Event Bus                      :m3, after m2, 10d
+    
+    section المرحلة 4
+    Container + Refactor Controllers           :m4, after m3, 7d
+    
+    section المرحلة 5
+    Redis + Queue + Workers                    :m5, after m4, 7d
+    
+    section المرحلة 6
+    Tests + Monitoring + CI/CD                 :m6, after m5, 10d
+```
+
+### خطوات التنفيذ:
+
+```
+المرحلة 1 (أسبوع): أنشئ Domain Layer
+├── أضف مجلد domain/ بجوار الكود الحالي
+├── ابدأ بـ Value Objects (Money, Email, Phone, OrderStatus)
+├── ثم Entities (Product, Order, Customer)  
+├── ثم Domain Errors
+└── ✅ الكود الحالي يبقى يعمل - لا كسر
+
+المرحلة 2 (أسبوع): أنشئ Repositories
+├── أضف Repository Interfaces
+├── أنشئ PgProductRepository
+├── أنشئ PgOrderRepository
+├── أنشئ PgCustomerRepository
+└── ✅ اختبرها بشكل مستقل
+
+المرحلة 3 (أسبوع ونصف): أنشئ Use Cases
+├── CreateOrder
+├── UpdateOrderStatus
+├── CreateProduct / ListProducts
+├── EventBus
+├── أضف Unit Tests لكل Use Case
+└── ✅ اختبرها بـ Mock Repositories
+
+المرحلة 4 (أسبوع): أعد تصميم Controllers
+├── أنشئ Container
+├── حوّل Controller واحد في كل مرة
+├── ابدأ بـ OrderController (الأهم)
+├── ثم ProductController
+└── ✅ اختبر كل controller بعد التحويل
+
+المرحلة 5 (أسبوع): أضف Redis + Queues
+├── أضف Redis container
+├── أنشئ CacheService
+├── أنشئ QueueManager
+├── أنشئ NotificationWorker
+└── ✅ اختبر الأداء
+
+المرحلة 6 (أسبوع ونصف): اختبارات + CI
+├── أضف Integration Tests
+├── أضف E2E Tests
+├── أضف GitHub Actions
+├── أضف Health Checks
+└── ✅ ثقة كاملة في كل تعديل
+```
+
+---
+
+## سابعاً: مقارنة قبل وبعد
+
+```
+┌──────────────────────┬──────────────────────────┬─────────────────────────────┐
+│     المعيار          │     قبل (الحالي)         │      بعد (الهدف)            │
+├──────────────────────┼──────────────────────────┼─────────────────────────────┤
+│ تعديل ميزة          │ يكسر 3 أماكن أخرى       │ معزول في Use Case واحد      │
+│                      │                          │                             │
+│ فحص بعد التعديل     │ يدوي شامل كل مرة        │ أوتوماتيكي عبر Tests        │
+│                      │                          │                             │
+│ إضافة ميزة جديدة    │ تعديل Controller + DB    │ Use Case جديد فقط           │
+│                      │                          │                             │
+│ تغيير قاعدة بيانات  │ تعديل كل الكود          │ تعديل Repository فقط        │
+│                      │                          │                             │
+│ آلاف الطلبات        │ DB تحت ضغط مباشر        │ Redis Cache + Queue          │
+│                      │                          │                             │
+│ إرسال إشعارات       │ يبطئ الـ Response        │ Queue غير متزامن            │
+│                      │                          │                             │
+│ منطق الأعمال        │ مبعثر في Controllers     │ مركّز في Domain             │
+│                      │                          │                             │
+│ حالة طلب خاطئة      │ لا يوجد تحقق            │ State Machine في الدومين    │
+│                      │                          │                             │
+│ الوكيل يعدل         │ ممكن يكسر كل شيء        │ حدود واضحة + Tests          │
+│                      │                          │                             │
+│ الثقة بالنظام       │ منخفضة                   │ عالية - كل شيء مختبر        │
+└──────────────────────┴──────────────────────────┴─────────────────────────────┘
+```
+
+---
+
+## ثامناً: النتيجة النهائية
+
+```mermaid
+flowchart TD
+    subgraph "بنيتك الجديدة"
+        direction TB
+        
+        P[Presentation<br/>رقيقة - HTTP فقط]
+        
+        A[Application<br/>Use Cases + Events]
+        
+        D[Domain<br/>Entities + Rules + VOs<br/>قلب النظام المحمي]
+        
+        I[Infrastructure<br/>DB + Cache + Queue + External]
+    end
+
+    P --> A
+    A --> D
+    A --> I
+    I -.-> D
+
+    style D fill:#4ecdc4,stroke:#2c3e50,stroke-width:3px,color:#000
+    style P fill:#95a5a6,color:#000
+    style A fill:#3498db,color:#fff
+    style I fill:#e74c3c,color:#fff
+```
+
+**القاعدة الأهم:**
+
+> Domain لا يعتمد على أي شيء خارجي.
+> كل شيء يعتمد على Domain.
+> التغيير في الطبقة الخارجية لا يكسر الطبقة الداخلية أبداً.
+
+هذا هو الفرق بين مشروع "يعمل" ومشروع "يُوثق به لسنوات".

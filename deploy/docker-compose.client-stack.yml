@@ -2,6 +2,8 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    stop_grace_period: 30s
+    shm_size: 256m
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-expresstrade}
       POSTGRES_USER: ${POSTGRES_USER:-etk_user}
@@ -9,8 +11,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    mem_limit: ${DB_MEM_LIMIT:-768m}
+    cpus: ${DB_CPUS:-1.0}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-etk_user} -d ${POSTGRES_DB:-expresstrade}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    stop_grace_period: 20s
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    volumes:
+      - redis_data:/data
+    mem_limit: ${REDIS_MEM_LIMIT:-256m}
+    cpus: ${REDIS_CPUS:-0.5}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -18,20 +37,41 @@ services:
   api:
     image: ${ETK_API_IMAGE:?ETK_API_IMAGE is required}
     restart: unless-stopped
+    stop_grace_period: 30s
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       PORT: 3001
       NODE_ENV: production
       TRUST_PROXY: "true"
+      CACHE_DRIVER: redis
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_PUBLIC_PREFIX: ${STORAGE_PUBLIC_PREFIX:-/uploads}
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB:-expresstrade}
       DB_USER: ${POSTGRES_USER:-etk_user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_KEY_PREFIX: "${CLIENT_SLUG:-etk}:"
+      RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-auto}
+      RATE_LIMIT_KEY_PREFIX: ${RATE_LIMIT_KEY_PREFIX:-${CLIENT_SLUG:-etk}:rate-limit:}
+      QUEUE_DRIVER: ${QUEUE_DRIVER:-inline}
+      QUEUE_NAME: ${QUEUE_NAME:-${CLIENT_SLUG:-etk}-events}
+      QUEUE_CONCURRENCY: ${QUEUE_CONCURRENCY:-5}
+      METRICS_ENABLED: ${METRICS_ENABLED:-true}
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
+      METRICS_PREFIX: ${METRICS_PREFIX:-etk_}
+      METRICS_COLLECT_DEFAULTS: ${METRICS_COLLECT_DEFAULTS:-true}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_SERVICE_NAME: ${LOG_SERVICE_NAME:-express-trade-kit-api}
       LOG_DIR: /app/logs
       FACEBOOK_PIXEL_ID: ${FACEBOOK_PIXEL_ID:-}
       FACEBOOK_ACCESS_TOKEN: ${FACEBOOK_ACCESS_TOKEN:-}
@@ -42,6 +82,12 @@ services:
       - api_logs:/app/logs
       - api_uploads:/app/public/uploads
       - api_backups:/app/backups
+    mem_limit: ${API_MEM_LIMIT:-768m}
+    cpus: ${API_CPUS:-1.0}
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 15s
@@ -51,12 +97,15 @@ services:
   web:
     image: ${ETK_WEB_IMAGE:?ETK_WEB_IMAGE is required}
     restart: unless-stopped
+    stop_grace_period: 15s
     depends_on:
       api:
         condition: service_healthy
     volumes:
       - api_uploads:/uploads:ro
       - ./Caddyfile.client:/etc/caddy/Caddyfile:ro
+    mem_limit: ${WEB_MEM_LIMIT:-192m}
+    cpus: ${WEB_CPUS:-0.5}
     networks:
       default:
       edge:
@@ -67,6 +116,7 @@ volumes:
   postgres_data:
     name: ${POSTGRES_VOLUME_NAME:?POSTGRES_VOLUME_NAME is required}
     external: true
+  redis_data:
   api_logs:
     name: ${API_LOGS_VOLUME_NAME:?API_LOGS_VOLUME_NAME is required}
     external: true

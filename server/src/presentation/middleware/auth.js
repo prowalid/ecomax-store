@@ -1,0 +1,63 @@
+const jwt = require('jsonwebtoken');
+const { getCookieValue, ACCESS_COOKIE_NAME } = require('../../infrastructure/services/AuthCookieService');
+const { isAuthSessionActive } = require('../../infrastructure/services/AuthSessionAccessService');
+
+function extractBearerToken(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  return authHeader.split(' ')[1];
+}
+
+function extractToken(req) {
+  return getCookieValue(req, ACCESS_COOKIE_NAME) || extractBearerToken(req);
+}
+
+async function authMiddleware(req, res, next) {
+  const token = extractToken(req);
+  if (!token) {
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type && decoded.type !== 'access') {
+      return res.status(401).json({ error: 'Invalid token type.' });
+    }
+    if (!decoded.sessionId || !(await isAuthSessionActive(decoded.sessionId))) {
+      return res.status(401).json({ error: 'Session is no longer active.' });
+    }
+    req.user = decoded;
+    next();
+  } catch (_err) {
+    return res.status(401).json({ error: 'Invalid or expired token.' });
+  }
+}
+
+async function optionalAuthMiddleware(req, _res, next) {
+  const secret = process.env.JWT_SECRET;
+  const token = extractToken(req);
+
+  if (!token || !secret) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, secret);
+    if (
+      (!decoded.type || decoded.type === 'access') &&
+      decoded.sessionId &&
+      (await isAuthSessionActive(decoded.sessionId))
+    ) {
+      req.user = decoded;
+    }
+  } catch (_err) {
+    // Keep request public if token is invalid.
+  }
+  next();
+}
+
+module.exports = authMiddleware;
+module.exports.optionalAuthMiddleware = optionalAuthMiddleware;

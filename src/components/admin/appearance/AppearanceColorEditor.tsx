@@ -29,29 +29,34 @@ export default function AppearanceColorEditor({ settings, onUpdate }: Appearance
               {colorFields
                 .filter((field) => field.group === group)
                 .map((field) => (
-                  <div
-                    key={field.key}
-                    className="bg-white px-3 py-3 rounded-[12px] border border-slate-100 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <label className="text-[13px] font-semibold text-sidebar-heading">{field.label}</label>
-                      <input
-                        type="text"
-                        value={settings[field.key] || "#000000"}
-                        onChange={(e) => onUpdate(field.key, e.target.value)}
-                        className="w-24 h-9 px-2 rounded-[8px] border border-slate-200 bg-slate-50 text-[13px] font-mono text-center focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-slate-700"
-                        dir="ltr"
-                      />
-                      <div className="relative w-9 h-9 rounded-[8px] overflow-hidden border border-slate-200 shrink-0 shadow-sm cursor-pointer">
-                        <input
-                          type="color"
-                          value={settings[field.key] || "#000000"}
-                          onChange={(e) => onUpdate(field.key, e.target.value)}
-                          className="absolute -top-2 -left-2 w-14 h-14 cursor-pointer outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 h-2.5 rounded-full" style={{ backgroundColor: settings[field.key] || "#000000" }} />
+                  <div key={field.key} className="bg-white px-3 py-3 rounded-[12px] border border-slate-100 shadow-sm">
+                    {(() => {
+                      const fieldValue = settings[field.key] || "#000000";
+
+                      return (
+                        <>
+                          <div className="flex items-center justify-between gap-3">
+                            <label className="text-[13px] font-semibold text-sidebar-heading">{field.label}</label>
+                            <input
+                              type="text"
+                              value={fieldValue}
+                              onChange={(e) => onUpdate(field.key, e.target.value)}
+                              className="w-24 h-9 px-2 rounded-[8px] border border-slate-200 bg-slate-50 text-[13px] font-mono text-center focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-slate-700"
+                              dir="ltr"
+                            />
+                            <div className="relative w-9 h-9 rounded-[8px] overflow-hidden border border-slate-200 shrink-0 shadow-sm cursor-pointer">
+                              <input
+                                type="color"
+                                value={fieldValue}
+                                onChange={(e) => onUpdate(field.key, e.target.value)}
+                                className="absolute -top-2 -left-2 w-14 h-14 cursor-pointer outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-3 h-2.5 rounded-full" style={{ backgroundColor: fieldValue }} />
+                        </>
+                      );
+                    })()}
                   </div>
                 ))}
             </div>

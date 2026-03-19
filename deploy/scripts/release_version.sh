@@ -31,6 +31,34 @@ SKIP_STEPDZ_UPDATE="false"
 CLIENT_DIR="/opt/client-stores/stepdz"
 PROJECT_NAME="stepdz"
 
+wait_for_stack_health() {
+  local env_file="$1"
+  local compose_file="$2"
+  local project_name="$3"
+  local domain="$4"
+  local attempts=30
+
+  for ((i=1; i<=attempts; i++)); do
+    local api_status
+    api_status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${project_name}-api-1" 2>/dev/null || true)"
+    if [[ "${api_status}" == "healthy" ]]; then
+      if [[ -n "${domain}" ]]; then
+        if curl -fsS "https://${domain}/api/health" >/dev/null 2>&1; then
+          return 0
+        fi
+      else
+        return 0
+      fi
+    fi
+
+    sleep 2
+  done
+
+  echo "Timed out waiting for ${project_name} stack health." >&2
+  docker compose -p "${project_name}" --env-file "${env_file}" -f "${compose_file}" ps >&2 || true
+  return 1
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --version) VERSION="$2"; shift 2 ;;
@@ -160,10 +188,19 @@ if [[ "${SKIP_STEPDZ_UPDATE}" == "false" ]]; then
     -e "s|^ETK_WEB_IMAGE=.*|ETK_WEB_IMAGE=${WEB_IMAGE}|" \
     "${ENV_FILE}"
 
+  STEP_DOMAIN="$(grep -E '^APP_DOMAIN=' "${ENV_FILE}" | cut -d'=' -f2- || true)"
+
   if ! docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --force-recreate api web; then
     cp "${BACKUP_FILE}" "${ENV_FILE}"
     docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d || true
     echo "Stepdz update failed. Restored env backup: ${BACKUP_FILE}" >&2
+    exit 1
+  fi
+
+  if ! wait_for_stack_health "${ENV_FILE}" "${COMPOSE_FILE}" "${PROJECT_NAME}" "${STEP_DOMAIN}"; then
+    cp "${BACKUP_FILE}" "${ENV_FILE}"
+    docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d || true
+    echo "Stepdz health verification failed. Restored env backup: ${BACKUP_FILE}" >&2
     exit 1
   fi
 fi

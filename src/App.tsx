@@ -9,6 +9,7 @@ import AdminGuard from "./components/admin/AdminGuard";
 import AdminGuestGuard from "./components/admin/AdminGuestGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import StoreLayout from "./components/store/StoreLayout";
+import AppearanceCssBridge from "./components/appearance/AppearanceCssBridge";
 import { handleChunkRecovery } from "./lib/chunkRecovery";
 
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -82,6 +83,7 @@ const withSuspense = (element: ReactNode) => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <AppearanceCssBridge />
     <TooltipProvider>
       <Toaster />
       <Sonner position="top-center" />

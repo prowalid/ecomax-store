@@ -1,0 +1,17 @@
+module.exports = {
+  authRoutes: require('./auth.routes'),
+  productsRoutes: require('./products.routes'),
+  ordersRoutes: require('./orders.routes'),
+  healthRoutes: require('./health.routes').healthRoutes,
+  metricsRoutes: require('./health.routes').metricsRoutes,
+  openApiRoutes: require('./openapi.routes'),
+  categoriesRoutes: require('./categories.routes'),
+  pagesRoutes: require('./pages.routes'),
+  customersRoutes: require('./customers.routes'),
+  cartRoutes: require('./cart.routes'),
+  settingsRoutes: require('./settings.routes'),
+  uploadRoutes: require('./upload.routes'),
+  integrationsRoutes: require('./integrations.routes'),
+  analyticsRoutes: require('./analytics.routes'),
+  blacklistRoutes: require('./blacklist.routes'),
+};

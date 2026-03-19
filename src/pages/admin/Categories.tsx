@@ -35,7 +35,7 @@ const Categories = () => {
   const handleImageUpload = async (catId: string, file: File) => {
     setUploadingImageId(catId);
     try {
-      const data = await api.upload('/upload', file);
+      const data = (await api.upload('/upload', file)) as { url: string };
       updateCategory.mutate({ id: catId, image_url: data.url });
       setEditingImage(null);
     } catch {
@@ -63,6 +63,7 @@ const Categories = () => {
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
+          data-testid="categories-add-button"
           className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
@@ -77,6 +78,7 @@ const Categories = () => {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="اسم التصنيف..."
+            data-testid="category-name-input"
             className="flex-1 h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             autoFocus
@@ -84,6 +86,7 @@ const Categories = () => {
           <button
             onClick={handleAdd}
             disabled={createCategory.isPending}
+            data-testid="category-save-button"
             className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
           >
             {createCategory.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "إضافة"}
@@ -100,7 +103,7 @@ const Categories = () => {
         <div className="divide-y divide-slate-50">
           {categories.map((cat) => (
             <div key={cat.id} className="px-5 py-4 hover:bg-slate-50/50 transition-colors">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4" data-testid={`category-row-${cat.id}`}>
                 <GripVertical className="w-4 h-4 text-slate-300 cursor-grab hover:text-primary transition-colors" />
                 
                 {cat.image_url ? (
@@ -129,6 +132,7 @@ const Categories = () => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setEditingImage(editingImage === cat.id ? null : cat.id)}
+                    data-testid={`category-edit-image-${cat.id}`}
                     className="p-1.5 rounded-lg hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors"
                     title="تغيير الصورة"
                   >
@@ -137,6 +141,7 @@ const Categories = () => {
 
                   <button
                     onClick={() => deleteCategory.mutate(cat.id)}
+                    data-testid={`category-delete-${cat.id}`}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />

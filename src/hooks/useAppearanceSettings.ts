@@ -1,5 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { useStoreSettings } from "./useStoreSettings";
+import { getBootstrappedAppearance } from "@/lib/bootstrapAppearance";
 
 export interface AppearanceSlide {
   image_url: string;
@@ -60,31 +63,59 @@ export const defaultAppearance: AppearanceSettings = {
   ],
   offers_banner_url: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&q=80&w=1400",
 };
-const APPEARANCE_CACHE_KEY = "etk:appearance-settings-cache";
-
 function normalizeSlides(value: unknown): AppearanceSlide[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value
-    .map((entry) => {
+    .flatMap((entry): AppearanceSlide[] => {
       if (typeof entry === "string") {
-        return { image_url: entry, href: "" };
+        return [{ image_url: entry, href: "" }];
       }
       if (entry && typeof entry === "object" && "image_url" in entry && typeof entry.image_url === "string") {
-        return {
+        return [{
           image_url: entry.image_url,
           href: typeof (entry as { href?: unknown }).href === "string" ? (entry as { href?: string }).href : "",
-        };
+        }];
       }
-      return null;
-    })
-    .filter((entry): entry is AppearanceSlide => Boolean(entry?.image_url));
+      return [];
+    });
 }
 
 export function useAppearanceSettings() {
-  const store = useStoreSettings<AppearanceSettings>("appearance", defaultAppearance);
+  const initialAppearance = getBootstrappedAppearance(defaultAppearance);
+  const { data: serverSettings = initialAppearance, isLoading: loading } = useQuery({
+    queryKey: ["store_settings", "appearance"],
+    queryFn: async () => {
+      try {
+        const data = await api.get("/settings/appearance");
+        if (data && data.value) {
+          return { ...defaultAppearance, ...(data.value as Partial<AppearanceSettings>) };
+        }
+      } catch (err) {
+        console.error("Failed to fetch appearance settings:", err);
+      }
+      return initialAppearance;
+    },
+  });
+
+  const normalizedSettings = useMemo(
+    () => ({
+      ...serverSettings,
+      slides: normalizeSlides(serverSettings.slides),
+    }),
+    [serverSettings]
+  );
+
+  return {
+    loading,
+    settings: normalizedSettings,
+  };
+}
+
+export function useEditableAppearanceSettings() {
+  const store = useStoreSettings<AppearanceSettings>("appearance", getBootstrappedAppearance(defaultAppearance));
   const normalizedSettings = useMemo(
     () => ({
       ...store.settings,
@@ -92,16 +123,6 @@ export function useAppearanceSettings() {
     }),
     [store.settings]
   );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      localStorage.removeItem(APPEARANCE_CACHE_KEY);
-    } catch {
-      // Ignore storage failures; app continues with API values.
-    }
-  }, []);
 
   return {
     ...store,

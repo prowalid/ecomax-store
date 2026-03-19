@@ -31,6 +31,7 @@ API_IMAGE="ghcr.io/walid733/express-trade-kit-api:v1.0.27"
 WEB_IMAGE="ghcr.io/walid733/express-trade-kit-web:v1.0.27"
 POSTGRES_PASSWORD=""
 JWT_SECRET=""
+METRICS_TOKEN=""
 START_STACK="false"
 EDGE_NETWORK="${EDGE_NETWORK:-etk-edge}"
 
@@ -44,6 +45,7 @@ while [[ $# -gt 0 ]]; do
     --web-image) WEB_IMAGE="$2"; shift 2 ;;
     --db-password) POSTGRES_PASSWORD="$2"; shift 2 ;;
     --jwt-secret) JWT_SECRET="$2"; shift 2 ;;
+    --metrics-token) METRICS_TOKEN="$2"; shift 2 ;;
     --up) START_STACK="true"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
@@ -66,6 +68,7 @@ SITE_CONFIG="${EDGE_DIR}/sites/${CLIENT_SLUG}.caddy"
 
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(rand_secret)}"
 JWT_SECRET="${JWT_SECRET:-$(rand_secret)$(rand_secret)}"
+METRICS_TOKEN="${METRICS_TOKEN:-$(rand_secret)}"
 
 mkdir -p "${CLIENT_DIR}"
 mkdir -p "${EDGE_DIR}/sites"
@@ -85,6 +88,7 @@ sed -i \
   -e "s/^API_UPLOADS_VOLUME_NAME=.*/API_UPLOADS_VOLUME_NAME=${CLIENT_SLUG}_api_uploads/" \
   -e "s/^API_BACKUPS_VOLUME_NAME=.*/API_BACKUPS_VOLUME_NAME=${CLIENT_SLUG}_api_backups/" \
   -e "s/^JWT_SECRET=.*/JWT_SECRET=${JWT_SECRET}/" \
+  -e "s/^METRICS_TOKEN=.*/METRICS_TOKEN=${METRICS_TOKEN}/" \
   -e "s|^ETK_API_IMAGE=.*|ETK_API_IMAGE=${API_IMAGE}|" \
   -e "s|^ETK_WEB_IMAGE=.*|ETK_WEB_IMAGE=${WEB_IMAGE}|" \
   -e "s/^EDGE_NETWORK=.*/EDGE_NETWORK=${EDGE_NETWORK}/" \

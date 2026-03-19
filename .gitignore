@@ -30,3 +30,7 @@ server/.env
 
 # Local runtime artifacts
 server/old_logs.txt
+test-results/
+playwright-report/
+coverage/
+*.tsbuildinfo

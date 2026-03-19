@@ -110,7 +110,7 @@ export function initPixel(pixelId: string, userData: CAPIUserData = {}) {
   if (!pixelId) return;
 
   // Standard Facebook Pixel base code
-  (function (f: Window, b: Document, e: string, v: string, n?: FBQ, t?: HTMLScriptElement, s?: Element) {
+  (function (f: Window, b: Document, e: string, v: string, n?: FBQ, t?: HTMLScriptElement, s?: HTMLScriptElement) {
     if (f.fbq) return;
     n = f.fbq = ((...args: unknown[]) => {
       if (!n) return;
@@ -130,10 +130,10 @@ export function initPixel(pixelId: string, userData: CAPIUserData = {}) {
     n.loaded = true;
     n.version = "2.0";
     n.queue = [];
-    t = b.createElement(e);
+    t = b.createElement(e) as HTMLScriptElement;
     t.async = true;
     t.src = v;
-    s = b.getElementsByTagName(e)[0];
+    s = b.getElementsByTagName(e)[0] as HTMLScriptElement | undefined;
     s?.parentNode?.insertBefore(t, s);
   })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
 

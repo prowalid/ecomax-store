@@ -19,8 +19,9 @@
     --primary-foreground: 0 0% 100%;
     
     /* Keep storefront colors intact */
-    --store-primary: #e84360;
-    --store-badge-bg: #f99898;
+    --store-primary: 23 114 69;
+    --store-button: 23 114 69;
+    --store-badge-bg: #dff3e8;
     --store-card-bg: #f4f6f8;
     --store-sale-badge: rgb(var(--store-primary));
 

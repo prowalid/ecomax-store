@@ -28,6 +28,34 @@ ALLOW_MIXED="false"
 CLIENT_DIR="/opt/client-stores/stepdz"
 PROJECT_NAME="stepdz"
 
+wait_for_stack_health() {
+  local env_file="$1"
+  local compose_file="$2"
+  local project_name="$3"
+  local domain="$4"
+  local attempts=30
+
+  for ((i=1; i<=attempts; i++)); do
+    local api_status
+    api_status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${project_name}-api-1" 2>/dev/null || true)"
+    if [[ "${api_status}" == "healthy" ]]; then
+      if [[ -n "${domain}" ]]; then
+        if curl -fsS "https://${domain}/api/health" >/dev/null 2>&1; then
+          return 0
+        fi
+      else
+        return 0
+      fi
+    fi
+
+    sleep 2
+  done
+
+  echo "Timed out waiting for ${project_name} stack health." >&2
+  docker compose -p "${project_name}" --env-file "${env_file}" -f "${compose_file}" ps >&2 || true
+  return 1
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-web-build) BUILD_WEB="false"; shift ;;
@@ -45,12 +73,13 @@ ENV_FILE="${CLIENT_DIR}/.env.registry"
 COMPOSE_FILE="${CLIENT_DIR}/docker-compose.yml"
 CLIENT_CADDY_FILE="${CLIENT_DIR}/Caddyfile.client"
 SOURCE_CLIENT_CADDY_FILE="${REPO_ROOT}/deploy/Caddyfile.client-internal"
+SOURCE_COMPOSE_FILE="${REPO_ROOT}/deploy/docker-compose.client-stack.yml"
 WEB_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-web:stepdz-test"
 API_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-api:stepdz-test"
 GIT_COMMIT="$(git -C "${REPO_ROOT}" rev-parse --short HEAD)"
 BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-if [[ ! -f "${ENV_FILE}" || ! -f "${COMPOSE_FILE}" || ! -f "${SOURCE_CLIENT_CADDY_FILE}" ]]; then
+if [[ ! -f "${ENV_FILE}" || ! -f "${COMPOSE_FILE}" || ! -f "${SOURCE_CLIENT_CADDY_FILE}" || ! -f "${SOURCE_COMPOSE_FILE}" ]]; then
   echo "Missing stepdz stack files under ${CLIENT_DIR}" >&2
   exit 1
 fi
@@ -96,6 +125,7 @@ fi
 
 cp "${ENV_FILE}" "${BACKUP_FILE}"
 cp "${SOURCE_CLIENT_CADDY_FILE}" "${CLIENT_CADDY_FILE}"
+cp "${SOURCE_COMPOSE_FILE}" "${COMPOSE_FILE}"
 
 TARGET_API_IMAGE="${CURRENT_API_IMAGE}"
 TARGET_WEB_IMAGE="${CURRENT_WEB_IMAGE}"
@@ -141,6 +171,8 @@ sed -i \
   -e "s|^ETK_WEB_IMAGE=.*|ETK_WEB_IMAGE=${TARGET_WEB_IMAGE}|" \
   "${ENV_FILE}"
 
+STEP_DOMAIN="$(grep -E '^APP_DOMAIN=' "${ENV_FILE}" | cut -d'=' -f2- || true)"
+
 if [[ "${BUILD_API}" == "true" && "${BUILD_WEB}" == "true" ]]; then
   docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --force-recreate api web
 elif [[ "${BUILD_API}" == "true" ]]; then
@@ -150,6 +182,8 @@ elif [[ "${BUILD_WEB}" == "true" ]]; then
 else
   docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d
 fi
+
+wait_for_stack_health "${ENV_FILE}" "${COMPOSE_FILE}" "${PROJECT_NAME}" "${STEP_DOMAIN}"
 
 echo
 echo "stepdz test deployment complete."

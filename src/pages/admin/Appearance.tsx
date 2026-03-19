@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Type, Image, Save, Loader2, X, Upload, Tag, Layers3 } from "lucide-react";
-import { useAppearanceSettings, type AppearanceSettings, type AppearanceSlide } from "@/hooks/useAppearanceSettings";
+import { useEditableAppearanceSettings, type AppearanceSettings, type AppearanceSlide } from "@/hooks/useAppearanceSettings";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import AppearanceUploadCard from "@/components/admin/appearance/AppearanceUploadCard";
@@ -9,12 +9,11 @@ import AppearancePresetsCard from "@/components/admin/appearance/AppearancePrese
 import { appearancePresets } from "@/components/admin/appearance/types";
 
 const Appearance = () => {
-  const { settings, loading, saving, saveSettings } = useAppearanceSettings();
+  const { settings, setSettings, loading, saving, saveSettings } = useEditableAppearanceSettings();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const footerLogoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const slideInputRef = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState(settings);
   
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFooterLogo, setUploadingFooterLogo] = useState(false);
@@ -22,12 +21,8 @@ const Appearance = () => {
   const [uploadingSlide, setUploadingSlide] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
-  useEffect(() => {
-    setDraft(settings);
-  }, [settings]);
-
   const update = <K extends keyof AppearanceSettings>(key: K, value: AppearanceSettings[K]) => {
-    setDraft((current) => ({ ...current, [key]: value }));
+    setSettings((current) => ({ ...current, [key]: value }));
   };
 
   const handleUpload = async (file: File): Promise<string | null> => {
@@ -84,7 +79,7 @@ const Appearance = () => {
     const files = e.target.files;
     if (!files?.length) return;
     setUploadingSlide(true);
-    const newSlides = [...(draft.slides || [])];
+    const newSlides = [...(settings.slides || [])];
     for (const file of Array.from(files)) {
       const url = await handleUpload(file);
       if (url) newSlides.push({ image_url: url, href: "" });
@@ -95,11 +90,11 @@ const Appearance = () => {
   };
 
   const removeSlide = (idx: number) => {
-    update("slides", draft.slides.filter((_: AppearanceSlide, i: number) => i !== idx));
+    update("slides", settings.slides.filter((_: AppearanceSlide, i: number) => i !== idx));
   };
 
   const updateSlideLink = (idx: number, href: string) => {
-    update("slides", draft.slides.map((slide, index) => (index === idx ? { ...slide, href } : slide)));
+    update("slides", settings.slides.map((slide, index) => (index === idx ? { ...slide, href } : slide)));
   };
 
   const applyPreset = (presetId: string) => {
@@ -108,10 +103,10 @@ const Appearance = () => {
       return;
     }
 
-    setDraft({
-      ...draft,
+    setSettings((current) => ({
+      ...current,
       ...preset.colors,
-    });
+    }));
     toast.success(`تم تطبيق قالب ${preset.name}`);
   };
 
@@ -140,7 +135,7 @@ const Appearance = () => {
           <p className="text-[13px] text-slate-500 mt-1 font-medium">تحكم كامل في شكل وألوان المتجر الخاص بك</p>
         </div>
         <button
-          onClick={() => saveSettings(draft)}
+          onClick={() => saveSettings()}
           disabled={saving}
           className="h-11 px-6 flex items-center justify-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
         >
@@ -162,9 +157,9 @@ const Appearance = () => {
           <div className="space-y-3">
             <label className="block text-[13px] font-semibold text-slate-500">شعار الهيدر (رئيسي)</label>
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
-              {draft.logo_url ? (
+              {settings.logo_url ? (
                 <div className="relative group shrink-0">
-                  <img src={draft.logo_url} alt="شعار" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-1 bg-white shadow-sm" />
+                  <img src={settings.logo_url} alt="شعار" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-1 bg-white shadow-sm" />
                   <button
                     onClick={() => update("logo_url", "")}
                     className="absolute -top-2 -left-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-full p-1.5 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
@@ -185,7 +180,7 @@ const Appearance = () => {
                   className="h-10 px-5 rounded-[12px] bg-primary/10 text-primary text-[13px] font-bold hover:bg-primary/20 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {draft.logo_url ? "تغيير الشعار" : "رفع شعار جديد"}
+                  {settings.logo_url ? "تغيير الشعار" : "رفع شعار جديد"}
                 </button>
                 <p className="text-[11px] font-medium text-slate-400 mt-2">المقاس الموصى به: 250×80 بكسل</p>
               </div>
@@ -195,9 +190,9 @@ const Appearance = () => {
           <div className="space-y-3 pt-2">
             <label className="block text-[13px] font-semibold text-slate-500">شعار الفوتر (أسفل الصفحة)</label>
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
-              {draft.footer_logo_url ? (
+              {settings.footer_logo_url ? (
                 <div className="relative group shrink-0">
-                  <img src={draft.footer_logo_url} alt="شعار الفوتر" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-1 bg-white shadow-sm" />
+                  <img src={settings.footer_logo_url} alt="شعار الفوتر" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-1 bg-white shadow-sm" />
                   <button
                     onClick={() => update("footer_logo_url", "")}
                     className="absolute -top-2 -left-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-full p-1.5 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
@@ -218,7 +213,7 @@ const Appearance = () => {
                   className="h-10 px-5 rounded-[12px] bg-primary/10 text-primary text-[13px] font-bold hover:bg-primary/20 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {uploadingFooterLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {draft.footer_logo_url ? "تغيير الشعار" : "رفع الشعار المفرغ"}
+                  {settings.footer_logo_url ? "تغيير الشعار" : "رفع الشعار المفرغ"}
                 </button>
                 <p className="text-[11px] font-medium text-slate-400 mt-2">شعار فاتح ليتناسب مع الخلفية الداكنة للفوتر</p>
               </div>
@@ -227,9 +222,9 @@ const Appearance = () => {
           <div className="space-y-3 pt-2">
             <label className="block text-[13px] font-semibold text-slate-500">Favicon المتجر</label>
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-50 p-4 rounded-[16px] border border-slate-100">
-              {draft.favicon_url ? (
+              {settings.favicon_url ? (
                 <div className="relative group shrink-0">
-                  <img src={draft.favicon_url} alt="Favicon" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-2 bg-white shadow-sm" />
+                  <img src={settings.favicon_url} alt="Favicon" className="h-16 w-16 object-contain rounded-xl border border-slate-200 p-2 bg-white shadow-sm" />
                   <button
                     onClick={() => update("favicon_url", "")}
                     className="absolute -top-2 -left-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-full p-1.5 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
@@ -250,14 +245,14 @@ const Appearance = () => {
                   className="h-10 px-5 rounded-[12px] bg-primary/10 text-primary text-[13px] font-bold hover:bg-primary/20 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {uploadingFavicon ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {draft.favicon_url ? "تغيير الفاف أيكون" : "رفع فاف أيكون"}
+                  {settings.favicon_url ? "تغيير الفاف أيكون" : "رفع فاف أيكون"}
                 </button>
                 <p className="text-[11px] font-medium text-slate-400 mt-2">يفضل مقاس مربع 32×32 أو 64×64 بكسل.</p>
               </div>
             </div>
           </div>
         </div>
-        <AppearancePresetsCard settings={draft} onApplyPreset={applyPreset} />
+        <AppearancePresetsCard settings={settings} onApplyPreset={applyPreset} />
 
         <AppearanceSlidesSection
           title="سلايدشو الواجهة الرئيسي"
@@ -270,7 +265,7 @@ const Appearance = () => {
           }
           buttonLabel="إضافة صور"
           uploading={uploadingSlide}
-          slides={draft.slides || []}
+          slides={settings.slides || []}
           previewHeightClass="h-28"
           columnsClass="sm:grid-cols-2"
           emptyLabel='اضغط "إضافة صور" للبدء بتشكيل سلايدشو رائع للمتجر'
@@ -287,9 +282,9 @@ const Appearance = () => {
               <Tag className="w-4 h-4 text-pink-500" />
             </div>
           }
-          buttonLabel={draft.offers_banner_url ? "استبدال البانر" : "رفع بانر التخفيضات"}
+          buttonLabel={settings.offers_banner_url ? "استبدال البانر" : "رفع بانر التخفيضات"}
           emptyLabel="لا يوجد بانر لعرضه حالياً"
-          imageUrl={draft.offers_banner_url}
+          imageUrl={settings.offers_banner_url}
           previewHeightClass="h-32"
           uploading={uploadingBanner}
           onUpload={(files) => {
@@ -315,7 +310,7 @@ const Appearance = () => {
             <div>
               <label className="block text-[13px] font-semibold text-slate-500 mb-2">خط العناوين البارزة</label>
               <select
-                value={draft.heading_font}
+                value={settings.heading_font}
                 onChange={(e) => update("heading_font", e.target.value)}
                 className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-bold text-sidebar-heading focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               >
@@ -328,7 +323,7 @@ const Appearance = () => {
             <div>
               <label className="block text-[13px] font-semibold text-slate-500 mb-2">خط النصوص العادية</label>
               <select
-                value={draft.body_font}
+                value={settings.body_font}
                 onChange={(e) => update("body_font", e.target.value)}
                 className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               >

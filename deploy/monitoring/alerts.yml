@@ -1,0 +1,46 @@
+groups:
+  - name: express-trade-kit
+    rules:
+      - alert: EtkApiDown
+        expr: up{job="etk_api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Express Trade Kit API is down"
+          description: "Prometheus cannot scrape /api/metrics for the API target for 2 minutes."
+
+      - alert: EtkApiHigh5xxRate
+        expr: |
+          sum(rate(etk_http_requests_total{status_code=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(etk_http_requests_total[5m])), 0.001)
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx rate on Express Trade Kit API"
+          description: "More than 5% of API traffic returned 5xx responses during the last 10 minutes."
+
+      - alert: EtkApiHighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(etk_http_request_duration_seconds_bucket[10m])) by (le)
+          ) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency p95"
+          description: "95th percentile API latency is above 1.5 seconds for 10 minutes."
+
+      - alert: EtkApiTooManyInflightRequests
+        expr: etk_http_requests_in_flight > 200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many in-flight API requests"
+          description: "The API has sustained more than 200 concurrent in-flight requests for 5 minutes."

@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Phone, Mail, Truck, Clock, User, Menu, ShoppingBag, ChevronLeft, ChevronUp, X, Loader2, Home, LayoutGrid } from "lucide-react";
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { useCart } from "@/hooks/useCart";
-import { useAppearanceSettings, defaultAppearance } from "@/hooks/useAppearanceSettings";
+import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
 import { usePublishedPages } from "@/hooks/usePages";

@@ -3,6 +3,13 @@ server/node_modules
 dist
 server/logs
 server/backups
+server/public/uploads
+server/old_logs.txt
+playwright-report
+test-results
+coverage
+docs
+.github
 .git
 .DS_Store
 *.log

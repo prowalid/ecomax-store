@@ -37,8 +37,11 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, allo
     ...(options.headers as Record<string, string>),
   };
 
+  const method = (options.method || 'GET').toUpperCase();
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
+    cache: options.cache ?? (method === 'GET' ? 'no-store' : 'no-store'),
     headers,
     credentials: 'include',
   });
@@ -90,6 +93,7 @@ export const api = {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       method: 'POST',
+      cache: options?.cache ?? 'no-store',
       headers,
       body: formData,
       credentials: 'include',

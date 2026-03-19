@@ -55,6 +55,7 @@ export default function ProductsTable({
             return (
               <tr
                 key={product.id}
+                data-testid={`product-row-${product.id}`}
                 className={cn(
                   "border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group",
                   isSelected && "bg-primary/5"
@@ -125,6 +126,7 @@ export default function ProductsTable({
                   <div className="flex items-center justify-center gap-1">
                     <button
                       onClick={() => onEdit(product)}
+                      data-testid={`product-edit-${product.id}`}
                       className="p-1.5 rounded-lg hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors"
                       title="تعديل"
                     >
@@ -132,6 +134,7 @@ export default function ProductsTable({
                     </button>
                     <button
                       onClick={() => onRequestDelete(product.id)}
+                      data-testid={`product-delete-${product.id}`}
                       className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                       title="حذف"
                     >
