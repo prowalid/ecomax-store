@@ -18,6 +18,7 @@ const {
 const authMiddleware = require('../middleware/auth');
 const { createRateLimit, loginLimiter } = require('../middleware/rateLimit');
 const { validateBody } = require('../middleware/validate');
+const { createSanitizeBody } = require('../middleware/sanitize');
 const { loginSchema, registerSchema } = require('../validators/authSchemas');
 
 const router = express.Router();
@@ -54,19 +55,19 @@ const passwordResetRateLimit = createRateLimit({
 });
 
 router.get('/setup-status', checkSetupStatus);
-router.post('/register', authRateLimit, validateBody(registerSchema), register);
-router.post('/login', loginLimiter, validateBody(loginSchema), login);
+router.post('/register', authRateLimit, createSanitizeBody(), validateBody(registerSchema), register);
+router.post('/login', loginLimiter, createSanitizeBody(), validateBody(loginSchema), login);
 router.post('/refresh', refresh);
 router.post('/logout', logout);
-router.post('/recover-password', passwordRecoveryRateLimit, recoverPassword);
-router.post('/reset-password', passwordResetRateLimit, resetPassword);
+router.post('/recover-password', passwordRecoveryRateLimit, createSanitizeBody(), recoverPassword);
+router.post('/reset-password', passwordResetRateLimit, createSanitizeBody(), resetPassword);
 
 router.get('/me', authMiddleware, getMe);
 router.get('/profile', authMiddleware, getProfile);
-router.put('/profile', authMiddleware, updateProfile);
-router.post('/change-password', authMiddleware, changePassword);
-router.post('/2fa/setup', authMiddleware, setup2FA);
-router.post('/2fa/verify', authMiddleware, verify2FA);
-router.post('/2fa/disable', authMiddleware, disable2FA);
+router.put('/profile', authMiddleware, createSanitizeBody(), updateProfile);
+router.post('/change-password', authMiddleware, createSanitizeBody(), changePassword);
+router.post('/2fa/setup', authMiddleware, createSanitizeBody(), setup2FA);
+router.post('/2fa/verify', authMiddleware, createSanitizeBody(), verify2FA);
+router.post('/2fa/disable', authMiddleware, createSanitizeBody(), disable2FA);
 
 module.exports = router;

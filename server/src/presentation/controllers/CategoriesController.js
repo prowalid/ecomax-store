@@ -1,4 +1,5 @@
 const { CategoryDTO } = require('../../application/dto');
+const { recordAdminAudit } = require('./audit');
 
 async function getCategories(req, res, next) {
   try {
@@ -14,6 +15,12 @@ async function createCategory(req, res, next) {
   try {
     const createCategoryUseCase = req.app.locals.container?.resolve('createCategoryUseCase');
     const category = await createCategoryUseCase.execute(req.body);
+    await recordAdminAudit(req, {
+      action: 'category.create',
+      entityType: 'category',
+      entityId: category.id,
+      meta: { name: category.name, slug: category.slug },
+    });
     res.status(201).json(CategoryDTO.from(category));
   } catch (err) {
     next(err);
@@ -31,6 +38,12 @@ async function updateCategory(req, res, next) {
     });
 
     await uploadCleanupService.cleanupRemovedUploadUrls([previousImageUrl], [updatedCategory.image_url]);
+    await recordAdminAudit(req, {
+      action: 'category.update',
+      entityType: 'category',
+      entityId: updatedCategory.id,
+      meta: { name: updatedCategory.name, slug: updatedCategory.slug },
+    });
     res.json(CategoryDTO.from(updatedCategory));
   } catch (err) {
     next(err);
@@ -45,6 +58,11 @@ async function deleteCategory(req, res, next) {
     const { deletedImageUrl } = await deleteCategoryUseCase.execute({ id });
     await uploadCleanupService.cleanupRemovedUploadUrls([deletedImageUrl], []);
 
+    await recordAdminAudit(req, {
+      action: 'category.delete',
+      entityType: 'category',
+      entityId: id,
+    });
     res.status(204).send();
   } catch (err) {
     next(err);

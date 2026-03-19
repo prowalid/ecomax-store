@@ -1,4 +1,5 @@
 const { OrderDTO, OrderItemDTO } = require('../../application/dto');
+const { recordAdminAudit, getRequestIp } = require('./audit');
 
 async function getOrders(req, res, next) {
   try {
@@ -26,12 +27,6 @@ async function getOrderItems(req, res, next) {
   } catch (err) {
     next(err);
   }
-}
-
-function getRequestIp(req) {
-  return req.headers['cf-connecting-ip']
-    || (req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',')[0].trim())
-    || req.ip;
 }
 
 async function createOrder(req, res, next) {
@@ -67,6 +62,12 @@ async function updateOrderStatus(req, res, next) {
       status,
     });
 
+    await recordAdminAudit(req, {
+      action: 'order.status.update',
+      entityType: 'order',
+      entityId: updatedOrder.id || id,
+      meta: { status: updatedOrder.status },
+    });
     res.json(OrderDTO.from(updatedOrder));
   } catch (err) {
     next(err);
@@ -81,6 +82,11 @@ async function createOrderShipment(req, res, next) {
     }
 
     const result = await useCase.execute({ orderId: req.params.id });
+    await recordAdminAudit(req, {
+      action: 'order.shipment.create',
+      entityType: 'order',
+      entityId: req.params.id,
+    });
     res.json(result);
   } catch (err) {
     next(err);

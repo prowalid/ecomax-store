@@ -1,4 +1,5 @@
 const { ProductDTO } = require('../../application/dto');
+const { recordAdminAudit } = require('./audit');
 
 async function getProducts(req, res, next) {
   try {
@@ -28,6 +29,12 @@ async function createProduct(req, res, next) {
     }
 
     const product = await createProductUseCase.execute(req.body);
+    await recordAdminAudit(req, {
+      action: 'product.create',
+      entityType: 'product',
+      entityId: product.id,
+      meta: { name: product.name, status: product.status },
+    });
     res.status(201).json(ProductDTO.from(product));
   } catch (err) {
     next(err);
@@ -51,6 +58,12 @@ async function updateProduct(req, res, next) {
     });
 
     await uploadCleanupService.cleanupRemovedUploadUrls([previousImageUrl], [updatedProduct.image_url]);
+    await recordAdminAudit(req, {
+      action: 'product.update',
+      entityType: 'product',
+      entityId: updatedProduct.id,
+      meta: { name: updatedProduct.name, status: updatedProduct.status },
+    });
     res.json(ProductDTO.from(updatedProduct));
   } catch (err) {
     next(err);
@@ -68,6 +81,11 @@ async function deleteProduct(req, res, next) {
 
     const { urlsToCleanup } = await deleteProductUseCase.execute({ productId: id });
     await uploadCleanupService.cleanupRemovedUploadUrls(urlsToCleanup, []);
+    await recordAdminAudit(req, {
+      action: 'product.delete',
+      entityType: 'product',
+      entityId: id,
+    });
     res.status(204).send();
   } catch (err) {
     next(err);
@@ -104,6 +122,12 @@ async function addProductImage(req, res, next) {
       imageUrl: image_url,
     });
 
+    await recordAdminAudit(req, {
+      action: 'product.image.add',
+      entityType: 'product',
+      entityId: id,
+      meta: { imageId: image.id },
+    });
     res.status(201).json(image);
   } catch (err) {
     next(err);
@@ -121,6 +145,12 @@ async function reorderProductImages(req, res, next) {
     }
 
     const result = await reorderProductImagesUseCase.execute({ productId: id, images });
+    await recordAdminAudit(req, {
+      action: 'product.image.reorder',
+      entityType: 'product',
+      entityId: id,
+      meta: { imagesCount: Array.isArray(images) ? images.length : 0 },
+    });
     res.json(result);
   } catch (err) {
     next(err);
@@ -142,6 +172,12 @@ async function deleteProductImage(req, res, next) {
     });
     await uploadCleanupService.cleanupRemovedUploadUrls([deletedImageUrl], [newMainImage]);
 
+    await recordAdminAudit(req, {
+      action: 'product.image.delete',
+      entityType: 'product',
+      entityId: id,
+      meta: { imageId },
+    });
     res.status(204).send();
   } catch (err) {
     next(err);

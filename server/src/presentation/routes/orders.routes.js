@@ -12,6 +12,7 @@ const { createOrderSchema, updateOrderStatusSchema } = require('../validators/or
 const { createRateLimit } = require('../middleware/rateLimit');
 const { validateBotProtection } = require('../middleware/security');
 const { createIdempotencyMiddleware } = require('../middleware/idempotency');
+const { createSanitizeBody } = require('../middleware/sanitize');
 
 const router = express.Router();
 
@@ -29,13 +30,13 @@ async function orderCreateIdempotency(req, res, next) {
   return middleware(req, res, next);
 }
 
-router.post('/', orderCreateIdempotency, createOrderRateLimit, validateBotProtection, validateBody(createOrderSchema), createOrder);
+router.post('/', orderCreateIdempotency, createOrderRateLimit, createSanitizeBody(), validateBotProtection, validateBody(createOrderSchema), createOrder);
 
 router.use(authMiddleware);
 
 router.get('/', getOrders);
 router.get('/:id/items', getOrderItems);
-router.patch('/:id/status', validateBody(updateOrderStatusSchema), updateOrderStatus);
+router.patch('/:id/status', createSanitizeBody(), validateBody(updateOrderStatusSchema), updateOrderStatus);
 router.post('/:id/shipping/provider', createOrderShipment);
 
 module.exports = router;

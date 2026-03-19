@@ -63,4 +63,54 @@ describe("BullMQQueueManager", () => {
       { jobId: "order.created:evt_1" }
     );
   });
+
+  it("logs failed jobs with retry metadata", async () => {
+    const errorLogger = vi.fn();
+    const queue = new BullMQQueueManager({
+      config: {
+        queueName: "etk-events",
+        workerConcurrency: 2,
+        redis: {
+          host: "127.0.0.1",
+          port: 6379,
+          password: "",
+          db: 0,
+          keyPrefix: "test:",
+        },
+      },
+      logger: {
+        error: errorLogger,
+        info: vi.fn(),
+      },
+      QueueClass,
+      WorkerClass,
+    });
+
+    await queue.start();
+
+    const failedCall = workerOn.mock.calls.find(([eventName]: any[]) => eventName === "failed");
+    expect(failedCall).toBeTruthy();
+
+    const failedHandler = failedCall?.[1];
+    failedHandler(
+      {
+        id: "job-1",
+        name: "order.created",
+        attemptsMade: 2,
+        opts: { attempts: 3 },
+        data: { orderId: "o1" },
+      },
+      new Error("network down")
+    );
+
+    expect(errorLogger).toHaveBeenCalledWith("[Queue:bullmq] Event job failed", {
+      queueName: "etk-events",
+      jobId: "job-1",
+      eventName: "order.created",
+      attemptsMade: 2,
+      maxAttempts: 3,
+      payload: { orderId: "o1" },
+      error: "network down",
+    });
+  });
 });

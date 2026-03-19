@@ -489,6 +489,26 @@ infrastructure = technical implementations
 - `create order` محمي من إعادة التنفيذ غير المقصود عبر `Idempotency-Key`
 - `cart` و`integrations` لديهما مفاتيح `rate limiting` أدق من السابق
 
+### 8.7 Resilience + Audit Trail + Input Sanitization
+
+تمت إضافة طبقة صلابة إضافية للمسارات الإدارية والتكاملات الخارجية.
+
+الملفات الأساسية:
+
+- [CircuitBreaker.js](/root/express-trade-kit/server/src/infrastructure/services/CircuitBreaker.js)
+- [OrderWebhookService.js](/root/express-trade-kit/server/src/infrastructure/services/OrderWebhookService.js)
+- [WhatsAppMessagingService.js](/root/express-trade-kit/server/src/infrastructure/services/WhatsAppMessagingService.js)
+- [AdminAuditService.js](/root/express-trade-kit/server/src/application/services/AdminAuditService.js)
+- [PgAdminAuditLogRepository.js](/root/express-trade-kit/server/src/infrastructure/repositories/PgAdminAuditLogRepository.js)
+- [004_admin_audit_log.up.sql](/root/express-trade-kit/server/src/db/migrations/004_admin_audit_log.up.sql)
+- [sanitize.js](/root/express-trade-kit/server/src/presentation/middleware/sanitize.js)
+
+الوضع الحالي:
+
+- `webhook / WhatsApp` أصبحا أقل قابلية لتعطيل المتجر عند فشل المزود الخارجي
+- التعديلات الإدارية الحساسة أصبحت تُسجل داخل `admin_audit_log`
+- نصوص الإدخال القادمة من HTTP تمر الآن عبر طبقة `sanitization` أوضح قبل دخولها إلى منطق الأعمال
+
 ## 9. الهاردننغ التشغيلي
 
 تم تقوية طبقة النشر والتشغيل عبر:
@@ -587,6 +607,9 @@ infrastructure = technical implementations
 - `security headers`
 - `rate limiting`
 - `idempotency`
+- `input sanitization`
+- `audit trail`
+- `resilience for external integrations`
 
 كما تم تثبيت اختبارات `integration` نفسها لتعمل داخل الذاكرة عبر `app.handle()` بدل الاعتماد على `listen()` وفتح منفذ محلي، حتى تبقى مستقرة داخل البيئات المقيدة أيضًا.
 

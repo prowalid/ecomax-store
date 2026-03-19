@@ -1,4 +1,5 @@
 const { PageDTO } = require('../../application/dto');
+const { recordAdminAudit } = require('./audit');
 
 async function getAllPages(req, res, next) {
   try {
@@ -35,6 +36,12 @@ async function createPage(req, res, next) {
   try {
     const createPageUseCase = req.app.locals.container?.resolve('createPageUseCase');
     const page = await createPageUseCase.execute(req.body);
+    await recordAdminAudit(req, {
+      action: 'page.create',
+      entityType: 'page',
+      entityId: page.id,
+      meta: { slug: page.slug, published: page.published },
+    });
     res.status(201).json(PageDTO.from(page));
   } catch (err) {
     next(err);
@@ -46,6 +53,12 @@ async function updatePage(req, res, next) {
   try {
     const updatePageUseCase = req.app.locals.container?.resolve('updatePageUseCase');
     const page = await updatePageUseCase.execute({ id, updates: req.body });
+    await recordAdminAudit(req, {
+      action: 'page.update',
+      entityType: 'page',
+      entityId: page.id,
+      meta: { slug: page.slug, published: page.published },
+    });
     res.json(PageDTO.from(page));
   } catch (err) {
     next(err);
@@ -53,12 +66,17 @@ async function updatePage(req, res, next) {
 }
 
 async function deletePage(req, res, next) {
-  const { id } = req.params;
-  try {
-    const deletePageUseCase = req.app.locals.container?.resolve('deletePageUseCase');
-    await deletePageUseCase.execute({ id });
-    res.status(204).send();
-  } catch (err) {
+    const { id } = req.params;
+    try {
+      const deletePageUseCase = req.app.locals.container?.resolve('deletePageUseCase');
+      await deletePageUseCase.execute({ id });
+      await recordAdminAudit(req, {
+        action: 'page.delete',
+        entityType: 'page',
+        entityId: id,
+      });
+      res.status(204).send();
+    } catch (err) {
     next(err);
   }
 }

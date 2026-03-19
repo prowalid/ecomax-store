@@ -79,6 +79,9 @@ class BullMQQueueManager {
         queueName: this.config.queueName,
         jobId: job?.id || null,
         eventName: job?.name || null,
+        attemptsMade: job?.attemptsMade ?? null,
+        maxAttempts: job?.opts?.attempts ?? null,
+        payload: job?.data || null,
         error: error instanceof Error ? error.message : String(error),
       });
     });

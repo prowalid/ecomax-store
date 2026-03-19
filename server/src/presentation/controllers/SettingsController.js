@@ -1,4 +1,5 @@
 const { collectAppearanceUploadUrls } = require('../../utils/uploadCleanup');
+const { recordAdminAudit } = require('./audit');
 
 const PUBLIC_SETTINGS_KEYS = new Set(['appearance', 'general', 'shipping', 'marketing', 'security']);
 
@@ -46,6 +47,12 @@ async function saveSettings(req, res, next) {
       await uploadCleanupService.cleanupRemovedUploadUrls(previousAppearanceUrls, nextAppearanceUrls);
     }
 
+    await recordAdminAudit(req, {
+      action: 'settings.save',
+      entityType: 'settings',
+      entityId: key,
+      meta: { key },
+    });
     res.json({ value: result.value });
   } catch (err) {
     next(err);

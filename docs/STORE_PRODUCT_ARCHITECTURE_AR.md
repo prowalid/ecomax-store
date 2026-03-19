@@ -537,6 +537,9 @@ src/features/
 - performance indexes
 - database pool tuning
 - CSP / security headers baseline
+- input sanitization
+- circuit breaker للتكاملات الخارجية
+- admin audit trail
 - backups / restore / verify
 - CI / CD scaffolding
 - OpenAPI
@@ -601,6 +604,9 @@ src/features/
 - `FOR UPDATE` لحجز المخزون عند إنشاء الطلب
 - قيود قاعدة بيانات تمنع جزءًا من البيانات التجارية الفاسدة
 - فهارس أفضل للمسارات التجارية الأكثر استخدامًا
+- `audit trail` للتعديلات الإدارية الحساسة
+- `circuit breaker` للتكاملات الخارجية
+- `sanitization` أوضح للمدخلات النصية القادمة من HTTP
 
 ### 9.4 الجاهزية للنمو
 
@@ -672,7 +678,12 @@ src/features/
 
 ### 10.6 Audit / Merchant Trust
 
-التاجر المحترف يحتاج لاحقًا:
+ما أصبح موجودًا الآن:
+
+- `audit trail` أساسية للتعديلات الإدارية المهمة
+- تسجيل من نفذ العملية وعلى أي كيان وفي أي طلب
+
+وما يزال مطلوبًا لاحقًا:
 
 - trace أوضح للتعديلات
 - سجل أحداث مهم
@@ -684,7 +695,6 @@ src/features/
 
 - `search / discovery` أقوى
 - `promotions / discounts` كنواة تجارية كاملة
-- `audit trail` للتعديلات الإدارية
 - `object storage` بدل الاعتماد المحلي فقط
 - `merchant UX` أهدأ وأكثر وضوحًا في العمليات اليومية
 

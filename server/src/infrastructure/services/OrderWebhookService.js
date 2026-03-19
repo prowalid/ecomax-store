@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { CircuitBreaker } = require('./CircuitBreaker');
 
 function sanitizeWebhookUrl(url) {
   const trimmed = String(url || '').trim();
@@ -20,10 +21,16 @@ function createWebhookSignature(secret, rawBody) {
 }
 
 class OrderWebhookService {
-  constructor({ settingsRepository, logger, whatsAppMessagingService }) {
+  constructor({ settingsRepository, logger, whatsAppMessagingService, breaker = null }) {
     this.settingsRepository = settingsRepository;
     this.logger = logger;
     this.whatsAppMessagingService = whatsAppMessagingService;
+    this.breaker = breaker || new CircuitBreaker({
+      name: 'order-webhook',
+      logger,
+      failureThreshold: 3,
+      resetTimeoutMs: 60_000,
+    });
   }
 
   async getMarketingSettings() {
@@ -109,50 +116,66 @@ class OrderWebhookService {
         headers['X-ETK-Signature-Alg'] = 'sha256';
       }
 
-      for (let attempt = 1; attempt <= 2; attempt += 1) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
+      try {
+        return await this.breaker.execute(async () => {
+          for (let attempt = 1; attempt <= 2; attempt += 1) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
 
-        try {
-          const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers,
-            body,
-            signal: controller.signal,
-          });
-          clearTimeout(timeout);
+            try {
+              const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers,
+                body,
+                signal: controller.signal,
+              });
+              clearTimeout(timeout);
 
-          if (response.ok) {
-            this.logger.info('[Webhook] Delivered order webhook', {
-              eventType,
-              webhookUrl,
-              attempt,
-              status: response.status,
-              orderNumber: payload.order?.order_id || null,
-            });
-            return { success: true, status: response.status };
+              if (response.ok) {
+                this.logger.info('[Webhook] Delivered order webhook', {
+                  eventType,
+                  webhookUrl,
+                  attempt,
+                  status: response.status,
+                  orderNumber: payload.order?.order_id || null,
+                });
+                return { success: true, status: response.status };
+              }
+
+              const text = await response.text().catch(() => '');
+              this.logger.warn('[Webhook] Non-2xx webhook response', {
+                eventType,
+                webhookUrl,
+                attempt,
+                status: response.status,
+                body: text.slice(0, 500),
+              });
+            } catch (error) {
+              clearTimeout(timeout);
+              this.logger.warn('[Webhook] Webhook attempt failed', {
+                eventType,
+                webhookUrl,
+                attempt,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
           }
 
-          const text = await response.text().catch(() => '');
-          this.logger.warn('[Webhook] Non-2xx webhook response', {
+          const error = new Error('delivery_failed');
+          error.code = 'WEBHOOK_DELIVERY_FAILED';
+          throw error;
+        }, { eventType, webhookUrl });
+      } catch (error) {
+        if (error?.code === 'CIRCUIT_OPEN') {
+          this.logger.warn('[Webhook] Delivery skipped because circuit is open', {
             eventType,
             webhookUrl,
-            attempt,
-            status: response.status,
-            body: text.slice(0, 500),
           });
-        } catch (error) {
-          clearTimeout(timeout);
-          this.logger.warn('[Webhook] Webhook attempt failed', {
-            eventType,
-            webhookUrl,
-            attempt,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          return { success: false, skipped: false, reason: 'circuit_open' };
         }
-      }
 
-      return { success: false, skipped: false, reason: 'delivery_failed' };
+        return { success: false, skipped: false, reason: 'delivery_failed' };
+      }
     } catch (error) {
       this.logger.error('[Webhook] Unexpected webhook error', {
         eventType,

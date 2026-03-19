@@ -62,6 +62,7 @@ const { RemoveFromBlacklistUseCase } = require('./application/use-cases/blacklis
 const { GetAnalyticsUseCase } = require('./application/use-cases/analytics/GetAnalytics');
 const { PgUserRepository } = require('./infrastructure/repositories/PgUserRepository');
 const { PgAuthSessionRepository } = require('./infrastructure/repositories/PgAuthSessionRepository');
+const { PgAdminAuditLogRepository } = require('./infrastructure/repositories/PgAdminAuditLogRepository');
 const { GetSetupStatusUseCase } = require('./application/use-cases/auth/GetSetupStatus');
 const { GetCurrentUserUseCase } = require('./application/use-cases/auth/GetCurrentUser');
 const { GetProfileUseCase } = require('./application/use-cases/auth/GetProfile');
@@ -93,6 +94,7 @@ const { CreateOrderShipmentUseCase } = require('./application/use-cases/shipping
 const { HandleFileUploadUseCase } = require('./application/use-cases/upload/HandleFileUpload');
 const { ShippingSettingsService } = require('./application/services/ShippingSettingsService');
 const { MetricsService } = require('./infrastructure/services/MetricsService');
+const { AdminAuditService } = require('./application/services/AdminAuditService');
 const { LocalFileStorage } = require('./infrastructure/storage/LocalFileStorage');
 const { PageIntegrityService } = require('./infrastructure/services/PageIntegrityService');
 const { SchemaMigrationService } = require('./infrastructure/services/SchemaMigrationService');
@@ -245,7 +247,15 @@ function createContainer() {
     .registerFactory('analyticsRepository', (container) => new PgAnalyticsRepository(container.resolve('pool')))
     .registerFactory('userRepository', (container) => new PgUserRepository(container.resolve('pool')))
     .registerFactory('authSessionRepository', (container) => new PgAuthSessionRepository(container.resolve('pool')))
+    .registerFactory('adminAuditLogRepository', (container) => new PgAdminAuditLogRepository(container.resolve('pool')))
     .registerFactory('authTokenService', () => new AuthTokenService())
+    .registerFactory(
+      'adminAuditService',
+      (container) => new AdminAuditService({
+        adminAuditLogRepository: container.resolve('adminAuditLogRepository'),
+        logger: container.resolve('logger'),
+      })
+    )
     .registerFactory(
       'authSessionService',
       (container) => new AuthSessionService({

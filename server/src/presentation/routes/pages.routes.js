@@ -9,6 +9,7 @@ const {
 } = require('../controllers/PagesController');
 const authMiddleware = require('../middleware/auth');
 const { validateBody } = require('../middleware/validate');
+const { createSanitizeBody } = require('../middleware/sanitize');
 const { createPageSchema, updatePageSchema } = require('../validators/pageSchemas');
 
 const router = express.Router();
@@ -18,8 +19,8 @@ router.get('/slug/:slug', getPageBySlug);
 
 router.use(authMiddleware);
 router.get('/', getAllPages);
-router.post('/', validateBody(createPageSchema), createPage);
-router.patch('/:id', validateBody(updatePageSchema), updatePage);
+router.post('/', createSanitizeBody({ allowHtmlPaths: ['content'] }), validateBody(createPageSchema), createPage);
+router.patch('/:id', createSanitizeBody({ allowHtmlPaths: ['content'] }), validateBody(updatePageSchema), updatePage);
 router.delete('/:id', deletePage);
 
 module.exports = router;

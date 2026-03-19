@@ -7,6 +7,7 @@ const {
 } = require('../../infrastructure/services/AuthCookieService');
 const { AuthTokenService } = require('../../infrastructure/services/AuthTokenService');
 const { UserDTO } = require('../../application/dto');
+const { recordAdminAudit } = require('./audit');
 
 const authTokenService = new AuthTokenService();
 
@@ -159,6 +160,11 @@ async function updateProfile(req, res, next) {
       name: req.body.name,
       phone: req.body.phone,
     });
+    await recordAdminAudit(req, {
+      action: 'profile.update',
+      entityType: 'user',
+      entityId: req.user.id,
+    });
     res.json(UserDTO.from(profile));
   } catch (err) {
     if (err.code === '23505') {
@@ -176,6 +182,11 @@ async function changePassword(req, res, next) {
       currentPassword: req.body.currentPassword,
       newPassword: req.body.newPassword,
     });
+    await recordAdminAudit(req, {
+      action: 'password.change',
+      entityType: 'user',
+      entityId: req.user.id,
+    });
     res.json(result);
   } catch (err) {
     if (err.status && err.status < 500) {
@@ -189,6 +200,11 @@ async function setup2FA(req, res, next) {
   try {
     const setupTwoFactorUseCase = req.app.locals.container?.resolve('setupTwoFactorUseCase');
     const result = await setupTwoFactorUseCase.execute({ userId: req.user.id });
+    await recordAdminAudit(req, {
+      action: '2fa.setup',
+      entityType: 'user',
+      entityId: req.user.id,
+    });
     res.json(result);
   } catch (err) {
     next(err);
@@ -201,6 +217,11 @@ async function verify2FA(req, res, next) {
     const result = await verifyTwoFactorUseCase.execute({
       userId: req.user.id,
       code: req.body.code,
+    });
+    await recordAdminAudit(req, {
+      action: '2fa.verify',
+      entityType: 'user',
+      entityId: req.user.id,
     });
     res.json(result);
   } catch (err) {
@@ -217,6 +238,11 @@ async function disable2FA(req, res, next) {
     const result = await disableTwoFactorUseCase.execute({
       userId: req.user.id,
       code: req.body.code,
+    });
+    await recordAdminAudit(req, {
+      action: '2fa.disable',
+      entityType: 'user',
+      entityId: req.user.id,
     });
     res.json(result);
   } catch (err) {
