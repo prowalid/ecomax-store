@@ -10,7 +10,13 @@ class UpdatePageUseCase {
   }
 
   async execute({ id, updates }) {
-    if (Object.keys(updates).length === 0) {
+    const { version, ...rawUpdates } = updates;
+
+    if (!Number.isInteger(version) || version < 1) {
+      throw new ValidationError('Version is required');
+    }
+
+    if (Object.keys(rawUpdates).length === 0) {
       throw new ValidationError('No fields to update');
     }
 
@@ -19,7 +25,7 @@ class UpdatePageUseCase {
       throw new NotFoundError('Page not found');
     }
 
-    const nextUpdates = { ...updates };
+    const nextUpdates = { ...rawUpdates };
 
     if (nextUpdates.slug !== undefined) {
       nextUpdates.slug = new Page({
@@ -35,7 +41,8 @@ class UpdatePageUseCase {
 
     const updatedPage = await this.pageRepository.update(
       id,
-      new Page(currentPage).applyUpdates(nextUpdates)
+      new Page(currentPage).applyUpdates(nextUpdates),
+      version
     );
     if (updatedPage?.type === 'invalid') {
       throw new ValidationError('No valid fields to update');

@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS categories (
   slug TEXT UNIQUE,
   image_url TEXT DEFAULT NULL,
   sort_order INT NOT NULL DEFAULT 0,
+  version INT NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -91,6 +92,7 @@ CREATE TABLE IF NOT EXISTS products (
   custom_options JSONB NOT NULL DEFAULT '[]'::jsonb,
   status product_status NOT NULL DEFAULT 'draft',
   variants_count INT NOT NULL DEFAULT 0,
+  version INT NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -188,6 +190,7 @@ CREATE TABLE IF NOT EXISTS pages (
   content TEXT DEFAULT '',
   published BOOLEAN NOT NULL DEFAULT false,
   show_in TEXT NOT NULL DEFAULT 'none' CHECK (show_in IN ('header', 'footer', 'both', 'none')),
+  version INT NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

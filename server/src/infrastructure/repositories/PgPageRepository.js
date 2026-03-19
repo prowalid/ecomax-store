@@ -1,4 +1,5 @@
 const { IPageRepository } = require('../../domain/repositories/IPageRepository');
+const { ConflictError } = require('../../domain/errors/ConflictError');
 
 class PgPageRepository extends IPageRepository {
   constructor(pool) {
@@ -83,7 +84,7 @@ class PgPageRepository extends IPageRepository {
     return result.rows[0];
   }
 
-  async update(id, updates) {
+  async update(id, updates, expectedVersion) {
     const payload = typeof updates?.toPersistence === 'function'
       ? updates.toPersistence()
       : updates;
@@ -106,18 +107,25 @@ class PgPageRepository extends IPageRepository {
     setClause.push(`updated_at = $${queryIndex}`);
     values.push(new Date().toISOString());
     queryIndex++;
+    setClause.push('version = version + 1');
     values.push(id);
+    queryIndex++;
+    values.push(expectedVersion);
 
     const result = await this.pool.query(
       `
         UPDATE pages
         SET ${setClause.join(', ')}
-        WHERE id = $${queryIndex}
+        WHERE id = $${queryIndex - 1}
+          AND version = $${queryIndex}
         RETURNING *
       `,
       values
     );
 
+    if (result.rowCount === 0) {
+      throw new ConflictError('تم تعديل الصفحة من مكان آخر. أعد تحميل القائمة ثم حاول مرة أخرى.');
+    }
     return result.rows[0] ?? null;
   }
 

@@ -19,6 +19,7 @@ describe("UpdateProductUseCase", () => {
         image_url: "/uploads/old.png",
         custom_options: [],
         status: "active",
+        version: 3,
       }),
       update: vi.fn().mockResolvedValue({ id: "p1", image_url: "/uploads/new.png" }),
     };
@@ -36,6 +37,7 @@ describe("UpdateProductUseCase", () => {
     const result = await useCase.execute({
       productId: "p1",
       updates: {
+        version: 3,
         custom_options: [{ name: " Size ", values: ["M", "M", "L"] }],
       },
     });
@@ -50,6 +52,7 @@ describe("UpdateProductUseCase", () => {
       image_url: "/uploads/old.png",
       custom_options: [{ name: "Size", values: ["M", "L"] }],
     });
+    expect(productRepository.update.mock.calls[0][2]).toBe(3);
     expect(result).toEqual({
       previousImageUrl: "/uploads/old.png",
       updatedProduct: { id: "p1", image_url: "/uploads/new.png" },
@@ -69,7 +72,7 @@ describe("UpdateProductUseCase", () => {
     await expect(
       useCase.execute({
         productId: "missing",
-        updates: { name: "New name" },
+        updates: { name: "New name", version: 1 },
       })
     ).rejects.toMatchObject({
       message: "Product not found",

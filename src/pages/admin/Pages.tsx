@@ -97,13 +97,15 @@ const Pages = () => {
         content: editContent,
         show_in: editShowIn,
         published: editPublished,
+        version: editingPage.version,
       },
       { onSuccess: () => setEditingPage(null) }
     );
   };
 
   const togglePublish = (id: string, current: boolean) => {
-    updatePage.mutate({ id, published: !current });
+    const page = pages.find((entry) => entry.id === id);
+    updatePage.mutate({ id, published: !current, version: page?.version });
   };
 
   if (isLoading) {

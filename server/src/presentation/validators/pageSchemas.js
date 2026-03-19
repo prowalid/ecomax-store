@@ -9,4 +9,6 @@ exports.createPageSchema = z.object({
   show_in: z.enum(['header', 'footer', 'both', 'none']).default('none'),
 });
 
-exports.updatePageSchema = exports.createPageSchema.partial();
+exports.updatePageSchema = exports.createPageSchema.partial().extend({
+  version: z.number().int().min(1, 'Version is required'),
+});

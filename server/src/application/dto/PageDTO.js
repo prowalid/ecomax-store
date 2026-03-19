@@ -22,6 +22,10 @@ class PageDTO {
       dto.show_in = page.show_in ?? 'none';
     }
 
+    if (Object.prototype.hasOwnProperty.call(page, 'version')) {
+      dto.version = Number(page.version ?? 1);
+    }
+
     return dto;
   }
 }

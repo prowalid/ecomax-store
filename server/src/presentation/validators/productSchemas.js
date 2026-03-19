@@ -19,7 +19,9 @@ exports.createProductSchema = z.object({
   status: z.enum(['active', 'draft', 'archived']).default('active'),
 });
 
-exports.updateProductSchema = exports.createProductSchema.partial();
+exports.updateProductSchema = exports.createProductSchema.partial().extend({
+  version: z.number().int().min(1, 'Version is required'),
+});
 
 exports.addProductImageSchema = z.object({
   image_url: z.string().url('Invalid image URL'),

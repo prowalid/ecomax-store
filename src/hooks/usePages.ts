@@ -11,6 +11,7 @@ export interface Page {
   content: string;
   published: boolean;
   show_in: PageShowIn;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -71,7 +72,12 @@ export function useUpdatePage() {
       qc.invalidateQueries({ queryKey: ["pages"] });
       toast.success("تم تحديث الصفحة");
     },
-    onError: (error: Error) => toast.error(error.message || "فشل تحديث الصفحة"),
+    onError: (error: Error & { code?: string }) => {
+      if (error.code === "CONFLICT") {
+        qc.invalidateQueries({ queryKey: ["pages"] });
+      }
+      toast.error(error.message || "فشل تحديث الصفحة");
+    },
   });
 }
 

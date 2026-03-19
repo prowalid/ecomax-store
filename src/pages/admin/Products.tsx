@@ -173,7 +173,8 @@ const Products = () => {
     if (editingId) {
       try {
         setIsSyncingImages(true);
-        await updateProduct.mutateAsync({ id: editingId, ...payload });
+        const currentProduct = products.find((product) => product.id === editingId);
+        await updateProduct.mutateAsync({ id: editingId, ...payload, version: currentProduct?.version });
 
         const existingImageIds = new Set(editImages.map((img) => img.id));
         const keptExistingIds = new Set(

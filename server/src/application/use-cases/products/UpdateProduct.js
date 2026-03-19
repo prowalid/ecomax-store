@@ -10,7 +10,13 @@ class UpdateProductUseCase {
   }
 
   async execute({ productId, updates }) {
-    if (Object.keys(updates).length === 0) {
+    const { version, ...rawUpdates } = updates;
+
+    if (!Number.isInteger(version) || version < 1) {
+      throw new ValidationError('Version is required');
+    }
+
+    if (Object.keys(rawUpdates).length === 0) {
       throw new ValidationError('No fields to update');
     }
 
@@ -19,14 +25,15 @@ class UpdateProductUseCase {
       throw new NotFoundError('Product not found');
     }
 
-    const preparedUpdates = { ...updates };
+    const preparedUpdates = { ...rawUpdates };
     if (Object.prototype.hasOwnProperty.call(preparedUpdates, 'custom_options')) {
       preparedUpdates.custom_options = this.normalizeCustomOptions(preparedUpdates.custom_options);
     }
 
     const updatedProduct = await this.productRepository.update(
       productId,
-      new Product(existingProduct).applyUpdates(preparedUpdates)
+      new Product(existingProduct).applyUpdates(preparedUpdates),
+      version
     );
     if (!updatedProduct) {
       throw new ValidationError('No valid fields to update');

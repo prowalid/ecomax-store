@@ -1,0 +1,8 @@
+ALTER TABLE pages
+  DROP COLUMN IF EXISTS version;
+
+ALTER TABLE categories
+  DROP COLUMN IF EXISTS version;
+
+ALTER TABLE products
+  DROP COLUMN IF EXISTS version;

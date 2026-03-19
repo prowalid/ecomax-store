@@ -11,7 +11,13 @@ class UpdateCategoryUseCase {
   }
 
   async execute({ id, updates }) {
-    if (Object.keys(updates).length === 0) {
+    const { version, ...rawUpdates } = updates;
+
+    if (!Number.isInteger(version) || version < 1) {
+      throw new ValidationError('Version is required');
+    }
+
+    if (Object.keys(rawUpdates).length === 0) {
       throw new ValidationError('No fields to update');
     }
 
@@ -20,7 +26,7 @@ class UpdateCategoryUseCase {
       throw new NotFoundError('Category not found');
     }
 
-    const nextUpdates = { ...updates };
+    const nextUpdates = { ...rawUpdates };
     if (nextUpdates.slug !== undefined) {
       nextUpdates.slug = Slug.optional(nextUpdates.slug);
 
@@ -34,7 +40,8 @@ class UpdateCategoryUseCase {
 
     const updatedCategory = await this.categoryRepository.update(
       id,
-      new Category(existingCategory).applyUpdates(nextUpdates)
+      new Category(existingCategory).applyUpdates(nextUpdates),
+      version
     );
     if (updatedCategory?.type === 'invalid') {
       throw new ValidationError('No valid fields to update');

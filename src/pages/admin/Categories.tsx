@@ -36,7 +36,12 @@ const Categories = () => {
     setUploadingImageId(catId);
     try {
       const data = (await api.upload('/upload', file)) as { url: string };
-      updateCategory.mutate({ id: catId, image_url: data.url });
+      const currentCategory = categories.find((category) => category.id === catId);
+      updateCategory.mutate({
+        id: catId,
+        image_url: data.url,
+        version: currentCategory?.version,
+      });
       setEditingImage(null);
     } catch {
       toast.error("فشل رفع الصورة");
@@ -175,7 +180,10 @@ const Categories = () => {
                   </div>
                   {cat.image_url && (
                     <button
-                      onClick={() => { updateCategory.mutate({ id: cat.id, image_url: null }); setEditingImage(null); }}
+                      onClick={() => {
+                        updateCategory.mutate({ id: cat.id, image_url: null, version: cat.version });
+                        setEditingImage(null);
+                      }}
                       className="h-8 px-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20"
                     >
                       إزالة الصورة

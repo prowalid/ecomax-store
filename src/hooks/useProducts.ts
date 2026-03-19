@@ -18,6 +18,7 @@ export interface Product {
   image_url: string | null;
   custom_options: ProductOptionGroup[];
   status: ProductStatus;
+  version: number;
   variants_count: number;
   created_at: string;
   updated_at: string;
@@ -61,7 +62,12 @@ export function useUpdateProduct() {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("تم تحديث المنتج");
     },
-    onError: (error: Error) => toast.error(error.message || "فشل تحديث المنتج"),
+    onError: (error: Error & { code?: string }) => {
+      if (error.code === "CONFLICT") {
+        qc.invalidateQueries({ queryKey: ["products"] });
+      }
+      toast.error(error.message || "فشل تحديث المنتج");
+    },
   });
 }
 

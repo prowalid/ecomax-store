@@ -1,5 +1,6 @@
 const format = require('pg-format');
 const { IProductRepository } = require('../../domain/repositories/IProductRepository');
+const { ConflictError } = require('../../domain/errors/ConflictError');
 
 class PgProductRepository extends IProductRepository {
   constructor(pool) {
@@ -73,7 +74,7 @@ class PgProductRepository extends IProductRepository {
     return rows[0] || null;
   }
 
-  async update(productId, updates) {
+  async update(productId, updates, expectedVersion) {
     const payload = typeof updates?.toPersistence === 'function'
       ? updates.toPersistence()
       : updates;
@@ -110,16 +111,23 @@ class PgProductRepository extends IProductRepository {
     setClause.push(`updated_at = $${queryIndex}`);
     values.push(new Date().toISOString());
     queryIndex += 1;
+    setClause.push('version = version + 1');
     values.push(productId);
+    queryIndex += 1;
+    values.push(expectedVersion);
 
     const query = `
       UPDATE products
       SET ${setClause.join(', ')}
-      WHERE id = $${queryIndex}
+      WHERE id = $${queryIndex - 1}
+        AND version = $${queryIndex}
       RETURNING *
     `;
 
-    const { rows } = await this.pool.query(query, values);
+    const { rows, rowCount } = await this.pool.query(query, values);
+    if (rowCount === 0) {
+      throw new ConflictError('تم تعديل المنتج من مكان آخر. أعد تحميل القائمة ثم حاول مرة أخرى.');
+    }
     return rows[0] || null;
   }
 

@@ -8,6 +8,7 @@ export interface Category {
   slug: string | null;
   sort_order: number;
   image_url: string | null;
+  version: number;
   created_at: string;
   products_count?: number;
 }
@@ -46,7 +47,12 @@ export function useUpdateCategory() {
       qc.invalidateQueries({ queryKey: ["categories"] });
       toast.success("تم تحديث التصنيف");
     },
-    onError: (error: Error) => toast.error(error.message || "فشل تحديث التصنيف"),
+    onError: (error: Error & { code?: string }) => {
+      if (error.code === "CONFLICT") {
+        qc.invalidateQueries({ queryKey: ["categories"] });
+      }
+      toast.error(error.message || "فشل تحديث التصنيف");
+    },
   });
 }
 

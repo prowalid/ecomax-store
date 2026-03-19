@@ -509,6 +509,7 @@ infrastructure = technical implementations
 - التعديلات الإدارية الحساسة أصبحت تُسجل داخل `admin_audit_log`
 - سجل التدقيق أصبح قابلًا للعرض من الإدارة عبر مسار `analytics`
 - نصوص الإدخال القادمة من HTTP تمر الآن عبر طبقة `sanitization` أوضح قبل دخولها إلى منطق الأعمال
+- الموارد الإدارية الأساسية (`products / categories / pages`) أصبحت تستخدم `optimistic locking` عبر `version`
 
 ## 9. الهاردننغ التشغيلي
 
@@ -611,6 +612,7 @@ infrastructure = technical implementations
 - `input sanitization`
 - `audit trail`
 - `resilience for external integrations`
+- `optimistic locking` للكتابة الإدارية الحساسة
 
 كما تم تثبيت اختبارات `integration` نفسها لتعمل داخل الذاكرة عبر `app.handle()` بدل الاعتماد على `listen()` وفتح منفذ محلي، حتى تبقى مستقرة داخل البيئات المقيدة أيضًا.
 

@@ -1,4 +1,5 @@
 const { ICategoryRepository } = require('../../domain/repositories/ICategoryRepository');
+const { ConflictError } = require('../../domain/errors/ConflictError');
 
 class PgCategoryRepository extends ICategoryRepository {
   constructor(pool) {
@@ -55,7 +56,7 @@ class PgCategoryRepository extends ICategoryRepository {
     return result.rows[0];
   }
 
-  async update(id, updates) {
+  async update(id, updates, expectedVersion) {
     const payload = typeof updates?.toPersistence === 'function'
       ? updates.toPersistence()
       : updates;
@@ -75,18 +76,25 @@ class PgCategoryRepository extends ICategoryRepository {
       return { type: 'invalid' };
     }
 
+    setClause.push('version = version + 1');
     values.push(id);
+    queryIndex++;
+    values.push(expectedVersion);
 
     const result = await this.pool.query(
       `
         UPDATE categories
         SET ${setClause.join(', ')}
-        WHERE id = $${queryIndex}
+        WHERE id = $${queryIndex - 1}
+          AND version = $${queryIndex}
         RETURNING *
       `,
       values
     );
 
+    if (result.rowCount === 0) {
+      throw new ConflictError('تم تعديل التصنيف من مكان آخر. أعد تحميل القائمة ثم حاول مرة أخرى.');
+    }
     return result.rows[0] ?? null;
   }
 

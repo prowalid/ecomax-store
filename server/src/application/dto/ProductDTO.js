@@ -21,6 +21,7 @@ class ProductDTO {
       image_url: product.image_url ?? null,
       custom_options: Array.isArray(product.custom_options) ? product.custom_options : [],
       status: product.status ?? 'active',
+      version: Number(product.version ?? 1),
     };
   }
 }

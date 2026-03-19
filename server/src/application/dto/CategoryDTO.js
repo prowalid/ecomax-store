@@ -10,6 +10,7 @@ class CategoryDTO {
       slug: category.slug ?? null,
       sort_order: Number(category.sort_order ?? 0),
       image_url: category.image_url ?? null,
+      version: Number(category.version ?? 1),
     };
   }
 }

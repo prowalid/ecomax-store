@@ -25,4 +25,6 @@ exports.createCategorySchema = z.object({
   image_url: imageUrlSchema.nullable().optional(),
 });
 
-exports.updateCategorySchema = exports.createCategorySchema.partial();
+exports.updateCategorySchema = exports.createCategorySchema.partial().extend({
+  version: z.number().int().min(1, 'Version is required'),
+});
