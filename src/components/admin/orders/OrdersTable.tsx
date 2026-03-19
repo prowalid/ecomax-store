@@ -131,6 +131,7 @@ function OrderTableRow({
   return (
     <>
       <tr
+        data-testid={`order-row-${order.id}`}
         className={cn(
           "border-b border-slate-50 transition-colors cursor-pointer group",
           isSelected ? "bg-primary/5" : "hover:bg-slate-50/50"
@@ -191,7 +192,7 @@ function OrderTableRow({
           </Badge>
         </td>
         <td className="px-4 py-4">
-          <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", isExpanded && "rotate-180")} />
+          <ChevronDown data-testid={`order-expand-${order.id}`} className={cn("w-4 h-4 text-slate-400 transition-transform", isExpanded && "rotate-180")} />
         </td>
       </tr>
       {isExpanded && (
@@ -359,6 +360,7 @@ function OrderTableRow({
                               e.stopPropagation();
                               onStatusChange(order.id, status);
                             }}
+                            data-testid={`order-status-${order.id}-${status}`}
                             className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-95 transition-opacity"
                           >
                             {orderStatusConfig[status].label}

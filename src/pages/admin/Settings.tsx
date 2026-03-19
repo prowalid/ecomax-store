@@ -81,6 +81,7 @@ const Settings = () => {
         <button
           onClick={handleSave}
           disabled={saving || !dirty}
+          data-testid="settings-save-button"
           className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -99,6 +100,7 @@ const Settings = () => {
               type="text"
               value={settings.store_name}
               onChange={(e) => setSettings({ ...settings, store_name: e.target.value })}
+              data-testid="settings-store-name-input"
               className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
           </div>
@@ -111,6 +113,7 @@ const Settings = () => {
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
                 placeholder="0555 123 456"
+                data-testid="settings-phone-input"
                 className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 dir="ltr"
               />
@@ -122,6 +125,7 @@ const Settings = () => {
                 value={settings.whatsapp_phone}
                 onChange={(e) => setSettings({ ...settings, whatsapp_phone: e.target.value })}
                 placeholder="0555 123 456 أو +213555123456"
+                data-testid="settings-whatsapp-input"
                 className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 dir="ltr"
               />
@@ -141,6 +145,7 @@ const Settings = () => {
                 value={settings.email}
                 onChange={(e) => setSettings({ ...settings, email: e.target.value })}
                 placeholder="admin@store.com"
+                data-testid="settings-email-input"
                 className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 dir="ltr"
               />
@@ -168,6 +173,7 @@ const Settings = () => {
                   value={settings.meta_title}
                   onChange={(e) => setSettings({ ...settings, meta_title: e.target.value })}
                   placeholder="مثال: متجر الأحذية الرياضية في الجزائر"
+                  data-testid="settings-meta-title-input"
                   className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
                 <p className="text-[11px] font-medium text-slate-400 mt-2">إذا تركته فارغاً سيُستخدم اسم المتجر تلقائياً.</p>
@@ -180,6 +186,7 @@ const Settings = () => {
                   onChange={(e) => setSettings({ ...settings, meta_description: e.target.value })}
                   placeholder="وصف مختصر وواضح للمتجر يظهر في محركات البحث وعند مشاركة الصفحة."
                   rows={4}
+                  data-testid="settings-meta-description-input"
                   className="w-full px-4 py-3 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-y"
                 />
               </div>

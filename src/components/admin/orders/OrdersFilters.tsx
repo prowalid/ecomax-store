@@ -27,6 +27,7 @@ export default function OrdersFilters({
       <div className="flex items-center gap-1 border-b border-border overflow-x-auto scrollbar-thin pb-px">
         <button
           onClick={() => onFilterChange("all")}
+          data-testid="orders-filter-all"
           className={cn(
             "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
             activeFilter === "all"
@@ -43,6 +44,7 @@ export default function OrdersFilters({
             <button
               key={status}
               onClick={() => onFilterChange(status)}
+              data-testid={`orders-filter-${status}`}
               className={cn(
                 "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
                 activeFilter === status
@@ -64,6 +66,7 @@ export default function OrdersFilters({
             placeholder="بحث بالاسم، رقم الطلب، الهاتف، IP أو رقم التتبع..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
+            data-testid="orders-search-input"
             className="w-full h-9 pr-9 pl-3 rounded-lg border border-input bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
           />
         </div>
