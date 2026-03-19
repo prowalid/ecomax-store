@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useStoreSettings } from "./useStoreSettings";
 import { getBootstrappedAppearance } from "@/lib/bootstrapAppearance";
+import { writeCachedAppearance } from "@/lib/appearanceCache";
 
 export interface AppearanceSlide {
   image_url: string;
@@ -99,6 +100,12 @@ export function useAppearanceSettings() {
       return initialAppearance;
     },
   });
+
+  useEffect(() => {
+    if (serverSettings) {
+      writeCachedAppearance(serverSettings);
+    }
+  }, [serverSettings]);
 
   const normalizedSettings = useMemo(
     () => ({
