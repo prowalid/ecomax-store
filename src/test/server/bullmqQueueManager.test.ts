@@ -66,6 +66,7 @@ describe("BullMQQueueManager", () => {
 
   it("logs failed jobs with retry metadata", async () => {
     const errorLogger = vi.fn();
+    const recordBestEffort = vi.fn();
     const queue = new BullMQQueueManager({
       config: {
         queueName: "etk-events",
@@ -82,6 +83,9 @@ describe("BullMQQueueManager", () => {
         error: errorLogger,
         info: vi.fn(),
       },
+      deadLetterQueueService: {
+        recordBestEffort,
+      },
       QueueClass,
       WorkerClass,
     });
@@ -96,7 +100,7 @@ describe("BullMQQueueManager", () => {
       {
         id: "job-1",
         name: "order.created",
-        attemptsMade: 2,
+        attemptsMade: 3,
         opts: { attempts: 3 },
         data: { orderId: "o1" },
       },
@@ -107,10 +111,19 @@ describe("BullMQQueueManager", () => {
       queueName: "etk-events",
       jobId: "job-1",
       eventName: "order.created",
-      attemptsMade: 2,
+      attemptsMade: 3,
       maxAttempts: 3,
       payload: { orderId: "o1" },
       error: "network down",
+    });
+    expect(recordBestEffort).toHaveBeenCalledWith({
+      driver: "bullmq",
+      eventName: "order.created",
+      jobId: "job-1",
+      payload: { orderId: "o1" },
+      error: "network down",
+      attemptsMade: 3,
+      maxAttempts: 3,
     });
   });
 });

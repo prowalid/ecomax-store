@@ -1,9 +1,10 @@
 const { Queue, Worker } = require('bullmq');
 
 class BullMQQueueManager {
-  constructor({ config, logger, QueueClass = Queue, WorkerClass = Worker }) {
+  constructor({ config, logger, deadLetterQueueService = null, QueueClass = Queue, WorkerClass = Worker }) {
     this.config = config;
     this.logger = logger;
+    this.deadLetterQueueService = deadLetterQueueService;
     this.QueueClass = QueueClass;
     this.WorkerClass = WorkerClass;
     this.handlers = new Map();
@@ -75,15 +76,30 @@ class BullMQQueueManager {
     );
 
     this.worker.on('failed', (job, error) => {
+      const attemptsMade = job?.attemptsMade ?? null;
+      const maxAttempts = job?.opts?.attempts ?? null;
+
       this.logger?.error?.('[Queue:bullmq] Event job failed', {
         queueName: this.config.queueName,
         jobId: job?.id || null,
         eventName: job?.name || null,
-        attemptsMade: job?.attemptsMade ?? null,
-        maxAttempts: job?.opts?.attempts ?? null,
+        attemptsMade,
+        maxAttempts,
         payload: job?.data || null,
         error: error instanceof Error ? error.message : String(error),
       });
+
+      if (this.deadLetterQueueService && maxAttempts !== null && attemptsMade >= maxAttempts) {
+        void this.deadLetterQueueService.recordBestEffort({
+          driver: 'bullmq',
+          eventName: job?.name || 'unknown',
+          jobId: job?.id || null,
+          payload: job?.data || {},
+          error: error instanceof Error ? error.message : String(error),
+          attemptsMade,
+          maxAttempts,
+        });
+      }
     });
 
     this.worker.on('completed', (job) => {

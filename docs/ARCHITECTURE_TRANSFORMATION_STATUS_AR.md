@@ -612,6 +612,7 @@ infrastructure = technical implementations
 - `input sanitization`
 - `audit trail`
 - `resilience for external integrations`
+- `dead letter queue` للمهام التي تفشل نهائيًا
 - `optimistic locking` للكتابة الإدارية الحساسة
 
 كما تم تثبيت اختبارات `integration` نفسها لتعمل داخل الذاكرة عبر `app.handle()` بدل الاعتماد على `listen()` وفتح منفذ محلي، حتى تبقى مستقرة داخل البيئات المقيدة أيضًا.

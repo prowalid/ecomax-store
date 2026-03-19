@@ -1,6 +1,7 @@
 class InlineQueueManager {
-  constructor({ logger } = {}) {
+  constructor({ logger, deadLetterQueueService = null } = {}) {
     this.logger = logger;
+    this.deadLetterQueueService = deadLetterQueueService;
     this.handlers = new Map();
   }
 
@@ -34,6 +35,17 @@ class InlineQueueManager {
               eventName,
               error: result.reason instanceof Error ? result.reason.message : String(result.reason),
             });
+
+            if (this.deadLetterQueueService) {
+              void this.deadLetterQueueService.recordBestEffort({
+                driver: 'inline',
+                eventName,
+                payload,
+                error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+                attemptsMade: 1,
+                maxAttempts: 1,
+              });
+            }
           }
         });
       });

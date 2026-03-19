@@ -607,6 +607,7 @@ src/features/
 - `audit trail` للتعديلات الإدارية الحساسة
 - `circuit breaker` للتكاملات الخارجية
 - `sanitization` أوضح للمدخلات النصية القادمة من HTTP
+- `dead letter queue` لتجميع المهام الجانبية التي تفشل نهائيًا بدل ضياعها بصمت
 - `optimistic locking` على `products / categories / pages` لتقليل الكتابة فوق تعديلات الآخرين بصمت
 
 ### 9.4 الجاهزية للنمو

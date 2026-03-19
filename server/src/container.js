@@ -104,6 +104,7 @@ const { CategoryDefaultsService } = require('./infrastructure/services/CategoryD
 const { CartCleanupService } = require('./infrastructure/services/CartCleanupService');
 const { EnsureDefaultCategoryImagesUseCase } = require('./application/use-cases/system/EnsureDefaultCategoryImages');
 const { StartCartCleanupUseCase } = require('./application/use-cases/system/StartCartCleanup');
+const { DeadLetterQueueService } = require('./infrastructure/services/DeadLetterQueueService');
 
 class Container {
   constructor() {
@@ -189,6 +190,13 @@ function createContainer() {
     })
     .registerFactory('cacheService', (container) => new CacheService(container.resolve('cacheStore')))
     .registerFactory(
+      'deadLetterQueueService',
+      (container) => new DeadLetterQueueService({
+        pool: container.resolve('pool'),
+        logger: container.resolve('logger'),
+      })
+    )
+    .registerFactory(
       'getHealthStatusUseCase',
       (container) => new GetHealthStatusUseCase({
         pool: container.resolve('pool'),
@@ -212,12 +220,14 @@ function createContainer() {
         return new BullMQQueueManager({
           config: currentQueueConfig,
           logger: currentLogger,
+          deadLetterQueueService: container.resolve('deadLetterQueueService'),
         });
       }
 
       currentLogger.info('[Queue] Using inline queue manager');
       return new InlineQueueManager({
         logger: currentLogger,
+        deadLetterQueueService: container.resolve('deadLetterQueueService'),
       });
     })
     .registerFactory('eventBus', (container) => {
