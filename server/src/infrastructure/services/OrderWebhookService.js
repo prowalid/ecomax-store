@@ -61,7 +61,7 @@ class OrderWebhookService {
       event: {
         id: crypto.randomUUID(),
         type: eventType,
-        source: 'express-trade-kit',
+        source: 'ecomax-store',
         version: '1.0',
         occurred_at: new Date().toISOString(),
       },

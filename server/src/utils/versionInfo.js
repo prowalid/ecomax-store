@@ -36,7 +36,7 @@ function getCurrentVersionInfo() {
   const webVersion = process.env.ETK_WEB_VERSION || process.env.WEB_VERSION || apiVersion;
 
   return {
-    app: 'express-trade-kit',
+    app: 'ecomax-store',
     api_version: apiVersion,
     web_version: webVersion,
     git_commit: process.env.ETK_GIT_COMMIT || process.env.GIT_COMMIT || null,

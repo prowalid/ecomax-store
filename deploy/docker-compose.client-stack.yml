@@ -71,7 +71,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      LOG_SERVICE_NAME: ${LOG_SERVICE_NAME:-express-trade-kit-api}
+      LOG_SERVICE_NAME: ${LOG_SERVICE_NAME:-ecomax-store-api}
       LOG_DIR: /app/logs
       FACEBOOK_PIXEL_ID: ${FACEBOOK_PIXEL_ID:-}
       FACEBOOK_ACCESS_TOKEN: ${FACEBOOK_ACCESS_TOKEN:-}

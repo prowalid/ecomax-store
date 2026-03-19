@@ -3,7 +3,7 @@ require('winston-daily-rotate-file');
 const path = require('path');
 
 const logDir = process.env.LOG_DIR || path.join(process.cwd(), 'logs');
-const serviceName = process.env.LOG_SERVICE_NAME || 'express-trade-kit';
+const serviceName = process.env.LOG_SERVICE_NAME || 'ecomax-store-api';
 const isProduction = process.env.NODE_ENV === 'production';
 
 const enrichFormat = winston.format((info) => {

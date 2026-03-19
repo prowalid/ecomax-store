@@ -106,7 +106,7 @@ ufw enable
 mkdir -p /opt/etk-infrastructure
 cd /opt/etk-infrastructure
 
-git clone --depth 1 --filter=blob:none --sparse https://YOUR_GITHUB_TOKEN@github.com/walid733/express-trade-kit.git .
+git clone --depth 1 --filter=blob:none --sparse https://YOUR_GITHUB_TOKEN@github.com/prowalid/ecomax-store.git .
 git sparse-checkout set deploy server/src/db
 ```
 
@@ -123,7 +123,7 @@ git sparse-checkout set deploy server/src/db
 ### 3.5 تسجيل الدخول إلى GHCR
 
 ```bash
-printf '%s' 'YOUR_GITHUB_TOKEN' | docker login ghcr.io -u walid733 --password-stdin
+printf '%s' 'YOUR_GITHUB_TOKEN' | docker login ghcr.io -u prowalid --password-stdin
 ```
 
 السبب:
@@ -144,8 +144,8 @@ bash deploy/scripts/install_edge_proxy.sh
 ### 3.7 سحب النسخة الرسمية التي تريد اعتمادها
 
 ```bash
-docker pull ghcr.io/walid733/express-trade-kit-api:v1.0.19
-docker pull ghcr.io/walid733/express-trade-kit-web:v1.0.19
+docker pull ghcr.io/prowalid/ecomax-store-api:v1.0.19
+docker pull ghcr.io/prowalid/ecomax-store-web:v1.0.19
 ```
 
 السبب:
@@ -166,8 +166,8 @@ cd /opt/etk-infrastructure
 bash deploy/scripts/create_client_store.sh \
   --slug veloria \
   --domain veloriarose.com \
-  --api-image ghcr.io/walid733/express-trade-kit-api:v1.0.19 \
-  --web-image ghcr.io/walid733/express-trade-kit-web:v1.0.19 \
+  --api-image ghcr.io/prowalid/ecomax-store-api:v1.0.19 \
+  --web-image ghcr.io/prowalid/ecomax-store-web:v1.0.19 \
   --up
 ```
 
@@ -219,15 +219,15 @@ docker compose -p veloria --env-file /opt/client-stores/veloria/.env.registry -f
 ### 7.1 اسحب الصور الجديدة
 
 ```bash
-docker pull ghcr.io/walid733/express-trade-kit-api:v1.0.20
-docker pull ghcr.io/walid733/express-trade-kit-web:v1.0.20
+docker pull ghcr.io/prowalid/ecomax-store-api:v1.0.20
+docker pull ghcr.io/prowalid/ecomax-store-web:v1.0.20
 ```
 
 ### 7.2 عدّل ملف البيئة الخاص بالعميل
 
 ```bash
-sed -i 's#^ETK_API_IMAGE=.*#ETK_API_IMAGE=ghcr.io/walid733/express-trade-kit-api:v1.0.20#' /opt/client-stores/veloria/.env.registry
-sed -i 's#^ETK_WEB_IMAGE=.*#ETK_WEB_IMAGE=ghcr.io/walid733/express-trade-kit-web:v1.0.20#' /opt/client-stores/veloria/.env.registry
+sed -i 's#^ETK_API_IMAGE=.*#ETK_API_IMAGE=ghcr.io/prowalid/ecomax-store-api:v1.0.20#' /opt/client-stores/veloria/.env.registry
+sed -i 's#^ETK_WEB_IMAGE=.*#ETK_WEB_IMAGE=ghcr.io/prowalid/ecomax-store-web:v1.0.20#' /opt/client-stores/veloria/.env.registry
 ```
 
 ### 7.3 أعد تشغيل `api/web`
@@ -252,8 +252,8 @@ grep -E '^ETK_(API|WEB)_IMAGE=' /opt/client-stores/veloria/.env.registry
 مثال:
 
 ```bash
-sed -i 's#^ETK_API_IMAGE=.*#ETK_API_IMAGE=ghcr.io/walid733/express-trade-kit-api:v1.0.19#' /opt/client-stores/veloria/.env.registry
-sed -i 's#^ETK_WEB_IMAGE=.*#ETK_WEB_IMAGE=ghcr.io/walid733/express-trade-kit-web:v1.0.19#' /opt/client-stores/veloria/.env.registry
+sed -i 's#^ETK_API_IMAGE=.*#ETK_API_IMAGE=ghcr.io/prowalid/ecomax-store-api:v1.0.19#' /opt/client-stores/veloria/.env.registry
+sed -i 's#^ETK_WEB_IMAGE=.*#ETK_WEB_IMAGE=ghcr.io/prowalid/ecomax-store-web:v1.0.19#' /opt/client-stores/veloria/.env.registry
 ```
 
 ### 8.2 أعد تشغيل `api/web`

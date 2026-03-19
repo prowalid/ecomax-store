@@ -82,10 +82,10 @@ if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-API_IMAGE="ghcr.io/walid733/express-trade-kit-api:${VERSION}"
-WEB_IMAGE="ghcr.io/walid733/express-trade-kit-web:${VERSION}"
-API_IMAGE_LATEST="ghcr.io/walid733/express-trade-kit-api:latest"
-WEB_IMAGE_LATEST="ghcr.io/walid733/express-trade-kit-web:latest"
+API_IMAGE="ghcr.io/prowalid/ecomax-store-api:${VERSION}"
+WEB_IMAGE="ghcr.io/prowalid/ecomax-store-web:${VERSION}"
+API_IMAGE_LATEST="ghcr.io/prowalid/ecomax-store-api:latest"
+WEB_IMAGE_LATEST="ghcr.io/prowalid/ecomax-store-web:latest"
 MANIFEST_FILE="${REPO_ROOT}/deploy/releases.json"
 ENV_FILE="${CLIENT_DIR}/.env.registry"
 COMPOSE_FILE="${CLIENT_DIR}/docker-compose.yml"

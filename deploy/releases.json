@@ -7,48 +7,48 @@
       "version": "v1.0.28",
       "channel": "stable",
       "released_at": "2026-03-19T00:00:00Z",
-      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.28",
-      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.28",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.28",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.28",
       "notes": "Cloud-readiness hardening, OpenAPI exposure, Grafana monitoring assets, structured deployment checklist, and production deployment verification improvements."
     },
     {
       "version": "v1.0.27",
       "channel": "stable",
       "released_at": "2026-03-16T00:00:00Z",
-      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.27",
-      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.27",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.27",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.27",
       "notes": "Admin settings drafts now survive tab switches and window refocus without wiping unsaved form input."
     },
     {
       "version": "v1.0.26",
       "channel": "stable",
       "released_at": "2026-03-15T00:00:00Z",
-      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.26",
-      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.26",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.26",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.26",
       "notes": "Storefront theme consistency fixes, fresh-store appearance reset hardening, Yalidine local wilaya sync, and verified Meta CAPI delivery."
     },
     {
       "version": "v1.0.25",
       "channel": "stable",
       "released_at": "2026-03-15T00:00:00Z",
-      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.25",
-      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.25",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.25",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.25",
       "notes": "Hardened client store provisioning defaults and blocked stepdz-test tags from entering client deployment flow."
     },
     {
       "version": "v1.0.24",
       "channel": "stable",
       "released_at": "2026-03-15T00:00:00Z",
-      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.24",
-      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.24",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.24",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.24",
       "notes": "Trusted version metadata, lighter admin version badge, mobile admin polish, and load-more pagination on the storefront."
     },
     {
       "version": "v1.0.23",
       "channel": "stable",
       "released_at": "2026-03-15T00:00:00Z",
-      "api_image": "ghcr.io/walid733/express-trade-kit-api:v1.0.23",
-      "web_image": "ghcr.io/walid733/express-trade-kit-web:v1.0.23",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.23",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.23",
       "notes": "Shipping labels, appearance fixes, add-product image UX, and unpublished default pages for new stores."
     }
   ]

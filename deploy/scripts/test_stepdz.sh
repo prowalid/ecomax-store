@@ -17,8 +17,8 @@ Options:
 Notes:
   - This script is TEST-ONLY. It does NOT push anything to GitHub or GHCR.
   - It rewires stepdz to local test tags:
-      ghcr.io/walid733/express-trade-kit-web:stepdz-test
-      ghcr.io/walid733/express-trade-kit-api:stepdz-test
+      ghcr.io/prowalid/ecomax-store-web:stepdz-test
+      ghcr.io/prowalid/ecomax-store-api:stepdz-test
 EOF
 }
 
@@ -74,8 +74,8 @@ COMPOSE_FILE="${CLIENT_DIR}/docker-compose.yml"
 CLIENT_CADDY_FILE="${CLIENT_DIR}/Caddyfile.client"
 SOURCE_CLIENT_CADDY_FILE="${REPO_ROOT}/deploy/Caddyfile.client-internal"
 SOURCE_COMPOSE_FILE="${REPO_ROOT}/deploy/docker-compose.client-stack.yml"
-WEB_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-web:stepdz-test"
-API_TEST_IMAGE="ghcr.io/walid733/express-trade-kit-api:stepdz-test"
+WEB_TEST_IMAGE="ghcr.io/prowalid/ecomax-store-web:stepdz-test"
+API_TEST_IMAGE="ghcr.io/prowalid/ecomax-store-api:stepdz-test"
 GIT_COMMIT="$(git -C "${REPO_ROOT}" rev-parse --short HEAD)"
 BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

@@ -32,26 +32,26 @@
 من خادم البناء أو جهاز الإصدار:
 
 ```bash
-docker build -f server/Dockerfile -t ghcr.io/walid733/express-trade-kit-api:v1.0.2 ./server
-docker build -f Dockerfile.web -t ghcr.io/walid733/express-trade-kit-web:v1.0.2 .
+docker build -f server/Dockerfile -t ghcr.io/prowalid/ecomax-store-api:v1.0.2 ./server
+docker build -f Dockerfile.web -t ghcr.io/prowalid/ecomax-store-web:v1.0.2 .
 ```
 
 إذا أردت وسمًا إضافيًا للإصدار الحالي:
 
 ```bash
-docker tag ghcr.io/walid733/express-trade-kit-api:v1.0.2 ghcr.io/walid733/express-trade-kit-api:latest
-docker tag ghcr.io/walid733/express-trade-kit-web:v1.0.2 ghcr.io/walid733/express-trade-kit-web:latest
+docker tag ghcr.io/prowalid/ecomax-store-api:v1.0.2 ghcr.io/prowalid/ecomax-store-api:latest
+docker tag ghcr.io/prowalid/ecomax-store-web:v1.0.2 ghcr.io/prowalid/ecomax-store-web:latest
 ```
 
 ## 2. رفع الصور إلى Registry
 مثال على `GHCR`:
 
 ```bash
-echo "$GHCR_TOKEN" | docker login ghcr.io -u walid733 --password-stdin
-docker push ghcr.io/walid733/express-trade-kit-api:v1.0.2
-docker push ghcr.io/walid733/express-trade-kit-web:v1.0.2
-docker push ghcr.io/walid733/express-trade-kit-api:latest
-docker push ghcr.io/walid733/express-trade-kit-web:latest
+echo "$GHCR_TOKEN" | docker login ghcr.io -u prowalid --password-stdin
+docker push ghcr.io/prowalid/ecomax-store-api:v1.0.2
+docker push ghcr.io/prowalid/ecomax-store-web:v1.0.2
+docker push ghcr.io/prowalid/ecomax-store-api:latest
+docker push ghcr.io/prowalid/ecomax-store-web:latest
 ```
 
 يمكنك استعمال Docker Hub أو Private Registry بدل GHCR.
@@ -107,8 +107,8 @@ bash deploy/scripts/create_client_store.sh --slug client-a --domain store-a.com 
 bash deploy/scripts/create_client_store.sh \
   --slug client-b \
   --domain store-b.com \
-  --api-image ghcr.io/walid733/express-trade-kit-api:v1.0.2 \
-  --web-image ghcr.io/walid733/express-trade-kit-web:v1.0.2 \
+  --api-image ghcr.io/prowalid/ecomax-store-api:v1.0.2 \
+  --web-image ghcr.io/prowalid/ecomax-store-web:v1.0.2 \
   --up
 ```
 

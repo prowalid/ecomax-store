@@ -28,7 +28,7 @@
 - ملفات التوثيق والتشغيل
 
 المستودع:
-- `https://github.com/walid733/express-trade-kit`
+- `https://github.com/prowalid/ecomax-store`
 
 هذا هو المكان الذي يجب أن تبدأ منه دائمًا عند إنشاء بيئة تطوير جديدة.
 
@@ -40,8 +40,8 @@
 - صورة `web`
 
 أمثلة حالية:
-- `ghcr.io/walid733/express-trade-kit-api:v1.0.2`
-- `ghcr.io/walid733/express-trade-kit-web:v1.0.2`
+- `ghcr.io/prowalid/ecomax-store-api:v1.0.2`
+- `ghcr.io/prowalid/ecomax-store-web:v1.0.2`
 
 هذا ليس مكان التطوير، بل مكان الإصدارات الجاهزة.
 
@@ -90,7 +90,7 @@
 ```bash
 mkdir -p /root/workspace
 cd /root/workspace
-git clone https://github.com/walid733/express-trade-kit.git
+git clone https://github.com/prowalid/ecomax-store.git
 cd express-trade-kit
 ```
 
@@ -98,7 +98,7 @@ cd express-trade-kit
 
 ### 4.1 تنزيل المشروع
 ```bash
-git clone https://github.com/walid733/express-trade-kit.git
+git clone https://github.com/prowalid/ecomax-store.git
 cd express-trade-kit
 git checkout main
 ```
@@ -216,24 +216,24 @@ git push origin release/v2.0.0
 مثال على `v1.1.0`:
 
 ```bash
-docker build -f server/Dockerfile -t ghcr.io/walid733/express-trade-kit-api:v1.1.0 ./server
-docker build -f Dockerfile.web -t ghcr.io/walid733/express-trade-kit-web:v1.1.0 .
+docker build -f server/Dockerfile -t ghcr.io/prowalid/ecomax-store-api:v1.1.0 ./server
+docker build -f Dockerfile.web -t ghcr.io/prowalid/ecomax-store-web:v1.1.0 .
 ```
 
 ثم:
 
 ```bash
-docker push ghcr.io/walid733/express-trade-kit-api:v1.1.0
-docker push ghcr.io/walid733/express-trade-kit-web:v1.1.0
+docker push ghcr.io/prowalid/ecomax-store-api:v1.1.0
+docker push ghcr.io/prowalid/ecomax-store-web:v1.1.0
 ```
 
 وإذا أردت تحديث `latest`:
 
 ```bash
-docker tag ghcr.io/walid733/express-trade-kit-api:v1.1.0 ghcr.io/walid733/express-trade-kit-api:latest
-docker tag ghcr.io/walid733/express-trade-kit-web:v1.1.0 ghcr.io/walid733/express-trade-kit-web:latest
-docker push ghcr.io/walid733/express-trade-kit-api:latest
-docker push ghcr.io/walid733/express-trade-kit-web:latest
+docker tag ghcr.io/prowalid/ecomax-store-api:v1.1.0 ghcr.io/prowalid/ecomax-store-api:latest
+docker tag ghcr.io/prowalid/ecomax-store-web:v1.1.0 ghcr.io/prowalid/ecomax-store-web:latest
+docker push ghcr.io/prowalid/ecomax-store-api:latest
+docker push ghcr.io/prowalid/ecomax-store-web:latest
 ```
 
 ## 9. كيف نعيد استعمال الإصدار الجديد لعميل جديد
@@ -255,8 +255,8 @@ docker push ghcr.io/walid733/express-trade-kit-web:latest
 
 مثال:
 ```env
-ETK_API_IMAGE=ghcr.io/walid733/express-trade-kit-api:v1.1.0
-ETK_WEB_IMAGE=ghcr.io/walid733/express-trade-kit-web:v1.1.0
+ETK_API_IMAGE=ghcr.io/prowalid/ecomax-store-api:v1.1.0
+ETK_WEB_IMAGE=ghcr.io/prowalid/ecomax-store-web:v1.1.0
 ```
 
 ## 9.1 دليل تشغيل السكربتين (المسار الصارم)
@@ -364,8 +364,8 @@ Checklist سريعة:
 الحالة الحالية الآن:
 - GitHub يحتوي baseline متوافق مع `Golden Image V1`
 - GHCR يحتوي:
-- `ghcr.io/walid733/express-trade-kit-api:v1.0.2`
-- `ghcr.io/walid733/express-trade-kit-web:v1.0.2`
+- `ghcr.io/prowalid/ecomax-store-api:v1.0.2`
+- `ghcr.io/prowalid/ecomax-store-web:v1.0.2`
 - ملفات التشغيل والتوثيق موجودة داخل المستودع
 
 هذا يعني أنكم الآن قادرون على:
