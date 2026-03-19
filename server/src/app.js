@@ -32,6 +32,13 @@ function parseCorsOrigins(rawOrigins) {
     .filter(Boolean);
 }
 
+function parseCspSources(rawValue) {
+  return String(rawValue || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function createApp(container) {
   const app = express();
   app.locals.container = container;
@@ -40,13 +47,58 @@ function createApp(container) {
   const fileStorage = container.resolve('fileStorage');
   const trustProxy = process.env.TRUST_PROXY;
   const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGINS);
+  const uploadsPrefix = fileStorage.getPublicPrefix();
+  const extraConnectSources = parseCspSources(process.env.EXTRA_CSP_CONNECT_SRC);
+  const extraImageSources = parseCspSources(process.env.EXTRA_CSP_IMG_SRC);
 
   if (trustProxy) {
     app.set('trust proxy', trustProxy === 'true' ? 1 : trustProxy);
   }
 
   app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        formAction: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'https://connect.facebook.net',
+          'https://challenges.cloudflare.com',
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'https://fonts.googleapis.com',
+        ],
+        fontSrc: [
+          "'self'",
+          'https://fonts.gstatic.com',
+          'data:',
+        ],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'blob:',
+          'https:',
+          ...extraImageSources,
+        ],
+        connectSrc: [
+          "'self'",
+          'https://graph.facebook.com',
+          'https://api.green-api.com',
+          'https://challenges.cloudflare.com',
+          ...extraConnectSources,
+        ],
+        frameSrc: [
+          "'self'",
+          'https://challenges.cloudflare.com',
+        ],
+      },
+    },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
@@ -64,7 +116,7 @@ function createApp(container) {
 
   app.use(express.json({ limit: '1mb' }));
   app.use(requestContext);
-  app.use(fileStorage.getPublicPrefix(), express.static(fileStorage.getUploadsDir()));
+  app.use(uploadsPrefix, express.static(fileStorage.getUploadsDir()));
   app.use(requestLogging);
   app.use(createMetricsMiddleware({ metricsService: container.resolve('metricsService') }));
 

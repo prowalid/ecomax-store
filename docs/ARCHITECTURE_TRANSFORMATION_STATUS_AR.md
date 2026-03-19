@@ -21,6 +21,9 @@
 - `Queue workers`
 - `Storage abstraction`
 - `Metrics`
+- `OpenAPI`
+- `Structured logging`
+- `Idempotency`
 - `Health / Live / Ready`
 - `Backup / Restore / Verify`
 - `Secrets rotation`
@@ -200,6 +203,8 @@ infrastructure = technical implementations
 - Redis cache
 - queue managers and workers
 - file storage abstraction
+- schema migrations with `up/down`
+- database safety constraints and performance indexes
 - webhook / WhatsApp services
 - cleanup / migration / startup services
 
@@ -451,6 +456,39 @@ infrastructure = technical implementations
 - `401` بدون token
 - `200` مع `Authorization: Bearer <token>`
 
+### 8.5 Logging + Request Context
+
+تم إدخال `structured logging` فعلية مع `requestId` واضح لكل طلب.
+
+الملفات الأساسية:
+
+- [logger.js](/root/express-trade-kit/server/src/utils/logger.js)
+- [requestContext.js](/root/express-trade-kit/server/src/presentation/middleware/requestContext.js)
+- [requestLogging.js](/root/express-trade-kit/server/src/presentation/middleware/requestLogging.js)
+
+والنتيجة:
+
+- كل طلب HTTP يحمل `x-request-id`
+- السجلات أصبحت أسهل تتبعًا داخل التشغيل الفعلي
+- الأخطاء والاستجابات المهمة صارت أصلح للمراجعة التشغيلية
+
+### 8.6 Rate Limiting + Idempotency
+
+تم تفعيل `rate limiting` و`idempotency` بشكل عملي على المسارات الحساسة.
+
+الملفات الأساسية:
+
+- [rateLimit.js](/root/express-trade-kit/server/src/presentation/middleware/rateLimit.js)
+- [idempotency.js](/root/express-trade-kit/server/src/presentation/middleware/idempotency.js)
+- [orders.routes.js](/root/express-trade-kit/server/src/presentation/routes/orders.routes.js)
+- [auth.routes.js](/root/express-trade-kit/server/src/presentation/routes/auth.routes.js)
+
+الوضع الحالي:
+
+- `auth login` محمي بمحددات أوضح
+- `create order` محمي من إعادة التنفيذ غير المقصود عبر `Idempotency-Key`
+- `cart` و`integrations` لديهما مفاتيح `rate limiting` أدق من السابق
+
 ## 9. الهاردننغ التشغيلي
 
 تم تقوية طبقة النشر والتشغيل عبر:
@@ -458,6 +496,10 @@ infrastructure = technical implementations
 - resource limits
 - graceful stop
 - startup validation
+- database pool tuning
+- security headers / CSP baseline
+- database safety constraints
+- performance indexes
 - backup / restore / verify scripts
 - secrets rotation
 - `CI/CD workflows`
@@ -470,6 +512,9 @@ infrastructure = technical implementations
 - [verify_client_stack.sh](/root/express-trade-kit/deploy/scripts/verify_client_stack.sh)
 - [rotate_client_secrets.sh](/root/express-trade-kit/deploy/scripts/rotate_client_secrets.sh)
 - [runtime.js](/root/express-trade-kit/server/src/config/runtime.js)
+- [db.js](/root/express-trade-kit/server/src/config/db.js)
+- [003_store_reliability_hardening.up.sql](/root/express-trade-kit/server/src/db/migrations/003_store_reliability_hardening.up.sql)
+- [003_store_reliability_hardening.down.sql](/root/express-trade-kit/server/src/db/migrations/003_store_reliability_hardening.down.sql)
 - [SECRETS_AND_OPERATIONS_RUNBOOK_AR.md](/root/express-trade-kit/deploy/SECRETS_AND_OPERATIONS_RUNBOOK_AR.md)
 - [ci.yml](/root/express-trade-kit/.github/workflows/ci.yml)
 - [cd.yml](/root/express-trade-kit/.github/workflows/cd.yml)
@@ -523,8 +568,8 @@ infrastructure = technical implementations
 
 الحالة الحالية المثبتة:
 
-- `48` ملف اختبار ناجح
-- `105` اختبار ناجح
+- `50` ملف اختبار ناجح
+- `114` اختبار ناجح
 
 وهذا يشمل:
 
@@ -534,10 +579,14 @@ infrastructure = technical implementations
 - `controllers`
 - `integration`
 - `E2E smoke`
+- `load test baseline`
 - `queue`
 - `metrics`
 - `runtime validation`
 - `storage`
+- `security headers`
+- `rate limiting`
+- `idempotency`
 
 كما تم تثبيت اختبارات `integration` نفسها لتعمل داخل الذاكرة عبر `app.handle()` بدل الاعتماد على `listen()` وفتح منفذ محلي، حتى تبقى مستقرة داخل البيئات المقيدة أيضًا.
 

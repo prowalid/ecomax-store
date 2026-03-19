@@ -1,0 +1,28 @@
+DROP INDEX IF EXISTS idx_pages_published_show_in;
+DROP INDEX IF EXISTS idx_cart_items_session_created_at;
+DROP INDEX IF EXISTS idx_customers_created_at;
+DROP INDEX IF EXISTS idx_customers_phone;
+DROP INDEX IF EXISTS idx_orders_customer_phone_created_at;
+DROP INDEX IF EXISTS idx_orders_customer_id_created_at;
+DROP INDEX IF EXISTS idx_orders_status_created_at;
+DROP INDEX IF EXISTS idx_products_sku;
+DROP INDEX IF EXISTS idx_products_category_active_created_at;
+DROP INDEX IF EXISTS idx_products_status_created_at;
+
+ALTER TABLE customers DROP CONSTRAINT IF EXISTS chk_customers_phone_not_blank;
+ALTER TABLE customers DROP CONSTRAINT IF EXISTS chk_customers_name_not_blank;
+ALTER TABLE cart_items DROP CONSTRAINT IF EXISTS chk_cart_items_product_price_non_negative;
+ALTER TABLE cart_items DROP CONSTRAINT IF EXISTS chk_cart_items_quantity_positive;
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS chk_order_items_total_non_negative;
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS chk_order_items_unit_price_non_negative;
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS chk_order_items_quantity_positive;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_orders_customer_phone_not_blank;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_orders_customer_name_not_blank;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_orders_total_non_negative;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_orders_shipping_cost_non_negative;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_orders_subtotal_non_negative;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS chk_products_name_not_blank;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS chk_products_stock_non_negative;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS chk_products_cost_price_non_negative;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS chk_products_compare_price_non_negative;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS chk_products_price_non_negative;

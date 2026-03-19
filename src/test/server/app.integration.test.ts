@@ -257,6 +257,19 @@ describe("Express app integration", () => {
     });
   });
 
+  it("applies hardened security headers on API responses", async () => {
+    const container = createTestContainer();
+
+    await withTestApp(container, async (client) => {
+      const response = await client.fetch("/api/health");
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-security-policy")).toContain("default-src 'self'");
+      expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+      expect(response.headers.get("cross-origin-resource-policy")).toBe("cross-origin");
+    });
+  });
+
   it("caches GET /api/products responses between requests", async () => {
     const listProductsUseCase = {
       execute: vi.fn().mockResolvedValue([

@@ -5,6 +5,8 @@
 ## المرجع الحالي
 
 - [ARCHITECTURE_TRANSFORMATION_STATUS_AR.md](/root/express-trade-kit/docs/ARCHITECTURE_TRANSFORMATION_STATUS_AR.md)
+- [STORE_PRODUCT_ARCHITECTURE_AR.md](/root/express-trade-kit/docs/STORE_PRODUCT_ARCHITECTURE_AR.md)
+- [PARALLEL_STORE_HARDENING_PLAN_AR.md](/root/express-trade-kit/docs/PARALLEL_STORE_HARDENING_PLAN_AR.md)
 
 ## مراجع تاريخية
 
@@ -18,6 +20,7 @@
 - [CD_GITHUB_RUNBOOK_AR.md](/root/express-trade-kit/deploy/CD_GITHUB_RUNBOOK_AR.md)
 - [SECRETS_AND_OPERATIONS_RUNBOOK_AR.md](/root/express-trade-kit/deploy/SECRETS_AND_OPERATIONS_RUNBOOK_AR.md)
 - [GRAFANA_AR.md](/root/express-trade-kit/deploy/monitoring/GRAFANA_AR.md)
+- [tests/load/README.md](/root/express-trade-kit/tests/load/README.md)
 
 ## ملفات النشر المهمة
 

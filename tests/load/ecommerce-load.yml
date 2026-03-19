@@ -1,0 +1,62 @@
+config:
+  target: "{{ $processEnvironment.TARGET || 'http://localhost:3000' }}"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp up load"
+    - duration: 30
+      arrivalRate: 50
+      name: "Sustained high load"
+  plugins:
+    # Ensure metrics are collected
+    metrics-by-endpoint: {}
+    
+scenarios:
+  - name: "Browse Catalog"
+    weight: 7
+    flow:
+      - get:
+          url: "/api/categories"
+      - think: 2
+      - get:
+          url: "/api/products?page=1&limit=20"
+      - think: 2
+      - get:
+          url: "/api/products?page=2&limit=20"
+
+  - name: "Browse and Checkout"
+    weight: 3
+    flow:
+      - get:
+          url: "/api/categories"
+      - think: 1
+      - get:
+          url: "/api/products?page=1&limit=10"
+          capture:
+            - json: "$[0].id"
+              as: "productId"
+              strict: false
+            - json: "$[0].name"
+              as: "productName"
+              strict: false
+            - json: "$[0].price"
+              as: "productPrice"
+              strict: false
+      - think: 3
+      - post:
+          url: "/api/orders"
+          ifTrue: "productId"
+          json:
+            customer_name: "Load Tester"
+            customer_phone: "0550001122"
+            wilaya: "Alger"
+            commune: "Alger Centre"
+            delivery_type: "home"
+            items:
+              - product_id: "{{ productId }}"
+                product_name: "{{ productName }}"
+                quantity: 1
