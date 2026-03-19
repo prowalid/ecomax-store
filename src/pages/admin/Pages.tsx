@@ -156,6 +156,7 @@ const Pages = () => {
         actions={(
           <button
             onClick={() => setShowAdd(!showAdd)}
+            data-testid="pages-add-button"
             className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground shadow-button transition-opacity hover:opacity-95"
           >
             <Plus className="w-4 h-4" />
@@ -173,6 +174,7 @@ const Pages = () => {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="عنوان الصفحة..."
+              data-testid="page-title-input"
               className="h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
@@ -182,6 +184,7 @@ const Pages = () => {
               value={newSlug}
               onChange={(e) => setNewSlug(e.target.value)}
               placeholder="slug (اختياري)"
+              data-testid="page-slug-input"
               className="h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               dir="ltr"
             />
@@ -205,6 +208,7 @@ const Pages = () => {
             <button
               onClick={handleAdd}
               disabled={createPage.isPending || !newTitle.trim()}
+              data-testid="page-create-button"
               className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
             >
               {createPage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "إضافة"}
@@ -228,7 +232,7 @@ const Pages = () => {
           </thead>
           <tbody>
             {pages.map((page) => (
-              <tr key={page.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group">
+              <tr key={page.id} data-testid={`page-row-${page.id}`} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group">
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-slate-400 shrink-0 group-hover:text-primary transition-colors" />
@@ -270,6 +274,7 @@ const Pages = () => {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => openEditor(page)}
+                      data-testid={`page-edit-${page.id}`}
                       className="p-1.5 rounded-lg hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors"
                       title="تعديل"
                     >
@@ -277,6 +282,7 @@ const Pages = () => {
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(page.id)}
+                      data-testid={`page-delete-${page.id}`}
                       className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                       title="حذف"
                     >
@@ -312,6 +318,7 @@ const Pages = () => {
               <button
                 onClick={() => deletePage.mutate(deleteConfirm, { onSuccess: () => setDeleteConfirm(null) })}
                 disabled={deletePage.isPending}
+                data-testid="page-delete-confirm"
                 className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {deletePage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حذف"}
@@ -324,7 +331,7 @@ const Pages = () => {
       {/* Page Editor Modal */}
       {editingPage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card rounded-xl shadow-2xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl" onClick={(e) => e.stopPropagation()}>
+          <div data-testid="page-editor-modal" className="bg-card rounded-xl shadow-2xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
               <h2 className="text-base font-semibold text-foreground">تعديل الصفحة</h2>
               <div className="mr-auto ml-3 text-[11px] font-medium text-slate-500">
@@ -346,6 +353,7 @@ const Pages = () => {
                     setEditTitle(e.target.value);
                     setPageDraftDirty(true);
                   }}
+                  data-testid="page-edit-title-input"
                   className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
@@ -360,6 +368,7 @@ const Pages = () => {
                     setEditSlug(e.target.value);
                     setPageDraftDirty(true);
                   }}
+                  data-testid="page-edit-slug-input"
                   className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   dir="ltr"
                 />
@@ -431,6 +440,7 @@ const Pages = () => {
               <button
                 onClick={saveEditor}
                 disabled={updatePage.isPending || !editTitle.trim()}
+                data-testid="page-save-button"
                 className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50 flex items-center gap-2"
               >
                 {updatePage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> حفظ</>}
