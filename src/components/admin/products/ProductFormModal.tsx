@@ -21,6 +21,7 @@ interface ProductFormModalProps {
   dragIdx: number | null;
   isSaving: boolean;
   isUploading: boolean;
+  hasUnsavedChanges: boolean;
   onClose: () => void;
   onSave: () => void;
   onFieldChange: (key: keyof ProductForm, value: string | ProductOptionGroup[]) => void;
@@ -40,6 +41,7 @@ export default function ProductFormModal({
   dragIdx,
   isSaving,
   isUploading,
+  hasUnsavedChanges,
   onClose,
   onSave,
   onFieldChange,
@@ -90,9 +92,18 @@ export default function ProductFormModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-50 sticky top-0 bg-white/80 backdrop-blur-md z-10">
-          <h2 className="text-[18px] font-bold text-sidebar-heading">
-            {editingId ? "تعديل المنتج" : "إضافة منتج جديد"}
-          </h2>
+          <div>
+            <h2 className="text-[18px] font-bold text-sidebar-heading">
+              {editingId ? "تعديل المنتج" : "إضافة منتج جديد"}
+            </h2>
+            <p className="mt-1 text-[11px] font-medium text-slate-500">
+              {isSaving
+                ? "جاري حفظ المنتج ومزامنة صوره..."
+                : hasUnsavedChanges
+                ? "لديك تعديلات غير محفوظة"
+                : "كل التغييرات الحالية محفوظة"}
+            </p>
+          </div>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
@@ -342,6 +353,7 @@ export default function ProductFormModal({
         <div className="flex items-center justify-end gap-3 p-5 border-t border-border sticky bottom-0 bg-card">
           <button
             onClick={onClose}
+            disabled={isSaving}
             className="h-9 px-4 rounded-lg border border-input text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             إلغاء

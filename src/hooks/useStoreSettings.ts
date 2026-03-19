@@ -23,6 +23,7 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
 
   const [settings, setLocalSettings] = useState<T>(defaultValue);
   const [dirty, setDirty] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const hydratedRef = useRef(false);
   const settingsRef = useRef<T>(defaultValue);
 
@@ -48,6 +49,7 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
       settingsRef.current = newSettings;
       setLocalSettings(newSettings);
       setDirty(false);
+      setLastSavedAt(new Date());
       toast.success("تم حفظ الإعدادات");
     },
     onError: () => {
@@ -68,5 +70,5 @@ export function useStoreSettings<T>(key: string, defaultValue: T) {
     return persistSettings(valueToSave);
   };
 
-  return { settings, setSettings, loading, saving, saveSettings };
+  return { settings, setSettings, loading, saving, saveSettings, dirty, lastSavedAt };
 }

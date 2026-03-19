@@ -1,6 +1,7 @@
 import { Shield, Lock, EyeOff, Save, Loader2, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useState } from "react";
+import AdminSaveStatusBadge from "@/components/admin/AdminSaveStatusBadge";
 
 interface SecuritySettings {
   turnstile_enabled: boolean;
@@ -10,7 +11,7 @@ interface SecuritySettings {
 }
 
 const Security = () => {
-  const { settings, setSettings, loading, saving, saveSettings } = useStoreSettings<SecuritySettings>("security", {
+  const { settings, setSettings, loading, saving, saveSettings, dirty, lastSavedAt } = useStoreSettings<SecuritySettings>("security", {
     turnstile_enabled: false,
     site_key: "",
     secret_key: "",
@@ -33,10 +34,13 @@ const Security = () => {
         <div>
           <h1 className="text-xl font-bold text-sidebar-heading">الأمان والحماية</h1>
           <p className="text-[13px] text-slate-500 mt-1 font-medium">إدارة حماية المتجر من البوتات والطلبات الوهمية</p>
+          <div className="mt-2">
+            <AdminSaveStatusBadge saving={saving} dirty={dirty} lastSavedAt={lastSavedAt} />
+          </div>
         </div>
         <button
           onClick={() => saveSettings(settings)}
-          disabled={saving}
+          disabled={saving || !dirty}
           className="h-11 px-6 flex items-center justify-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

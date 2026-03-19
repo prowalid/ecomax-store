@@ -2,6 +2,7 @@ import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { formatWhatsAppForStorage, normalizeWhatsAppPhone } from "@/lib/whatsapp";
+import AdminSaveStatusBadge from "@/components/admin/AdminSaveStatusBadge";
 
 interface GeneralSettings {
   store_name: string;
@@ -17,7 +18,7 @@ interface GeneralSettings {
 }
 
 const Settings = () => {
-  const { settings, setSettings, loading, saving, saveSettings } = useStoreSettings<GeneralSettings>("general", {
+  const { settings, setSettings, loading, saving, saveSettings, dirty, lastSavedAt } = useStoreSettings<GeneralSettings>("general", {
     store_name: "ECOMAX",
     phone: "",
     whatsapp_phone: "",
@@ -73,10 +74,13 @@ const Settings = () => {
         <div>
           <h1 className="text-xl font-bold text-sidebar-heading">الإعدادات</h1>
           <p className="text-[13px] text-slate-500 mt-1 font-medium">إعدادات المتجر العامة</p>
+          <div className="mt-2">
+            <AdminSaveStatusBadge saving={saving} dirty={dirty} lastSavedAt={lastSavedAt} />
+          </div>
         </div>
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !dirty}
           className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

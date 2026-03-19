@@ -3,13 +3,14 @@ import { Type, Image, Save, Loader2, X, Upload, Tag, Layers3 } from "lucide-reac
 import { useEditableAppearanceSettings, type AppearanceSettings, type AppearanceSlide } from "@/hooks/useAppearanceSettings";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import AdminSaveStatusBadge from "@/components/admin/AdminSaveStatusBadge";
 import AppearanceUploadCard from "@/components/admin/appearance/AppearanceUploadCard";
 import AppearanceSlidesSection from "@/components/admin/appearance/AppearanceSlidesSection";
 import AppearancePresetsCard from "@/components/admin/appearance/AppearancePresetsCard";
 import { appearancePresets } from "@/components/admin/appearance/types";
 
 const Appearance = () => {
-  const { settings, setSettings, loading, saving, saveSettings } = useEditableAppearanceSettings();
+  const { settings, setSettings, loading, saving, saveSettings, dirty, lastSavedAt } = useEditableAppearanceSettings();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const footerLogoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
@@ -133,10 +134,13 @@ const Appearance = () => {
         <div>
           <h1 className="text-xl font-bold text-sidebar-heading">المظهر</h1>
           <p className="text-[13px] text-slate-500 mt-1 font-medium">تحكم كامل في شكل وألوان المتجر الخاص بك</p>
+          <div className="mt-2">
+            <AdminSaveStatusBadge saving={saving} dirty={dirty} lastSavedAt={lastSavedAt} />
+          </div>
         </div>
         <button
           onClick={() => saveSettings()}
-          disabled={saving}
+          disabled={saving || !dirty}
           className="h-11 px-6 flex items-center justify-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

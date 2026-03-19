@@ -37,6 +37,7 @@ const Products = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isSyncingImages, setIsSyncingImages] = useState(false);
+  const [productDraftDirty, setProductDraftDirty] = useState(false);
 
   const { data: editImages = [] } = useProductImages(editingId);
   const uploadImage = useUploadProductImage();
@@ -60,6 +61,7 @@ const Products = () => {
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
   const handleDrop = (dropIdx: number) => {
     if (dragIdx === null || dragIdx === dropIdx) return;
+    setProductDraftDirty(true);
     const reordered = [...draftImages];
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(dropIdx, 0, moved);
@@ -123,6 +125,7 @@ const Products = () => {
     setEditingId(null);
     setForm(emptyProductForm);
     setDraftImages([]);
+    setProductDraftDirty(false);
     setShowModal(true);
   };
 
@@ -139,6 +142,7 @@ const Products = () => {
       custom_options: p.custom_options || [],
     });
     setDraftImages([]);
+    setProductDraftDirty(false);
     setShowModal(true);
   };
 
@@ -151,9 +155,17 @@ const Products = () => {
   };
 
   const closeModal = () => {
+    if (isSaving) {
+      return;
+    }
+
+    if (!isSaving && productDraftDirty && !window.confirm("لديك تعديلات غير محفوظة على المنتج. هل تريد إغلاق النافذة؟")) {
+      return;
+    }
     cleanupDraftObjectUrls();
     setDraftImages([]);
     setDragIdx(null);
+    setProductDraftDirty(false);
     setShowModal(false);
   };
 
@@ -210,6 +222,7 @@ const Products = () => {
           await reorderImages.mutateAsync({ productId: editingId, images: finalizedImages });
         }
 
+        setProductDraftDirty(false);
         closeModal();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "فشل حفظ المنتج");
@@ -239,6 +252,7 @@ const Products = () => {
           }
         }
 
+        setProductDraftDirty(false);
         closeModal();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "فشل إنشاء المنتج");
@@ -258,10 +272,12 @@ const Products = () => {
         previewObjectUrl,
       } satisfies DraftProductImage;
     });
+    setProductDraftDirty(true);
     setDraftImages((prev) => [...prev, ...nextImages]);
   };
 
   const handleDeleteImage = (imageId: string) => {
+    setProductDraftDirty(true);
     setDraftImages((prev) => {
       const target = prev.find((image) => image.id === imageId);
       if (target?.previewObjectUrl) {
@@ -278,6 +294,7 @@ const Products = () => {
   };
 
   const updateField = (key: keyof ProductForm, value: string | ProductForm["custom_options"]) => {
+    setProductDraftDirty(true);
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -399,6 +416,7 @@ const Products = () => {
         isUploading={false}
         onClose={closeModal}
         onSave={handleSave}
+        hasUnsavedChanges={productDraftDirty}
         onFieldChange={updateField}
         onUploadFiles={handleUploadFiles}
         onDeleteImage={handleDeleteImage}

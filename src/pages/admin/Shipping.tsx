@@ -3,6 +3,7 @@ import { ChevronDown, Loader2, Save, Search, Truck } from "lucide-react";
 
 import AdminIntegrationStatusNote from "@/components/admin/AdminIntegrationStatusNote";
 import AdminSecureField from "@/components/admin/AdminSecureField";
+import AdminSaveStatusBadge from "@/components/admin/AdminSaveStatusBadge";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { ALGERIA_WILAYAS, normalizeAlgeriaLocationName } from "@/data/algeriaWilayas";
 
@@ -126,7 +127,7 @@ const defaultShippingSettings: ShippingSettings = {
 };
 
 const Shipping = () => {
-  const { settings, loading, saving, saveSettings } = useStoreSettings<ShippingSettings>("shipping", defaultShippingSettings);
+  const { settings, loading, saving, saveSettings, lastSavedAt } = useStoreSettings<ShippingSettings>("shipping", defaultShippingSettings);
   const [wilayas, setWilayas] = useState<WilayaShipping[]>(() =>
     ALGERIA_WILAYAS.map((w) => ({ id: w.id, name: w.name, homePrice: w.priceHome, deskPrice: w.priceDesk }))
   );
@@ -214,6 +215,46 @@ const Shipping = () => {
   const activeProviderMeta = SHIPPING_PROVIDERS.find((provider) => provider.key === providerSettings.active_provider)
     || SHIPPING_PROVIDERS[0];
 
+  const shippingDraftDirty = useMemo(() => {
+    const nextYalidineSettings = {
+      ...yalidineSettings,
+      enabled: providerSettings.active_provider === "yalidine",
+      api_id: yalidineSecretsDraft.api_id.trim() || savedYalidineSettings.api_id,
+      api_token: yalidineSecretsDraft.api_token.trim() || savedYalidineSettings.api_token,
+    };
+    const nextGuepexSettings = {
+      ...guepexSettings,
+      enabled: providerSettings.active_provider === "guepex",
+      api_id: guepexSecretsDraft.api_id.trim() || savedGuepexSettings.api_id,
+      api_token: guepexSecretsDraft.api_token.trim() || savedGuepexSettings.api_token,
+    };
+
+    return JSON.stringify({
+      wilayas,
+      provider: providerSettings,
+      yalidine: nextYalidineSettings,
+      guepex: nextGuepexSettings,
+    }) !== JSON.stringify({
+      wilayas: settings.wilayas,
+      provider: settings.provider,
+      yalidine: savedYalidineSettings,
+      guepex: savedGuepexSettings,
+    });
+  }, [
+    guepexSecretsDraft.api_id,
+    guepexSecretsDraft.api_token,
+    guepexSettings,
+    providerSettings,
+    savedGuepexSettings,
+    savedYalidineSettings,
+    settings.provider,
+    settings.wilayas,
+    wilayas,
+    yalidineSecretsDraft.api_id,
+    yalidineSecretsDraft.api_token,
+    yalidineSettings,
+  ]);
+
   const updatePrice = (id: number, field: "homePrice" | "deskPrice", value: number) => {
     setWilayas((prev) => prev.map((w) => (w.id === id ? { ...w, [field]: value } : w)));
   };
@@ -271,10 +312,13 @@ const Shipping = () => {
         <div>
           <h1 className="text-xl font-semibold text-foreground">الشحن</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">أسعار التوصيل المحلية وربط شركات الشحن المباشرة من نفس الصفحة.</p>
+          <div className="mt-2">
+            <AdminSaveStatusBadge saving={saving} dirty={shippingDraftDirty} lastSavedAt={lastSavedAt} />
+          </div>
         </div>
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !shippingDraftDirty}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-primary px-6 text-[14px] font-bold text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50 disabled:hover:translate-y-0 sm:w-auto"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

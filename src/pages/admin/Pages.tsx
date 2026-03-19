@@ -48,6 +48,7 @@ const Pages = () => {
   const [editContent, setEditContent] = useState("");
   const [editShowIn, setEditShowIn] = useState<PageShowIn>("none");
   const [editPublished, setEditPublished] = useState(false);
+  const [pageDraftDirty, setPageDraftDirty] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -79,6 +80,20 @@ const Pages = () => {
     setEditContent(page.content || "");
     setEditShowIn((page.show_in as PageShowIn) || "none");
     setEditPublished(page.published);
+    setPageDraftDirty(false);
+  };
+
+  const closeEditor = () => {
+    if (updatePage.isPending) {
+      return;
+    }
+
+    if (pageDraftDirty && !window.confirm("لديك تعديلات غير محفوظة على الصفحة. هل تريد إغلاق المحرر؟")) {
+      return;
+    }
+
+    setEditingPage(null);
+    setPageDraftDirty(false);
   };
 
   const saveEditor = () => {
@@ -99,7 +114,12 @@ const Pages = () => {
         published: editPublished,
         version: editingPage.version,
       },
-      { onSuccess: () => setEditingPage(null) }
+      {
+        onSuccess: () => {
+          setPageDraftDirty(false);
+          setEditingPage(null);
+        },
+      }
     );
   };
 
@@ -307,7 +327,10 @@ const Pages = () => {
           <div className="bg-card rounded-xl shadow-2xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
               <h2 className="text-base font-semibold text-foreground">تعديل الصفحة</h2>
-              <button onClick={() => setEditingPage(null)} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
+              <div className="mr-auto ml-3 text-[11px] font-medium text-slate-500">
+                {updatePage.isPending ? "جاري حفظ التعديلات..." : pageDraftDirty ? "لديك تعديلات غير محفوظة" : "كل التغييرات الحالية محفوظة"}
+              </div>
+              <button onClick={closeEditor} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -319,7 +342,10 @@ const Pages = () => {
                 <input
                   type="text"
                   value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
+                  onChange={(e) => {
+                    setEditTitle(e.target.value);
+                    setPageDraftDirty(true);
+                  }}
                   className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
@@ -330,7 +356,10 @@ const Pages = () => {
                 <input
                   type="text"
                   value={editSlug}
-                  onChange={(e) => setEditSlug(e.target.value)}
+                  onChange={(e) => {
+                    setEditSlug(e.target.value);
+                    setPageDraftDirty(true);
+                  }}
                   className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   dir="ltr"
                 />
@@ -344,7 +373,10 @@ const Pages = () => {
                     <button
                       key={o.value}
                       type="button"
-                      onClick={() => setEditShowIn(o.value)}
+                      onClick={() => {
+                        setEditShowIn(o.value);
+                        setPageDraftDirty(true);
+                      }}
                       className={`text-xs font-medium py-2 px-3 rounded-lg border-2 transition-all ${
                         editShowIn === o.value
                           ? "border-primary bg-primary/10 text-primary"
@@ -361,7 +393,10 @@ const Pages = () => {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setEditPublished(!editPublished)}
+                  onClick={() => {
+                    setEditPublished(!editPublished);
+                    setPageDraftDirty(true);
+                  }}
                   className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border-2 transition-all ${
                     editPublished
                       ? "border-green-500 bg-green-50 text-green-700"
@@ -378,14 +413,17 @@ const Pages = () => {
                 <label className="text-xs font-medium text-muted-foreground">محتوى الصفحة</label>
                 <RichTextEditor
                   value={editContent}
-                  onChange={setEditContent}
+                  onChange={(value) => {
+                    setEditContent(value);
+                    setPageDraftDirty(true);
+                  }}
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-2 p-5 border-t border-border sticky bottom-0 bg-card">
               <button
-                onClick={() => setEditingPage(null)}
+                onClick={closeEditor}
                 className="h-9 px-4 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted transition-colors"
               >
                 إلغاء
