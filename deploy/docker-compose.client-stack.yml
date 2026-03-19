@@ -55,6 +55,8 @@ services:
       DB_NAME: ${POSTGRES_DB:-expresstrade}
       DB_USER: ${POSTGRES_USER:-etk_user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      DB_SSL: ${DB_SSL:-false}
+      DB_SSL_REJECT_UNAUTHORIZED: ${DB_SSL_REJECT_UNAUTHORIZED:-false}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
