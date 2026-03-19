@@ -8,6 +8,20 @@ async function getAnalytics(req, res, next) {
   }
 }
 
+async function getAdminAuditLog(req, res, next) {
+  try {
+    const getAdminAuditLogUseCase = req.app.locals.container?.resolve('getAdminAuditLogUseCase');
+    const limit = Number.parseInt(req.query.limit, 10);
+    const auditLog = await getAdminAuditLogUseCase.execute({
+      limit: Number.isFinite(limit) ? limit : 15,
+    });
+    res.json(auditLog);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getAnalytics,
+  getAdminAuditLog,
 };

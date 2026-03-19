@@ -1,12 +1,30 @@
 import StatCard from "@/components/admin/StatCard";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " د.ج";
 
+const formatAuditAction = (action: string) =>
+  action
+    .split(".")
+    .filter(Boolean)
+    .join(" / ");
+
+const formatAuditTime = (value: string) =>
+  new Intl.DateTimeFormat("ar-DZ", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
+
 const Analytics = () => {
   const { data, isLoading, isError, error, refetch, isFetching } = useAnalytics();
+  const {
+    data: auditLog,
+    isLoading: auditLoading,
+    isError: auditError,
+  } = useAdminAuditLog();
 
   if (isLoading) {
     return <AdminDataState type="loading" title="جاري تحميل التحليلات" description="نسترجع مؤشرات المتجر المبنية على بيانات الخادم." />;
@@ -109,6 +127,46 @@ const Analytics = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="bg-card rounded-[20px] shadow-card border border-border p-5 animate-slide-in">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">سجل التعديلات الإدارية</h3>
+            <p className="text-sm text-muted-foreground">آخر العمليات الحساسة التي نُفذت داخل الإدارة لزيادة الثقة والتتبع.</p>
+          </div>
+        </div>
+
+        {auditLoading ? (
+          <p className="text-sm text-muted-foreground">جاري تحميل آخر العمليات...</p>
+        ) : auditError ? (
+          <p className="text-sm text-destructive">تعذر تحميل سجل التعديلات الإدارية.</p>
+        ) : !auditLog || auditLog.length === 0 ? (
+          <p className="text-sm text-muted-foreground">لا توجد عمليات إدارية مسجلة بعد.</p>
+        ) : (
+          <div className="space-y-3">
+            {auditLog.map((entry) => (
+              <div key={entry.id} className="rounded-2xl border border-border bg-background/60 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">{formatAuditAction(entry.action)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      الكيان: {entry.entityType}
+                      {entry.entityId ? ` • ${entry.entityId}` : ""}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      المنفذ: {entry.actorPhone || "مدير"}
+                    </p>
+                  </div>
+                  <div className="text-xs text-muted-foreground text-right">
+                    <p>{formatAuditTime(entry.createdAt)}</p>
+                    {entry.requestId ? <p>req: {entry.requestId}</p> : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

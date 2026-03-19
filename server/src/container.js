@@ -60,6 +60,7 @@ const { GetBlacklistUseCase } = require('./application/use-cases/blacklist/GetBl
 const { AddToBlacklistUseCase } = require('./application/use-cases/blacklist/AddToBlacklist');
 const { RemoveFromBlacklistUseCase } = require('./application/use-cases/blacklist/RemoveFromBlacklist');
 const { GetAnalyticsUseCase } = require('./application/use-cases/analytics/GetAnalytics');
+const { GetAdminAuditLogUseCase } = require('./application/use-cases/analytics/GetAdminAuditLog');
 const { PgUserRepository } = require('./infrastructure/repositories/PgUserRepository');
 const { PgAuthSessionRepository } = require('./infrastructure/repositories/PgAuthSessionRepository');
 const { PgAdminAuditLogRepository } = require('./infrastructure/repositories/PgAdminAuditLogRepository');
@@ -524,6 +525,12 @@ function createContainer() {
     .registerFactory(
       'getAnalyticsUseCase',
       (container) => new GetAnalyticsUseCase({
+        analyticsRepository: container.resolve('analyticsRepository'),
+      })
+    )
+    .registerFactory(
+      'getAdminAuditLogUseCase',
+      (container) => new GetAdminAuditLogUseCase({
         analyticsRepository: container.resolve('analyticsRepository'),
       })
     )

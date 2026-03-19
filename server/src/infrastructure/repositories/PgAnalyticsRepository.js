@@ -81,6 +81,34 @@ class PgAnalyticsRepository extends IAnalyticsRepository {
 
     return result.rows;
   }
+
+  async getRecentAdminAuditLog(limit = 20) {
+    const normalizedLimit = Number.isFinite(Number(limit))
+      ? Math.max(1, Math.min(50, Number(limit)))
+      : 20;
+
+    const result = await this.pool.query(
+      `
+        SELECT
+          id,
+          actor_user_id,
+          actor_phone,
+          action,
+          entity_type,
+          entity_id,
+          request_id,
+          ip_address,
+          meta,
+          created_at
+        FROM admin_audit_log
+        ORDER BY created_at DESC
+        LIMIT $1
+      `,
+      [normalizedLimit]
+    );
+
+    return result.rows;
+  }
 }
 
 module.exports = {

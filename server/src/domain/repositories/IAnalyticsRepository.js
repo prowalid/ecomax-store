@@ -5,6 +5,7 @@ class IAnalyticsRepository extends BaseRepositoryContract {
   async getProductMetrics() { this.notImplemented('getProductMetrics'); }
   async getCustomerMetrics() { this.notImplemented('getCustomerMetrics'); }
   async getStatusBreakdown() { this.notImplemented('getStatusBreakdown'); }
+  async getRecentAdminAuditLog() { this.notImplemented('getRecentAdminAuditLog'); }
 }
 
 module.exports = { IAnalyticsRepository };
