@@ -203,7 +203,12 @@ const AdminLayout = () => {
         </main>
       </div>
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-        <SheetContent side="right" className="w-[88vw] max-w-sm p-4" showCloseButton>
+        <SheetContent
+          side="right"
+          className="w-[88vw] max-w-sm p-4 bg-background text-foreground"
+          style={adminThemeVars}
+          showCloseButton
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>التنقل الإداري</SheetTitle>
             <SheetDescription>الوصول السريع إلى أقسام لوحة التحكم.</SheetDescription>
