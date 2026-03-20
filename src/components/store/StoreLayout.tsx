@@ -393,28 +393,26 @@ const StoreLayout = () => {
             </div>
           </nav>
 
-          <div className="flex-1 flex justify-end gap-3">
+          <div className="flex-1 flex justify-end gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className={`relative border-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${isScrolled ? "p-2.5" : "p-2"}`}
-              style={{ borderColor: theme.accent_color, color: theme.accent_color }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.accent_color; e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = theme.accent_color; }}
+              className={`rounded-full transition-all duration-300 hover:opacity-80 active:scale-95 ${isScrolled ? "p-2" : "p-2.5"}`}
+              style={{ backgroundColor: theme.accent_color + '15', color: theme.accent_color }}
             >
-              <Search size={22} className="stroke-[2.5]" />
+              <Search size={20} className="stroke-[2.5]" />
             </button>
 
             <button
               onClick={() => setCartOpen(true)}
-              className={`relative border-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${isScrolled ? "p-2.5" : "p-2"}`}
-              style={{ borderColor: theme.accent_color, color: theme.accent_color }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.accent_color; e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = theme.accent_color; }}
+              className={`relative rounded-full transition-all duration-300 hover:opacity-80 active:scale-95 ${isScrolled ? "p-2" : "p-2.5"}`}
+              style={{ backgroundColor: theme.accent_color + '15', color: theme.accent_color }}
             >
-              <ShoppingBag size={22} />
-              <span className="absolute -top-2 -left-2 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: theme.accent_color }}>
-                {totalCount}
-              </span>
+              <ShoppingBag size={20} />
+              {totalCount > 0 && (
+                <span className="absolute -top-1 -left-1 text-white text-[10px] font-black w-[18px] h-[18px] flex items-center justify-center rounded-full" style={{ backgroundColor: theme.accent_color }}>
+                  {totalCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -424,15 +422,15 @@ const StoreLayout = () => {
           className="md:hidden border-t overflow-hidden transition-all duration-300 ease-in-out"
           style={{
             borderColor: theme.header_text + '1a',
-            maxHeight: mobileMenuOpen ? '300px' : '0',
+            maxHeight: mobileMenuOpen ? '520px' : '0',
             opacity: mobileMenuOpen ? 1 : 0,
           }}
         >
-          <div className="pt-2 pb-1 px-4">
+          <div className="pt-3 pb-3 px-4">
             <Link
               to="/shop"
               onClick={() => setMobileMenuOpen(false)}
-              className="mb-2 block rounded-2xl px-4 py-3 text-sm font-black transition-all"
+              className="mb-3 block rounded-2xl px-4 py-3.5 text-[15px] font-black transition-all"
               style={
                 isProductsRoute && !isCategoryRoute
                   ? {
@@ -449,17 +447,17 @@ const StoreLayout = () => {
               المنتجات
             </Link>
             {menuCategories.length > 0 && (
-              <div className="rounded-2xl border px-2 py-2" style={{ borderColor: withAlpha(theme.header_text, "12"), backgroundColor: withAlpha(theme.header_text, "05") }}>
-                <div className="px-2 pb-2 text-[11px] font-bold" style={{ color: withAlpha(theme.header_text, "88") }}>
+              <div className="rounded-2xl border px-3 py-3" style={{ borderColor: withAlpha(theme.header_text, "12"), backgroundColor: withAlpha(theme.header_text, "05") }}>
+                <div className="px-1 pb-3 text-[12px] font-bold" style={{ color: withAlpha(theme.header_text, "88") }}>
                   التصنيفات
                 </div>
-                <div className="grid grid-cols-1 gap-1">
+                <div className="grid grid-cols-1 gap-2">
                   {menuCategories.map((category) => (
                     <Link
                       key={category.id}
                       to={`/category/${category.slug}`}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block rounded-xl px-3 py-2.5 text-sm font-semibold transition-all"
+                      className="block rounded-xl px-4 py-3 text-[14px] font-semibold transition-all"
                       style={
                         location.pathname === `/category/${category.slug}`
                           ? {
