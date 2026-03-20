@@ -61,7 +61,11 @@ const StoreLayout = () => {
     )},
   ].filter(s => s.url?.trim());
 
-
+  const setExclusiveOverlay = useCallback((overlay: "menu" | "search" | "cart" | null) => {
+    setMobileMenuOpen(overlay === "menu");
+    setSearchOpen(overlay === "search");
+    setCartOpen(overlay === "cart");
+  }, []);
   useEffect(() => {
     if (marketing.pixel_id) {
       initPixel(marketing.pixel_id, getTrackingProfile());
@@ -89,10 +93,10 @@ const StoreLayout = () => {
   }, []);
 
   useEffect(() => {
-    const handleOpenCart = () => setCartOpen(true);
+    const handleOpenCart = () => setExclusiveOverlay("cart");
     window.addEventListener("open-cart", handleOpenCart);
     return () => window.removeEventListener("open-cart", handleOpenCart);
-  }, []);
+  }, [setExclusiveOverlay]);
 
   // Dynamic page title for SEO
   useEffect(() => {
@@ -220,18 +224,18 @@ const StoreLayout = () => {
   const navigateToProducts = useCallback(
     (closeMobileMenu = false) => {
       if (closeMobileMenu) {
-        setMobileMenuOpen(false);
+        setExclusiveOverlay(null);
       }
 
       navigate("/shop");
     },
-    [navigate]
+    [navigate, setExclusiveOverlay]
   );
 
   const handleSectionNavigation = useCallback(
     (sectionId: "products" | "offers", closeMobileMenu = false) => {
       if (closeMobileMenu) {
-        setMobileMenuOpen(false);
+        setExclusiveOverlay(null);
       }
 
       if (location.pathname === "/") {
@@ -245,12 +249,12 @@ const StoreLayout = () => {
 
       navigate(`/#${sectionId}`);
     },
-    [location.pathname, navigate]
+    [location.pathname, navigate, setExclusiveOverlay]
   );
 
   useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
+    setExclusiveOverlay(null);
+  }, [location.pathname, setExclusiveOverlay]);
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -331,7 +335,7 @@ const StoreLayout = () => {
       >
         <div className={`container mx-auto px-4 flex justify-between items-center transition-all duration-300 ${isScrolled ? "py-2" : "py-3"}`}>
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setExclusiveOverlay(mobileMenuOpen ? null : "menu")}
             className="md:hidden border rounded p-1 transition-colors"
             style={{ color: theme.header_text, borderColor: theme.header_text + '33' }}
           >
@@ -408,7 +412,7 @@ const StoreLayout = () => {
 
           <div className="flex-1 flex justify-end gap-2">
             <button
-              onClick={() => setSearchOpen(true)}
+              onClick={() => setExclusiveOverlay("search")}
               className={`rounded-full transition-all duration-300 hover:opacity-80 active:scale-95 ${isScrolled ? "p-2" : "p-2.5"}`}
               style={{ backgroundColor: theme.accent_color + '15', color: theme.accent_color }}
             >
@@ -416,7 +420,7 @@ const StoreLayout = () => {
             </button>
 
             <button
-              onClick={() => setCartOpen(true)}
+              onClick={() => setExclusiveOverlay("cart")}
               className={`relative rounded-full transition-all duration-300 hover:opacity-80 active:scale-95 ${isScrolled ? "p-2" : "p-2.5"}`}
               style={{ backgroundColor: theme.accent_color + '15', color: theme.accent_color }}
             >
@@ -442,7 +446,7 @@ const StoreLayout = () => {
           <div className="pt-3 pb-3 px-4">
             <Link
               to="/"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => setExclusiveOverlay(null)}
               className="mb-2 block rounded-2xl px-4 py-3.5 text-[15px] font-black transition-all"
               style={
                 isHomeRoute
@@ -488,7 +492,7 @@ const StoreLayout = () => {
                     <Link
                       key={category.id}
                       to={`/category/${category.slug}`}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => setExclusiveOverlay(null)}
                       className="block rounded-xl px-4 py-3 text-[14px] font-semibold transition-all"
                       style={
                         location.pathname === `/category/${category.slug}`
@@ -529,8 +533,8 @@ const StoreLayout = () => {
       </header>
 
       {/* Cart & Search Drawers */}
-      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
-      <SearchDrawer open={searchOpen} onOpenChange={setSearchOpen} />
+      <CartDrawer open={cartOpen} onOpenChange={(open) => setExclusiveOverlay(open ? "cart" : null)} />
+      <SearchDrawer open={searchOpen} onOpenChange={(open) => setExclusiveOverlay(open ? "search" : null)} />
 
       {/* Main Content */}
       <main className="pt-[106px] md:pt-0 pb-16 md:pb-0 overflow-x-clip min-h-[80vh]">
@@ -647,7 +651,7 @@ const StoreLayout = () => {
         style={{ backgroundColor: theme.header_bg, borderTopColor: theme.header_text + '22' }}
       >
         <button 
-          onClick={() => { scrollToTop(); navigate('/'); }} 
+          onClick={() => { setExclusiveOverlay(null); scrollToTop(); navigate('/'); }} 
           className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
           style={{ color: isHomeRoute ? theme.accent_color : theme.header_text + 'cc' }}
         >
@@ -655,7 +659,7 @@ const StoreLayout = () => {
           <span className="text-[10px] font-bold">الرئيسية</span>
         </button>
         <button 
-          onClick={() => navigateToProducts()} 
+          onClick={() => { setExclusiveOverlay(null); navigateToProducts(); }} 
           className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
           style={{ color: isCatalogRoute ? theme.accent_color : theme.header_text + 'cc' }}
         >
@@ -663,7 +667,7 @@ const StoreLayout = () => {
           <span className="text-[10px] font-bold">المنتجات</span>
         </button>
         <button 
-          onClick={() => setSearchOpen(true)} 
+          onClick={() => setExclusiveOverlay("search")} 
           className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
           style={{ color: searchOpen ? theme.accent_color : theme.header_text + 'cc' }}
         >
@@ -671,7 +675,7 @@ const StoreLayout = () => {
           <span className="text-[10px] font-bold">البحث</span>
         </button>
         <button 
-          onClick={() => setCartOpen(true)} 
+          onClick={() => setExclusiveOverlay("cart")} 
           className="flex flex-col items-center justify-center flex-1 h-full gap-1 relative transition-colors"
           style={{ color: cartOpen ? theme.accent_color : theme.header_text + 'cc' }}
         >
