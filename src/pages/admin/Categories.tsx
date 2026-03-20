@@ -72,9 +72,10 @@ const Categories = () => {
         },
       });
       setEditingImage(null);
-    } catch {
-      setStatus("error", "فشل رفع الصورة");
-      toast.error("فشل رفع الصورة");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "فشل رفع الصورة";
+      setStatus("error", message);
+      toast.error(message);
     } finally {
       setUploadingImageId(null);
     }

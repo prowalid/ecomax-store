@@ -115,7 +115,17 @@ export const api = {
     }
 
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || 'Upload failed');
+    if (!response.ok) {
+      const error = new Error(data.message || data.error || 'Upload failed') as Error & {
+        code?: string;
+        requestId?: string;
+        details?: unknown;
+      };
+      error.code = data.code;
+      error.requestId = data.requestId;
+      error.details = data.details;
+      throw error;
+    }
     return data;
   }
 };

@@ -35,23 +35,50 @@ const storage = multer.diskStorage({
   },
 });
 
-const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp/;
+const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp|svg\+xml|avif/;
+const ALLOWED_EXTENSIONS = /\.(jpe?g|png|gif|webp|svg|avif)$/i;
+const INVALID_FILE_TYPE_MESSAGE = 'صيغة الصورة غير مدعومة. استخدم jpg أو png أو gif أو webp أو svg أو avif.';
+const FILE_TOO_LARGE_MESSAGE = 'حجم الصورة يجب ألا يتجاوز 5 ميغابايت.';
 
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const extOk = /\.(jpe?g|png|gif|webp)$/i.test(file.originalname);
+    const extOk = ALLOWED_EXTENSIONS.test(file.originalname);
     const mimeOk = ALLOWED_TYPES.test(file.mimetype);
     if (extOk && mimeOk) {
       return cb(null, true);
     }
 
-    cb(new Error('Only image files (jpg, png, gif, webp) are allowed'));
+    const error = new Error(INVALID_FILE_TYPE_MESSAGE);
+    error.status = 400;
+    cb(error);
   },
 });
 
 router.use(authMiddleware);
-router.post('/', upload.single('file'), uploadController);
+router.post('/', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (!err) {
+      return uploadController(req, res, next);
+    }
+
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      err.status = 400;
+      err.message = FILE_TOO_LARGE_MESSAGE;
+      return next(err);
+    }
+
+    if (!err.status) {
+      err.status = 400;
+    }
+
+    if (err.message === 'Only image files (jpg, png, gif, webp) are allowed') {
+      err.message = INVALID_FILE_TYPE_MESSAGE;
+    }
+
+    return next(err);
+  });
+});
 
 module.exports = router;

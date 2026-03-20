@@ -32,8 +32,8 @@ const Appearance = () => {
     try {
       const data = (await api.upload('/upload', file)) as { url: string };
       return data.url;
-    } catch {
-      toast.error("فشل رفع الصورة");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "فشل رفع الصورة");
       return null;
     }
   };
@@ -122,7 +122,7 @@ const Appearance = () => {
       <input
         ref={slideInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml,image/avif"
         multiple
         className="hidden"
         onChange={handleSlideUpload}
