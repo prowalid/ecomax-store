@@ -133,18 +133,25 @@ export function useCreateShippingShipment(providerLabel: string) {
 export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (order: { customer_name: string; customer_phone: string; total?: number; wilaya?: string; commune?: string; address?: string; delivery_type?: DeliveryType; subtotal?: number; shipping_cost?: number; note?: string | null; customer_id?: string; website_url?: string; "cf-turnstile-response"?: string | null; items?: { product_name: string; quantity: number; unit_price: number; total: number; product_id?: string; selected_options?: Record<string, string> }[] }) => {
+    mutationFn: async (order: { customer_name: string; customer_phone: string; total?: number; wilaya?: string; commune?: string; address?: string; delivery_type?: DeliveryType; subtotal?: number; shipping_cost?: number; note?: string | null; customer_id?: string; website_url?: string; "cf-turnstile-response"?: string | null; items?: { product_name: string; quantity: number; unit_price: number; total: number; product_id?: string; selected_options?: Record<string, string> }[]; suppressToast?: boolean }) => {
+      const { suppressToast: _suppressToast, ...payload } = order;
       
       // The backend now handles the entire transaction (inserting order, items, and updating stock) in one go
-      const data = await api.post('/orders', order);
+      const data = await api.post('/orders', payload);
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast.success("تم إنشاء الطلب");
+      if (!variables.suppressToast) {
+        toast.success("تم إنشاء الطلب");
+      }
     },
-    onError: (error: Error) => toast.error(error.message || "فشل إنشاء الطلب"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل إنشاء الطلب");
+      }
+    },
   });
 }

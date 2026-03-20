@@ -355,6 +355,7 @@ const ProductPage = () => {
         customer_id: customerId,
         website_url: honeypotValue,
         "cf-turnstile-response": turnstileToken,
+        suppressToast: true,
         items: [
           {
             product_id: product.id,

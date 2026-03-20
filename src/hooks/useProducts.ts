@@ -165,32 +165,44 @@ export function usePaginatedProducts(
 export function useCreateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (product: { name: string; price?: number; stock?: number; status?: ProductStatus; category_id?: string; description?: string; compare_price?: number; cost_price?: number; sku?: string; image_url?: string; custom_options?: ProductOptionGroup[] }) => {
-      return await api.post('/products', product);
+    mutationFn: async (product: { name: string; price?: number; stock?: number; status?: ProductStatus; category_id?: string; description?: string; compare_price?: number; cost_price?: number; sku?: string; image_url?: string; custom_options?: ProductOptionGroup[]; suppressToast?: boolean }) => {
+      const { suppressToast: _suppressToast, ...payload } = product;
+      return await api.post('/products', payload);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast.success("تم إضافة المنتج");
+      if (!variables.suppressToast) {
+        toast.success("تم إضافة المنتج");
+      }
     },
-    onError: (error: Error) => toast.error(error.message || "فشل إضافة المنتج"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل إضافة المنتج");
+      }
+    },
   });
 }
 
 export function useUpdateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
-      return await api.patch(`/products/${id}`, updates);
+    mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string; suppressToast?: boolean }) => {
+      const { suppressToast: _suppressToast, ...payload } = updates;
+      return await api.patch(`/products/${id}`, payload);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast.success("تم تحديث المنتج");
+      if (!variables.suppressToast) {
+        toast.success("تم تحديث المنتج");
+      }
     },
-    onError: (error: Error & { code?: string }) => {
+    onError: (error: Error & { code?: string }, variables) => {
       if (error.code === "CONFLICT") {
         qc.invalidateQueries({ queryKey: ["products"] });
       }
-      toast.error(error.message || "فشل تحديث المنتج");
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل تحديث المنتج");
+      }
     },
   });
 }

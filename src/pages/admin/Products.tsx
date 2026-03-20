@@ -205,7 +205,7 @@ const Products = () => {
       try {
         setIsSyncingImages(true);
         const currentProduct = products.find((product) => product.id === editingId);
-        await updateProduct.mutateAsync({ id: editingId, ...payload, version: currentProduct?.version });
+        await updateProduct.mutateAsync({ id: editingId, ...payload, version: currentProduct?.version, suppressToast: true });
 
         const existingImageIds = new Set(editImages.map((img) => img.id));
         const keptExistingIds = new Set(
@@ -214,7 +214,7 @@ const Products = () => {
 
         const deletedExistingIds = Array.from(existingImageIds).filter((id) => !keptExistingIds.has(id));
         for (const imageId of deletedExistingIds) {
-          await deleteImage.mutateAsync({ id: imageId, productId: editingId });
+          await deleteImage.mutateAsync({ id: imageId, productId: editingId, suppressToast: true });
         }
 
         const finalizedImages: { id: string; image_url: string; sort_order: number }[] = [];
@@ -229,7 +229,7 @@ const Products = () => {
           }
 
           if (!image.file) continue;
-          const uploaded = await uploadImage.mutateAsync({ productId: editingId, file: image.file });
+          const uploaded = await uploadImage.mutateAsync({ productId: editingId, file: image.file, suppressToast: true });
           finalizedImages.push({
             id: uploaded.id,
             image_url: uploaded.image_url,
@@ -242,6 +242,7 @@ const Products = () => {
         }
 
         resetModalState();
+        toast.success("تم تحديث المنتج بنجاح");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "فشل حفظ المنتج");
       } finally {
@@ -250,7 +251,7 @@ const Products = () => {
     } else {
       try {
         setIsSyncingImages(true);
-        const created = await createProduct.mutateAsync(payload as any);
+        const created = await createProduct.mutateAsync({ ...(payload as any), suppressToast: true });
         const newProductId = (created as any)?.id;
 
         // Upload images that were selected during creation
@@ -258,7 +259,7 @@ const Products = () => {
           const finalizedImages: { id: string; image_url: string; sort_order: number }[] = [];
           for (const image of draftImages) {
             if (!image.file) continue;
-            const uploaded = await uploadImage.mutateAsync({ productId: newProductId, file: image.file });
+            const uploaded = await uploadImage.mutateAsync({ productId: newProductId, file: image.file, suppressToast: true });
             finalizedImages.push({
               id: uploaded.id,
               image_url: uploaded.image_url,
@@ -271,6 +272,7 @@ const Products = () => {
         }
 
         resetModalState();
+        toast.success("تم إضافة المنتج بنجاح");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "فشل إنشاء المنتج");
       } finally {

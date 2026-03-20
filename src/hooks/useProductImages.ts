@@ -30,7 +30,7 @@ export function useProductImages(productId: string | null) {
 export function useUploadProductImage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, file }: { productId: string; file: File }) => {
+    mutationFn: async ({ productId, file }: { productId: string; file: File; suppressToast?: boolean }) => {
       // 1. Upload file to backend storage
       const uploadRes = (await api.upload('/upload', file)) as UploadResponse;
       
@@ -49,11 +49,17 @@ export function useUploadProductImage() {
 
       return data;
     },
-    onSuccess: (_, { productId }) => {
+    onSuccess: (_, { productId, suppressToast }) => {
       qc.invalidateQueries({ queryKey: ["product_images", productId] });
-      toast.success("تم رفع الصورة");
+      if (!suppressToast) {
+        toast.success("تم رفع الصورة");
+      }
     },
-    onError: (error: Error) => toast.error(error.message || "فشل رفع الصورة"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل رفع الصورة");
+      }
+    },
   });
 }
 
@@ -73,14 +79,20 @@ export function useReorderProductImages() {
 export function useDeleteProductImage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, productId }: { id: string; productId: string }) => {
+    mutationFn: async ({ id, productId }: { id: string; productId: string; suppressToast?: boolean }) => {
       await api.delete(`/products/${productId}/images/${id}`);
       qc.invalidateQueries({ queryKey: ["products"] });
     },
-    onSuccess: (_, { productId }) => {
+    onSuccess: (_, { productId, suppressToast }) => {
       qc.invalidateQueries({ queryKey: ["product_images", productId] });
-      toast.success("تم حذف الصورة");
+      if (!suppressToast) {
+        toast.success("تم حذف الصورة");
+      }
     },
-    onError: (error: Error) => toast.error(error.message || "فشل حذف الصورة"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل حذف الصورة");
+      }
+    },
   });
 }

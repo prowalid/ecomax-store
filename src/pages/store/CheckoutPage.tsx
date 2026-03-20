@@ -281,6 +281,7 @@ export default function CheckoutPage() {
         customer_id: customerId,
         website_url: values.website_url, // Honeypot
         "cf-turnstile-response": turnstileToken, // Turnstile
+        suppressToast: true,
         items: items.map((item) => ({
           product_id: item.product_id,
           product_name: item.product_name,
