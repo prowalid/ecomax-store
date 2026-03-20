@@ -160,14 +160,14 @@ const Shipping = () => {
 
     if (settings.yalidine) {
       setYalidineSettings(settings.yalidine);
-      setYalidineSecretsDraft({ api_id: settings.yalidine.api_id || "", api_token: settings.yalidine.api_token || "" });
+      setYalidineSecretsDraft({ api_id: "", api_token: "" });
     } else {
       setYalidineSettings(defaultShippingSettings.yalidine);
       setYalidineSecretsDraft({ api_id: "", api_token: "" });
     }
     if (settings.guepex) {
       setGuepexSettings(settings.guepex);
-      setGuepexSecretsDraft({ api_id: settings.guepex.api_id || "", api_token: settings.guepex.api_token || "" });
+      setGuepexSecretsDraft({ api_id: "", api_token: "" });
     } else {
       setGuepexSettings(defaultShippingSettings.guepex);
       setGuepexSecretsDraft({ api_id: "", api_token: "" });
@@ -447,9 +447,10 @@ const Shipping = () => {
                 type="text"
                 value={activeCourierSecretsDraft.api_id}
                 onChange={(e) => setActiveCourierSecretsDraft((prev) => ({ ...prev, api_id: e.target.value }))}
-                placeholder={`Your ${activeCourierLabel} API ID`}
+                placeholder={activeSavedCourierSettings.api_id ? "قيمة محفوظة - أدخل API ID جديدًا للاستبدال" : `Your ${activeCourierLabel} API ID`}
                 dir="ltr"
                 configured={Boolean(activeSavedCourierSettings.api_id.trim())}
+                helperText="لن نعرض القيمة المحفوظة هنا. اترك الحقل فارغًا للاحتفاظ بها، أو أدخل قيمة جديدة لاستبدالها."
               />
 
               <AdminSecureField
@@ -458,9 +459,10 @@ const Shipping = () => {
                 type="password"
                 value={activeCourierSecretsDraft.api_token}
                 onChange={(e) => setActiveCourierSecretsDraft((prev) => ({ ...prev, api_token: e.target.value }))}
-                placeholder={`Your ${activeCourierLabel} API Token`}
+                placeholder={activeSavedCourierSettings.api_token ? "قيمة محفوظة - أدخل Token جديدًا للاستبدال" : `Your ${activeCourierLabel} API Token`}
                 dir="ltr"
                 configured={Boolean(activeSavedCourierSettings.api_token.trim())}
+                helperText="لن نعرض التوكن الحالي. اترك الحقل فارغًا للاحتفاظ به، أو أدخل قيمة جديدة لاستبداله."
               />
 
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">

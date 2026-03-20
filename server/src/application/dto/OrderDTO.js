@@ -26,6 +26,9 @@ class OrderDTO {
     if (Object.prototype.hasOwnProperty.call(order, 'total')) dto.total = order.total?.toNumber ? order.total.toNumber() : Number(order.total ?? 0);
     if (order.created_at != null) dto.created_at = order.created_at;
     if (order.updated_at != null) dto.updated_at = order.updated_at;
+    if (order.shipping_company != null) dto.shipping_company = order.shipping_company;
+    if (order.tracking_number != null) dto.tracking_number = order.tracking_number;
+    if (order.shipping_label_url != null) dto.shipping_label_url = order.shipping_label_url;
     if (Array.isArray(order.items)) dto.items = order.items.map((item) => OrderItemDTO.from(item));
 
     return dto;
