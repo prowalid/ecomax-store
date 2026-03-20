@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
 import AdminIntegrationStatusNote from "@/components/admin/AdminIntegrationStatusNote";
 import AdminSecureField from "@/components/admin/AdminSecureField";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminDataState from "@/components/admin/AdminDataState";
 
 const STANDARD_EVENTS = [
   { name: "PageView", icon: <Eye className="w-4 h-4" />, desc: "عرض صفحة" },
@@ -157,24 +159,16 @@ const Marketing = () => {
     "w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors";
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AdminDataState type="loading" title="جاري تحميل إعدادات التسويق" description="يتم تجهيز بيانات Pixel والأحداث." />;
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">التسويق</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Facebook Pixel + Conversions API — تتبع متقدم مع مطابقة بيانات المستخدم
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          {settings.pixel_configured ? (
+      <AdminPageHeader
+        title="التسويق"
+        description="Facebook Pixel + Conversions API — تتبع متقدم مع مطابقة بيانات المستخدم."
+        badge={
+          settings.pixel_configured ? (
             <span className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               <Wifi className="w-3.5 h-3.5" /> Pixel متصل
             </span>
@@ -182,17 +176,19 @@ const Marketing = () => {
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
               <WifiOff className="w-3.5 h-3.5" /> غير مفعّل
             </span>
-          )}
+          )
+        }
+        actions={
           <button
             onClick={handleSaveAll}
             disabled={saving}
             className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            حفظ الإعدادات
+            حفظ
           </button>
-        </div>
-      </div>
+        }
+      />
 
       <AdminIntegrationStatusNote
         configured={settings.pixel_configured}
@@ -228,8 +224,8 @@ const Marketing = () => {
       </div>
 
       {/* Standard Events with Toggles */}
-      <div className="bg-card rounded-lg shadow-card border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-3">الأحداث القياسية</h3>
+      <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 p-6">
+        <h3 className="text-[15px] font-bold text-sidebar-heading mb-4">الأحداث القياسية</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {STANDARD_EVENTS.map((ev) => (
             <button

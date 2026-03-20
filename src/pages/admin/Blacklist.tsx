@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import AdminDataState from "@/components/admin/AdminDataState";
 import AdminActionStatus from "@/components/admin/AdminActionStatus";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 interface BlacklistEntry {
   id: string;
@@ -91,12 +92,11 @@ const Blacklist = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-sidebar-heading">القائمة السوداء (Blacklist)</h1>
-          <p className="text-[13px] text-slate-500 mt-1 font-medium">حظر الزبائن المزعجين أو البوتات بناءً على الهاتف أو IP</p>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="القائمة السوداء (Blacklist)"
+        description="حظر الزبائن المزعجين أو البوتات بناءً على الهاتف أو IP."
+        meta={`${entries.length} محظور`}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Add Form */}

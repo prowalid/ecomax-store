@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Type, Image, Save, Loader2, X, Upload, Tag, Layers3 } from "lucide-react";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { useEditableAppearanceSettings, type AppearanceSettings, type AppearanceSlide } from "@/hooks/useAppearanceSettings";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -127,23 +128,23 @@ const Appearance = () => {
         onChange={handleSlideUpload}
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-sidebar-heading">المظهر</h1>
-          <p className="text-[13px] text-slate-500 mt-1 font-medium">تحكم كامل في شكل وألوان المتجر الخاص بك</p>
-          <div className="mt-2">
+      <AdminPageHeader
+        title="المظهر"
+        description="تحكم كامل في شكل وألوان المتجر الخاص بك."
+        actions={
+          <div className="flex items-center gap-3">
             <AdminSaveStatusBadge saving={saving} dirty={dirty} lastSavedAt={lastSavedAt} />
+            <button
+              onClick={() => saveSettings()}
+              disabled={saving || !dirty}
+              className="h-11 px-6 flex items-center justify-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              حفظ
+            </button>
           </div>
-        </div>
-        <button
-          onClick={() => saveSettings()}
-          disabled={saving || !dirty}
-          className="h-11 px-6 flex items-center justify-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          حفظ التغييرات
-        </button>
-      </div>
+        }
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Logos & Brand Assets */}

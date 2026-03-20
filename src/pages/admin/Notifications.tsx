@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 import AdminIntegrationStatusNote from "@/components/admin/AdminIntegrationStatusNote";
 import AdminSecureField from "@/components/admin/AdminSecureField";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 const NOTIFICATION_TYPES = [
   { key: "order_confirmed", label: "تأكيد الطلب", desc: "إشعار للزبون عند تأكيد طلبه", icon: "✅", target: "customer" },
@@ -135,15 +136,11 @@ const Notifications = () => {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">الإشعارات</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            إشعارات واتساب تلقائية عند تغيير حالة الطلبات
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          {settings.api_configured ? (
+      <AdminPageHeader
+        title="الإشعارات"
+        description="إشعارات واتساب تلقائية عند تغيير حالة الطلبات."
+        badge={
+          settings.api_configured ? (
             <span className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               <Wifi className="w-3.5 h-3.5" /> متصل
             </span>
@@ -151,17 +148,19 @@ const Notifications = () => {
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
               <WifiOff className="w-3.5 h-3.5" /> غير متصل
             </span>
-          )}
+          )
+        }
+        actions={
           <button
             onClick={handleSaveSettings}
             disabled={saving}
             className="h-11 px-6 flex items-center gap-2 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            حفظ الإعدادات
+            حفظ
           </button>
-        </div>
-      </div>
+        }
+      />
 
       <AdminIntegrationStatusNote
         configured={settings.api_configured}

@@ -167,7 +167,7 @@ const Pages = () => {
 
       {/* Add form */}
       {showAdd && (
-        <div className="bg-card rounded-lg shadow-card border border-border p-4 space-y-3 animate-slide-in">
+        <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 p-6 space-y-4 animate-slide-in">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <input
               type="text"
@@ -175,7 +175,7 @@ const Pages = () => {
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="عنوان الصفحة..."
               data-testid="page-title-input"
-              className="h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
             />
@@ -185,13 +185,13 @@ const Pages = () => {
               onChange={(e) => setNewSlug(e.target.value)}
               placeholder="slug (اختياري)"
               data-testid="page-slug-input"
-              className="h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               dir="ltr"
             />
             <select
               value={newShowIn}
               onChange={(e) => setNewShowIn(e.target.value as PageShowIn)}
-              className="h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm"
+              className="h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             >
               {SHOW_IN_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -201,7 +201,7 @@ const Pages = () => {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => { setShowAdd(false); setNewTitle(""); setNewSlug(""); }}
-              className="h-9 px-4 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted transition-colors"
+              className="h-10 px-5 rounded-[12px] border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors"
             >
               إلغاء
             </button>
@@ -209,7 +209,7 @@ const Pages = () => {
               onClick={handleAdd}
               disabled={createPage.isPending || !newTitle.trim()}
               data-testid="page-create-button"
-              className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
+              className="h-10 px-6 rounded-[12px] bg-primary text-primary-foreground text-[13px] font-bold hover:opacity-95 transition-opacity disabled:opacity-50"
             >
               {createPage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "إضافة"}
             </button>
@@ -305,13 +305,13 @@ const Pages = () => {
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)}>
-          <div className="bg-card rounded-xl shadow-xl border border-border p-6 w-full max-w-sm mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-semibold text-foreground">حذف الصفحة</h3>
-            <p className="text-sm text-muted-foreground">هل أنت متأكد من حذف هذه الصفحة؟</p>
+          <div className="bg-white rounded-[20px] shadow-xl border border-slate-100 p-7 w-full max-w-sm mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-[16px] font-black text-sidebar-heading">حذف الصفحة</h3>
+            <p className="text-[13px] text-slate-500 font-medium">هل أنت متأكد من حذف هذه الصفحة؟</p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="h-9 px-4 rounded-lg border border-input text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                className="h-10 px-5 rounded-[12px] border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors"
               >
                 إلغاء
               </button>
@@ -319,7 +319,7 @@ const Pages = () => {
                 onClick={() => deletePage.mutate({ id: deleteConfirm }, { onSuccess: () => setDeleteConfirm(null) })}
                 disabled={deletePage.isPending}
                 data-testid="page-delete-confirm"
-                className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="h-10 px-5 rounded-[12px] bg-destructive text-destructive-foreground text-[13px] font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {deletePage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حذف"}
               </button>
@@ -331,21 +331,21 @@ const Pages = () => {
       {/* Page Editor Modal */}
       {editingPage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div data-testid="page-editor-modal" className="bg-card rounded-xl shadow-2xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
-              <h2 className="text-base font-semibold text-foreground">تعديل الصفحة</h2>
-              <div className="mr-auto ml-3 text-[11px] font-medium text-slate-500">
-                {updatePage.isPending ? "جاري حفظ التعديلات..." : pageDraftDirty ? "لديك تعديلات غير محفوظة" : "كل التغييرات الحالية محفوظة"}
+          <div data-testid="page-editor-modal" className="bg-white rounded-[24px] shadow-2xl border border-slate-100 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 sticky top-0 bg-white z-10 rounded-t-[24px]">
+              <h2 className="text-[16px] font-black text-sidebar-heading">تعديل الصفحة</h2>
+              <div className="mr-auto ml-3 text-[11px] font-bold text-slate-400">
+                {updatePage.isPending ? "جاري حفظ التعديلات..." : pageDraftDirty ? "تعديلات غير محفوظة" : "كل التغييرات محفوظة"}
               </div>
-              <button onClick={closeEditor} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
+              <button onClick={closeEditor} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-6 space-y-5">
               {/* Title */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">العنوان</label>
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-slate-500">العنوان</label>
                 <input
                   type="text"
                   value={editTitle}
@@ -354,13 +354,13 @@ const Pages = () => {
                     setPageDraftDirty(true);
                   }}
                   data-testid="page-edit-title-input"
-                  className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
               {/* Slug */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">المسار (Slug)</label>
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-slate-500">المسار (Slug)</label>
                 <input
                   type="text"
                   value={editSlug}
@@ -369,14 +369,14 @@ const Pages = () => {
                     setPageDraftDirty(true);
                   }}
                   data-testid="page-edit-slug-input"
-                  className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   dir="ltr"
                 />
               </div>
 
               {/* Show In */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">مكان الظهور في القائمة</label>
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-slate-500">مكان الظهور في القائمة</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {SHOW_IN_OPTIONS.map((o) => (
                     <button
@@ -386,10 +386,10 @@ const Pages = () => {
                         setEditShowIn(o.value);
                         setPageDraftDirty(true);
                       }}
-                      className={`text-xs font-medium py-2 px-3 rounded-lg border-2 transition-all ${
+                      className={`text-[12px] font-bold py-2.5 px-3 rounded-[12px] border-2 transition-all ${
                         editShowIn === o.value
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:border-primary/40"
+                          : "border-slate-100 text-slate-400 hover:border-primary/40"
                       }`}
                     >
                       {o.label}
@@ -406,10 +406,10 @@ const Pages = () => {
                     setEditPublished(!editPublished);
                     setPageDraftDirty(true);
                   }}
-                  className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border-2 transition-all ${
+                  className={`flex items-center gap-2 text-[13px] font-bold px-4 py-2.5 rounded-[12px] border-2 transition-all ${
                     editPublished
-                      ? "border-green-500 bg-green-50 text-green-700"
-                      : "border-border text-muted-foreground hover:border-primary/40"
+                      ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                      : "border-slate-100 text-slate-400 hover:border-primary/40"
                   }`}
                 >
                   {editPublished ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -418,8 +418,8 @@ const Pages = () => {
               </div>
 
               {/* Content */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">محتوى الصفحة</label>
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-slate-500">محتوى الصفحة</label>
                 <RichTextEditor
                   value={editContent}
                   onChange={(value) => {
@@ -430,10 +430,10 @@ const Pages = () => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 p-5 border-t border-border sticky bottom-0 bg-card">
+            <div className="flex justify-end gap-2 p-6 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-[24px]">
               <button
                 onClick={closeEditor}
-                className="h-9 px-4 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted transition-colors"
+                className="h-10 px-5 rounded-[12px] border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors"
               >
                 إلغاء
               </button>
@@ -441,7 +441,7 @@ const Pages = () => {
                 onClick={saveEditor}
                 disabled={updatePage.isPending || !editTitle.trim()}
                 data-testid="page-save-button"
-                className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                className="h-10 px-6 rounded-[12px] bg-primary text-primary-foreground text-[13px] font-bold hover:opacity-95 transition-opacity disabled:opacity-50 flex items-center gap-2"
               >
                 {updatePage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> حفظ</>}
               </button>

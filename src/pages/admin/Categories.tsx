@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import AdminDataState from "@/components/admin/AdminDataState";
 import AdminActionStatus from "@/components/admin/AdminActionStatus";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 const sanitizeCategorySlug = (value: string) =>
   value
@@ -84,32 +85,31 @@ const Categories = () => {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">التصنيفات</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            نظّم التصنيفات وارفع صورة مناسبة لكل تصنيف حتى يظهر بشكل احترافي داخل واجهة المتجر.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          data-testid="categories-add-button"
-          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-button hover:opacity-95 transition-opacity flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          إضافة تصنيف
-        </button>
-      </div>
+      <AdminPageHeader
+        title="التصنيفات"
+        description="نظّم التصنيفات وارفع صورة مناسبة لكل تصنيف حتى يظهر بشكل احترافي."
+        meta={`${categories.length} تصنيف`}
+        actions={
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            data-testid="categories-add-button"
+            className="h-10 px-5 rounded-[12px] bg-primary text-primary-foreground text-[13px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة تصنيف
+          </button>
+        }
+      />
 
       {showAdd && (
-        <div className="bg-card rounded-lg shadow-card border border-border p-4 flex items-center gap-3 animate-slide-in">
+        <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 p-5 flex items-center gap-3 animate-slide-in">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="اسم التصنيف..."
             data-testid="category-name-input"
-            className="flex-1 h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+            className="flex-1 h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             autoFocus
           />
@@ -117,7 +117,7 @@ const Categories = () => {
             onClick={handleAdd}
             disabled={createCategory.isPending}
             data-testid="category-save-button"
-            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
+            className="h-11 px-6 rounded-[12px] bg-primary text-primary-foreground text-[13px] font-bold hover:opacity-95 transition-opacity disabled:opacity-50"
           >
             {createCategory.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "إضافة"}
           </button>
@@ -126,9 +126,9 @@ const Categories = () => {
 
       <AdminActionStatus state={actionState} message={actionMessage} />
 
-      <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+      <div className="rounded-[20px] border border-slate-100 bg-slate-50/70 p-4 text-[13px] text-slate-600 font-medium">
         المقاس المقترح للصور: <span className="font-black text-slate-900">1200 × 1200</span> بكسل.
-        استخدم صورة مربعة واضحة وخفيفة لتظهر بشكل احترافي في المتجر.
+        استخدم صورة مربعة واضحة وخفيفة.
       </div>
 
       {categories.length === 0 ? (

@@ -3,10 +3,45 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Loader2, ShieldCheck, User, KeyRound, Smartphone, AlertTriangle } from "lucide-react";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminDataState from "@/components/admin/AdminDataState";
+
+const FIELD_CLASS =
+  "w-full h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
+
+const LABEL_CLASS = "block text-[13px] font-semibold text-slate-500 mb-2";
+
+const BTN_PRIMARY =
+  "w-full h-11 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 flex items-center justify-center gap-2";
+
+interface SectionCardProps {
+  icon: React.ElementType;
+  iconColor: string;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+function SectionCard({ icon: Icon, iconColor, title, description, children, className = "" }: SectionCardProps) {
+  return (
+    <div className={`bg-white rounded-[24px] shadow-sm border border-slate-100 p-7 space-y-5 ${className}`}>
+      <div className="border-b border-slate-100 pb-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}`}>
+            <Icon className="w-4 h-4" />
+          </div>
+          <h2 className="text-[15px] font-bold text-sidebar-heading">{title}</h2>
+        </div>
+        {description && (
+          <p className="text-[13px] text-slate-400 font-medium mt-2 mr-11">{description}</p>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function Profile() {
   const { user } = useAuth();
@@ -26,7 +61,6 @@ export default function Profile() {
     },
   });
 
-  // Use useEffect instead of setting state in queryFn, to handle React Query caching
   useEffect(() => {
     if (profile) {
       setName(profile.name || user?.name || "");
@@ -93,214 +127,196 @@ export default function Profile() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8 h-[calc(100vh-100px)]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <AdminDataState type="loading" title="جاري تحميل الملف الشخصي" description="يتم تجهيز بيانات الحساب وحالة الأمان." />;
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6" dir="rtl">
-      <div>
-        <h1 className="text-3xl font-black text-sidebar-heading tracking-tight mb-2">الملف الشخصي والأمان</h1>
-        <p className="text-muted-foreground font-medium flex items-center gap-2">
-          إدارة بياناتك الشخصية وحماية حسابك
-        </p>
-      </div>
+    <div className="space-y-6" dir="rtl">
+      <AdminPageHeader
+        title="الملف الشخصي والأمان"
+        description="إدارة بياناتك الشخصية وحماية حسابك."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-border shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              البيانات الأساسية
-            </CardTitle>
-            <CardDescription>تحديث بيانات الاتصال واسم المدير</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold">الاسم</label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="اسم المدير"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold flex items-center gap-2"><Smartphone className="w-4 h-4"/> الهاتف (لاستعادة الحساب)</label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                placeholder="0555123456"
-                dir="ltr"
-              />
-            </div>
-            <Button
-              className="w-full font-bold mt-2"
-              disabled={updateProfileMutation.isPending}
-              onClick={() => updateProfileMutation.mutate({ name, phone })}
-            >
-              {updateProfileMutation.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-              حفظ التغييرات
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Basic Info */}
+        <SectionCard icon={User} iconColor="bg-primary/10 text-primary" title="البيانات الأساسية" description="تحديث بيانات الاتصال واسم المدير.">
+          <div>
+            <label className={LABEL_CLASS}>الاسم</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="اسم المدير"
+              className={FIELD_CLASS}
+            />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}>
+              <span className="flex items-center gap-2"><Smartphone className="w-3.5 h-3.5" /> الهاتف (لاستعادة الحساب)</span>
+            </label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+              placeholder="0555123456"
+              dir="ltr"
+              className={FIELD_CLASS}
+            />
+          </div>
+          <button
+            className={BTN_PRIMARY}
+            disabled={updateProfileMutation.isPending}
+            onClick={() => updateProfileMutation.mutate({ name, phone })}
+          >
+            {updateProfileMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            حفظ التغييرات
+          </button>
+        </SectionCard>
 
-        <Card className="border-border shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-primary" />
-              تغيير كلمة المرور
-            </CardTitle>
-            <CardDescription>تغيير كلمة المرور الخاصة بك</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold">كلمة المرور الحالية</label>
-              <Input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                dir="ltr"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold">كلمة المرور الجديدة</label>
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                dir="ltr"
-              />
-            </div>
-            <Button
-              className="w-full font-bold mt-2"
-              disabled={changePasswordMutation.isPending || !currentPassword || !newPassword}
-              onClick={() => changePasswordMutation.mutate({ currentPassword, newPassword })}
-            >
-              {changePasswordMutation.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-              تحديث كلمة المرور
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Password */}
+        <SectionCard icon={KeyRound} iconColor="bg-amber-50 text-amber-600" title="تغيير كلمة المرور" description="تغيير كلمة المرور الخاصة بك.">
+          <div>
+            <label className={LABEL_CLASS}>كلمة المرور الحالية</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              dir="ltr"
+              className={FIELD_CLASS}
+            />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}>كلمة المرور الجديدة</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              dir="ltr"
+              className={FIELD_CLASS}
+            />
+          </div>
+          <button
+            className={BTN_PRIMARY}
+            disabled={changePasswordMutation.isPending || !currentPassword || !newPassword}
+            onClick={() => changePasswordMutation.mutate({ currentPassword, newPassword })}
+          >
+            {changePasswordMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            تحديث كلمة المرور
+          </button>
+        </SectionCard>
 
-        <Card className="border-border shadow-sm md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              المصادقة الثنائية (2FA)
-            </CardTitle>
-            <CardDescription>طبقة حماية إضافية لحسابك باستخدام رمز من التطبيق (مثل Google Authenticator)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {profile?.two_factor_enabled ? (
-              <div className="space-y-4 p-4 border border-destructive/20 bg-destructive/5 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-green-700">المصادقة الثنائية مفعلة</h3>
-                    <p className="text-sm text-green-600/80">حسابك محمي بنجاح. لا تنسخ رمز الـ 2FA في مكان آمن تجنباً لفقدان الحساب.</p>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t border-destructive/10 space-y-4">
-                  <p className="text-sm font-medium text-destructive">لإيقاف وتأكيد الإيقاف، يرجى كتابة الرمز الحالي أدناه:</p>
-                  <div className="flex gap-4 items-end">
-                    <div className="space-y-2 flex-1">
-                      <Input
-                        value={twoFactorCode}
-                        onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
-                        placeholder="123456"
-                        maxLength={6}
-                        className="text-center text-lg tracking-widest font-bold font-mono"
-                        dir="ltr"
-                      />
-                    </div>
-                    <Button
-                      variant="destructive"
-                      className="font-bold whitespace-nowrap"
-                      disabled={disable2FAMutation.isPending || twoFactorCode.length !== 6}
-                      onClick={() => disable2FAMutation.mutate(twoFactorCode)}
-                    >
-                      {disable2FAMutation.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                      تعطيل الحماية
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : setup2faData ? (
-              <div className="space-y-6 animate-in fade-in slide-in-from-top-4">
-                <div className="bg-orange-50 text-orange-800 p-4 rounded-xl flex items-start gap-3 border border-orange-200">
-                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-                  <div className="text-sm leading-relaxed">
-                    <strong>خطوات التفعيل:</strong>
-                    <ol className="list-decimal mr-4 mt-2 space-y-1">
-                      <li>قم بتحميل تطبيق Google Authenticator.</li>
-                      <li>امسح رمز الـ QR أدناه بالتطبيق.</li>
-                      <li>أدخل الرمز المكون من 6 أرقام لتأكيد التفعيل.</li>
-                    </ol>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-8 justify-center bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                  <div className="bg-white p-2 rounded-xl shadow-sm">
-                    <img src={setup2faData.qrCodeUrl} alt="QR Code" className="w-40 h-40" />
-                  </div>
-                  <div className="space-y-4 w-full sm:w-64 text-center sm:text-right">
-                    <p className="text-xs text-muted-foreground mb-4">أو استخدم المفتاح: <code className="block bg-gray-100 p-2 mt-1 rounded text-center ltr">{setup2faData.secret}</code></p>
-                    <div className="space-y-2">
-                      <Input
-                        value={twoFactorCode}
-                        onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
-                        placeholder="123456"
-                        maxLength={6}
-                        className="text-center text-xl tracking-widest font-bold font-mono py-6"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        className="w-full font-bold"
-                        disabled={verify2FAMutation.isPending || twoFactorCode.length !== 6}
-                        onClick={() => verify2FAMutation.mutate(twoFactorCode)}
-                      >
-                        {verify2FAMutation.isPending && <Loader2 className="ml-2 animate-spin w-4 h-4" />}
-                        تأكيد وتفعيل
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setSetup2faData(null)}
-                      >
-                        إلغاء
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-6 space-y-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto text-gray-400">
-                  <ShieldCheck className="w-8 h-8" />
+        {/* 2FA */}
+        <SectionCard
+          icon={ShieldCheck}
+          iconColor="bg-emerald-50 text-emerald-600"
+          title="المصادقة الثنائية (2FA)"
+          description="طبقة حماية إضافية باستخدام رمز من التطبيق (Google Authenticator)."
+          className="md:col-span-2"
+        >
+          {profile?.two_factor_enabled ? (
+            <div className="space-y-4 p-5 border border-rose-100 bg-rose-50/40 rounded-[18px]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800">حسابك غير محمي حالياً بـ 2FA</h3>
-                  <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">تفعيل المصادقة الثنائية سيجعل حسابك منيعاً ضد الاختراق، حيث يتطلب خطوة إضافية للمرور.</p>
+                  <h3 className="font-black text-[14px] text-emerald-700">المصادقة الثنائية مفعلة</h3>
+                  <p className="text-[12px] text-emerald-500 font-medium">حسابك محمي. احتفظ برمز الـ 2FA في مكان آمن.</p>
                 </div>
-                <Button
-                  onClick={() => setup2FAMutation.mutate()}
-                  className="font-bold hover:-translate-y-0.5 transition-transform"
-                  disabled={setup2FAMutation.isPending}
-                >
-                  {setup2FAMutation.isPending && <Loader2 className="ml-2 animate-spin w-4 h-4" />}
-                  ابدأ عملية التفعيل
-                </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              
+              <div className="pt-4 border-t border-rose-100 space-y-3">
+                <p className="text-[13px] font-bold text-rose-500">لإيقاف الحماية، أدخل الرمز الحالي:</p>
+                <div className="flex gap-3 items-end">
+                  <input
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="flex-1 h-11 text-center text-lg tracking-widest font-black font-mono rounded-[12px] border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    dir="ltr"
+                  />
+                  <button
+                    className="h-11 px-6 rounded-[14px] bg-destructive text-white text-[13px] font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
+                    disabled={disable2FAMutation.isPending || twoFactorCode.length !== 6}
+                    onClick={() => disable2FAMutation.mutate(twoFactorCode)}
+                  >
+                    {disable2FAMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                    تعطيل الحماية
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : setup2faData ? (
+            <div className="space-y-5 animate-in fade-in slide-in-from-top-4">
+              <div className="bg-amber-50 text-amber-800 p-4 rounded-[16px] flex items-start gap-3 border border-amber-100">
+                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div className="text-[13px] leading-relaxed font-medium">
+                  <strong>خطوات التفعيل:</strong>
+                  <ol className="list-decimal mr-4 mt-2 space-y-1">
+                    <li>قم بتحميل تطبيق Google Authenticator.</li>
+                    <li>امسح رمز الـ QR أدناه بالتطبيق.</li>
+                    <li>أدخل الرمز المكون من 6 أرقام لتأكيد التفعيل.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-8 justify-center bg-slate-50 p-6 rounded-[20px] border border-slate-100">
+                <div className="bg-white p-3 rounded-[16px] shadow-sm border border-slate-100">
+                  <img src={setup2faData.qrCodeUrl} alt="QR Code" className="w-40 h-40" />
+                </div>
+                <div className="space-y-4 w-full sm:w-64 text-center sm:text-right">
+                  <p className="text-[12px] text-slate-400 font-medium mb-4">
+                    أو استخدم المفتاح:
+                    <code className="block bg-slate-100 p-2 mt-1 rounded-lg text-center font-mono text-[11px] text-sidebar-heading" dir="ltr">{setup2faData.secret}</code>
+                  </p>
+                  <input
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="w-full h-12 text-center text-xl tracking-widest font-black font-mono rounded-[12px] border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    dir="ltr"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      className={BTN_PRIMARY}
+                      disabled={verify2FAMutation.isPending || twoFactorCode.length !== 6}
+                      onClick={() => verify2FAMutation.mutate(twoFactorCode)}
+                    >
+                      {verify2FAMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                      تأكيد وتفعيل
+                    </button>
+                    <button
+                      onClick={() => setSetup2faData(null)}
+                      className="h-11 px-5 rounded-[14px] border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 space-y-4">
+              <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="font-black text-[14px] text-sidebar-heading">حسابك غير محمي حالياً بـ 2FA</h3>
+                <p className="text-[13px] text-slate-400 font-medium mt-1 max-w-sm mx-auto">
+                  تفعيل المصادقة الثنائية سيجعل حسابك منيعاً ضد الاختراق.
+                </p>
+              </div>
+              <button
+                onClick={() => setup2FAMutation.mutate()}
+                className="h-11 px-6 rounded-[14px] bg-primary text-white text-[14px] font-bold shadow-lg shadow-primary/25 hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-50 flex items-center gap-2 mx-auto"
+                disabled={setup2FAMutation.isPending}
+              >
+                {setup2FAMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                ابدأ عملية التفعيل
+              </button>
+            </div>
+          )}
+        </SectionCard>
       </div>
     </div>
   );
