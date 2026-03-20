@@ -316,7 +316,7 @@ const Pages = () => {
                 إلغاء
               </button>
               <button
-                onClick={() => deletePage.mutate(deleteConfirm, { onSuccess: () => setDeleteConfirm(null) })}
+                onClick={() => deletePage.mutate({ id: deleteConfirm }, { onSuccess: () => setDeleteConfirm(null) })}
                 disabled={deletePage.isPending}
                 data-testid="page-delete-confirm"
                 className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"

@@ -210,13 +210,19 @@ export function useUpdateProduct() {
 export function useDeleteProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id }: { id: string; suppressToast?: boolean }) => {
       return await api.delete(`/products/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast.success("تم حذف المنتج");
+      if (!variables.suppressToast) {
+        toast.success("تم حذف المنتج");
+      }
     },
-    onError: (error: Error) => toast.error(error.message || "فشل حذف المنتج"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل حذف المنتج");
+      }
+    },
   });
 }

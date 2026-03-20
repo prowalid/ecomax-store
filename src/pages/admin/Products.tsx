@@ -99,8 +99,17 @@ const Products = () => {
 
   const handleBulkDelete = () => {
     if (!window.confirm(`هل أنت متأكد من حذف ${selectedProducts.length} منتجات؟ لا يمكن التراجع عن هذا الإجراء.`)) return;
-    selectedProducts.forEach((id) => deleteProduct.mutate(id));
-    setSelectedProducts([]);
+    void (async () => {
+      try {
+        for (const id of selectedProducts) {
+          await deleteProduct.mutateAsync({ id, suppressToast: true });
+        }
+        toast.success(`تم حذف ${selectedProducts.length} منتجات بنجاح`);
+        setSelectedProducts([]);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "فشل حذف بعض المنتجات");
+      }
+    })();
   };
 
   const filtered = products;
@@ -307,7 +316,7 @@ const Products = () => {
   };
 
   const handleDelete = (id: string) => {
-    deleteProduct.mutate(id, {
+    deleteProduct.mutate({ id }, {
       onSuccess: () => setDeleteConfirm(null),
     });
   };

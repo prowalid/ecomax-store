@@ -11,6 +11,7 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
 import { Loader2 } from "lucide-react";
 import { formatSelectedOptions } from "@/lib/productOptions";
+import { toast } from "sonner";
 
 const Orders = () => {
   const [search, setSearch] = useState("");
@@ -65,15 +66,17 @@ const Orders = () => {
       for (const id of selectedOrders) {
         const order = orders.find((o) => o.id === id);
         if (order) {
-          await updateStatus.mutateAsync({ id, status: newStatus, order });
+          await updateStatus.mutateAsync({ id, status: newStatus, order, suppressToast: true });
           // small delay to prevent overwhelming the server's event loop and db pool
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
       
+      toast.success(`تم تحديث ${selectedOrders.length} طلبات إلى "${orderStatusConfig[newStatus].label}"`);
       setSelectedOrders([]);
     } catch (error) {
       console.error("Bulk update error:", error);
+      toast.error(error instanceof Error ? error.message : "فشل تحديث بعض الطلبات");
     } finally {
       setIsUpdatingBulk(false);
     }

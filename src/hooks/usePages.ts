@@ -51,32 +51,44 @@ export function usePageBySlug(slug: string | undefined) {
 export function useCreatePage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (page: { title: string; slug: string; content?: string; published?: boolean; show_in?: PageShowIn }) => {
-      return await api.post('/pages', page);
+    mutationFn: async (page: { title: string; slug: string; content?: string; published?: boolean; show_in?: PageShowIn; suppressToast?: boolean }) => {
+      const { suppressToast: _suppressToast, ...payload } = page;
+      return await api.post('/pages', payload);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["pages"] });
-      toast.success("تم إنشاء الصفحة");
+      if (!variables.suppressToast) {
+        toast.success("تم إنشاء الصفحة");
+      }
     },
-    onError: (error: Error) => toast.error(error.message || "فشل إنشاء الصفحة"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل إنشاء الصفحة");
+      }
+    },
   });
 }
 
 export function useUpdatePage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Page> & { id: string }) => {
-      return await api.patch(`/pages/${id}`, updates);
+    mutationFn: async ({ id, ...updates }: Partial<Page> & { id: string; suppressToast?: boolean }) => {
+      const { suppressToast: _suppressToast, ...payload } = updates;
+      return await api.patch(`/pages/${id}`, payload);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["pages"] });
-      toast.success("تم تحديث الصفحة");
+      if (!variables.suppressToast) {
+        toast.success("تم تحديث الصفحة");
+      }
     },
-    onError: (error: Error & { code?: string }) => {
+    onError: (error: Error & { code?: string }, variables) => {
       if (error.code === "CONFLICT") {
         qc.invalidateQueries({ queryKey: ["pages"] });
       }
-      toast.error(error.message || "فشل تحديث الصفحة");
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل تحديث الصفحة");
+      }
     },
   });
 }
@@ -84,13 +96,19 @@ export function useUpdatePage() {
 export function useDeletePage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id }: { id: string; suppressToast?: boolean }) => {
       return await api.delete(`/pages/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["pages"] });
-      toast.success("تم حذف الصفحة");
+      if (!variables.suppressToast) {
+        toast.success("تم حذف الصفحة");
+      }
     },
-    onError: (error: Error) => toast.error(error.message || "فشل حذف الصفحة"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل حذف الصفحة");
+      }
+    },
   });
 }

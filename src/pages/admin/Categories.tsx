@@ -145,7 +145,7 @@ const Categories = () => {
                   </button>
 
                   <button
-                    onClick={() => deleteCategory.mutate(cat.id)}
+                    onClick={() => deleteCategory.mutate({ id: cat.id })}
                     data-testid={`category-delete-${cat.id}`}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                   >

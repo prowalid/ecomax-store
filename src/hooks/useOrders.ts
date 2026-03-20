@@ -106,7 +106,7 @@ export function useOrderItems(orderId: string | null, enabled = true) {
 export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status, order }: { id: string; status: OrderStatus; order: Order }) => {
+    mutationFn: async ({ id, status, order }: { id: string; status: OrderStatus; order: Order; suppressToast?: boolean }) => {
       // The backend now handles call_attempts incrementing and stock restoration logic inside a safe PG transaction
       await api.patch(`/orders/${id}/status`, { status, call_attempts: order.call_attempts });
     },
@@ -114,7 +114,11 @@ export function useUpdateOrderStatus() {
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["products"] });
     },
-    onError: (error: Error) => toast.error(error.message || "فشل تحديث حالة الطلب"),
+    onError: (error: Error, variables) => {
+      if (!variables.suppressToast) {
+        toast.error(error.message || "فشل تحديث حالة الطلب");
+      }
+    },
   });
 }
 
