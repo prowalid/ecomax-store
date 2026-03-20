@@ -1,11 +1,10 @@
-import { useRef, useState, useEffect, useCallback, useDeferredValue } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
-import { Search, SlidersHorizontal, CheckCircle2, BadgePercent, X } from "lucide-react";
+import { Sheet, SheetContent, SheetClose, SheetTitle } from "@/components/ui/sheet";
+import { Search, SlidersHorizontal, CheckCircle2, BadgePercent, X, ArrowDownUp } from "lucide-react";
 import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { getStoreThemeTokens } from "@/lib/storeTheme";
 import type { ProductSort } from "@/hooks/useProducts";
-import { Button } from "@/components/ui/button";
 
 interface SearchDrawerProps {
   open: boolean;
@@ -14,12 +13,21 @@ interface SearchDrawerProps {
 
 const SEARCH_DEBOUNCE_MS = 350;
 
+const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
+  { value: "newest", label: "الأحدث" },
+  { value: "price_asc", label: "الأرخص" },
+  { value: "price_desc", label: "الأغلى" },
+  { value: "name_asc", label: "أبجدي" },
+  { value: "discount_desc", label: "أكبر تخفيض" },
+];
+
 export default function SearchDrawer({ open, onOpenChange }: SearchDrawerProps) {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { settings: theme } = useAppearanceSettings();
   const tokens = getStoreThemeTokens(theme);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const searchFromUrl = searchParams.get("q") || "";
   const sortFromUrl = (searchParams.get("sort") as ProductSort | null) || "newest";
@@ -32,6 +40,14 @@ export default function SearchDrawer({ open, onOpenChange }: SearchDrawerProps) 
   useEffect(() => {
     setLocalSearch(searchFromUrl);
   }, [searchFromUrl, open]);
+
+  useEffect(() => {
+    if (open) {
+      // Small delay so the sheet animation finishes before focusing
+      const t = setTimeout(() => inputRef.current?.focus(), 200);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
 
   const updateDiscoveryParams = useCallback(
     (updates: { q?: string | null; sort?: ProductSort | null; inStock?: boolean | null; onSale?: boolean | null }) => {
@@ -58,7 +74,6 @@ export default function SearchDrawer({ open, onOpenChange }: SearchDrawerProps) 
         else nextParams.delete("on_sale");
       }
 
-      // If we are on the homepage and search begins, redirect to /shop to show results
       const targetPath = (location.pathname === "/" && nextParams.toString()) ? "/shop" : location.pathname;
 
       navigate(
@@ -87,14 +102,8 @@ export default function SearchDrawer({ open, onOpenChange }: SearchDrawerProps) 
 
   const clearAllFilters = () => {
     setLocalSearch("");
-    const nextParams = new URLSearchParams();
-    
-    // Preserve category if we are on a category page
     navigate(
-      {
-        pathname: location.pathname,
-        search: "",
-      },
+      { pathname: location.pathname, search: "" },
       { replace: true, preventScrollReset: true }
     );
     onOpenChange(false);
@@ -104,113 +113,113 @@ export default function SearchDrawer({ open, onOpenChange }: SearchDrawerProps) 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="top" showCloseButton={false} className="w-full p-0 flex flex-col max-h-[85vh] rounded-b-3xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-out" dir="rtl" style={{ backgroundColor: tokens.surface, borderBottom: `1px solid ${tokens.border}` }}>
-        <SheetHeader className="p-4 border-b flex flex-row items-center justify-between shadow-sm relative z-10" style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}>
-          <SheetTitle className="text-xl font-black flex items-center gap-2 m-0" style={{ color: tokens.textPrimary }}>
-            <Search size={24} style={{ color: theme.accent_color }} />
-            البحث والفلترة
-          </SheetTitle>
-          <SheetClose asChild>
-            <Button variant="ghost" size="icon" className="rounded-full shrink-0" style={{ color: tokens.textPrimary }}>
-              <X size={24} />
-            </Button>
-          </SheetClose>
-        </SheetHeader>
+      <SheetContent
+        side="top"
+        showCloseButton={false}
+        className="w-full p-0 flex flex-col rounded-b-[28px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] max-h-[70vh]"
+        dir="rtl"
+        style={{ backgroundColor: tokens.surface, borderBottom: `1px solid ${tokens.border}` }}
+      >
+        <SheetTitle className="sr-only">البحث والفلترة</SheetTitle>
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-          {/* Search Input */}
-          <div className="space-y-3">
-            <label className="text-sm font-bold block" style={{ color: tokens.textPrimary }}>كلمات البحث</label>
-            <label
-              className="flex items-center gap-3 rounded-2xl border-2 px-4 py-3 sm:py-4 transition-colors"
-              style={{ borderColor: tokens.border, backgroundColor: tokens.surfaceSoft }}
-            >
-              <Search className="h-6 w-6 shrink-0" style={{ color: theme.accent_color }} />
-              <input
-                autoFocus
-                value={localSearch}
-                onChange={(event) => handleSearchChange(event.target.value)}
-                placeholder="ابحث باسم المنتج أو الوصف..."
-                className="w-full bg-transparent text-base sm:text-lg font-medium outline-none placeholder:text-slate-400"
-                style={{ color: tokens.textPrimary }}
-              />
-              {localSearch && (
-                <button onClick={() => handleSearchChange("")} className="shrink-0 p-1 opacity-50 hover:opacity-100 transition-opacity">
-                  <X className="h-5 w-5" style={{ color: tokens.textPrimary }} />
-                </button>
-              )}
-            </label>
-          </div>
-
-          {/* Sort & Filters Grid */}
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-3">
-              <label className="text-sm font-bold block" style={{ color: tokens.textPrimary }}>الترتيب</label>
-              <label
-                className="flex items-center gap-3 rounded-2xl border-2 px-4 py-3 sm:py-4 transition-colors"
-                style={{ borderColor: tokens.border, backgroundColor: tokens.surfaceSoft }}
-              >
-                <SlidersHorizontal className="h-6 w-6 shrink-0" style={{ color: theme.accent_color }} />
-                <select
-                  value={sortFromUrl}
-                  onChange={(event) => updateDiscoveryParams({ sort: event.target.value as ProductSort })}
-                  className="w-full bg-transparent text-base sm:text-lg font-medium outline-none cursor-pointer"
-                  style={{ color: tokens.textPrimary }}
-                >
-                  <option value="newest">الأحدث</option>
-                  <option value="price_asc">السعر: من الأقل للأعلى</option>
-                  <option value="price_desc">السعر: من الأعلى للأقل</option>
-                  <option value="name_asc">الاسم: أبجديًا</option>
-                  <option value="discount_desc">الأكثر تخفيضًا</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-sm font-bold block" style={{ color: tokens.textPrimary }}>خيارات إضافية</label>
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={() => updateDiscoveryParams({ inStock: !inStockFromUrl })}
-                  className="flex items-center gap-3 rounded-2xl border-2 px-4 py-3 sm:py-4 text-base sm:text-lg font-bold transition-all"
-                  style={inStockFromUrl
-                    ? { backgroundColor: theme.accent_color, color: "#fff", borderColor: theme.accent_color }
-                    : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, borderColor: tokens.border }}
-                >
-                  <CheckCircle2 className="h-6 w-6" />
-                  المتاح في المخزون فقط
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => updateDiscoveryParams({ onSale: !onSaleFromUrl })}
-                  className="flex items-center gap-3 rounded-2xl border-2 px-4 py-3 sm:py-4 text-base sm:text-lg font-bold transition-all"
-                  style={onSaleFromUrl
-                    ? { backgroundColor: theme.accent_color, color: "#fff", borderColor: theme.accent_color }
-                    : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, borderColor: tokens.border }}
-                >
-                  <BadgePercent className="h-6 w-6" />
-                  عروض وتخفيضات فقط
-                </button>
-              </div>
-            </div>
+        {/* Search input — compact */}
+        <div className="px-4 pb-3">
+          <div
+            className="flex items-center gap-2.5 rounded-2xl px-4 py-2.5 border transition-colors"
+            style={{ borderColor: tokens.border, backgroundColor: tokens.surfaceSoft }}
+          >
+            <Search className="h-5 w-5 shrink-0" style={{ color: theme.accent_color }} />
+            <input
+              ref={inputRef}
+              value={localSearch}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              placeholder="ابحث عن منتج..."
+              className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400"
+              style={{ color: tokens.textPrimary }}
+            />
+            {localSearch && (
+              <button onClick={() => handleSearchChange("")} className="shrink-0 p-0.5 opacity-40 hover:opacity-100 transition-opacity">
+                <X className="h-4 w-4" style={{ color: tokens.textPrimary }} />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 sm:p-6 border-t flex items-center justify-between gap-4" style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}>
+        {/* Filters — compact grid */}
+        <div className="px-4 pb-4 space-y-3 overflow-y-auto flex-1">
+          {/* Sort chips */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold flex items-center gap-1.5" style={{ color: tokens.textMuted }}>
+              <ArrowDownUp className="w-3.5 h-3.5" /> الترتيب
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {SORT_OPTIONS.map((option) => {
+                const active = sortFromUrl === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => updateDiscoveryParams({ sort: option.value })}
+                    className="px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                    style={active
+                      ? { backgroundColor: theme.accent_color, color: "#fff" }
+                      : { backgroundColor: tokens.surfaceSoft, color: tokens.textMuted, border: `1px solid ${tokens.border}` }}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Toggle filters */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => updateDiscoveryParams({ inStock: !inStockFromUrl })}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all"
+              style={inStockFromUrl
+                ? { backgroundColor: theme.accent_color, color: "#fff" }
+                : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, border: `1px solid ${tokens.border}` }}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              متوفر فقط
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateDiscoveryParams({ onSale: !onSaleFromUrl })}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all"
+              style={onSaleFromUrl
+                ? { backgroundColor: theme.accent_color, color: "#fff" }
+                : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, border: `1px solid ${tokens.border}` }}
+            >
+              <BadgePercent className="h-4 w-4" />
+              عروض فقط
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          className="px-4 py-3 border-t flex items-center justify-between gap-3"
+          style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}
+        >
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="px-6 py-3 rounded-xl font-bold text-sm sm:text-base hover:bg-gray-100 transition-colors"
+              className="px-4 py-2 rounded-xl font-bold text-xs hover:opacity-70 transition-opacity"
               style={{ color: tokens.textMuted }}
             >
-              مسح الفلاتر
+              مسح الكل
             </button>
           )}
           <SheetClose asChild>
             <button
-              className="flex-1 max-w-[200px] text-white px-6 py-3 rounded-xl font-bold text-sm sm:text-base hover:opacity-90 transition-all shadow-lg"
+              className="flex-1 max-w-[180px] text-white px-5 py-2.5 rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md mr-auto"
               style={{ backgroundColor: theme.button_color, color: theme.button_text }}
             >
               عرض النتائج
