@@ -212,8 +212,21 @@ const StoreLayout = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const isProductsRoute = location.pathname === "/" || location.pathname === "/shop" || location.pathname.startsWith("/product/");
+  const isHomeRoute = location.pathname === "/";
   const isCategoryRoute = location.pathname.startsWith("/category/");
+  const isProductsRoute = location.pathname === "/shop" || location.pathname.startsWith("/product/");
+  const isCatalogRoute = isProductsRoute || isCategoryRoute;
+
+  const navigateToProducts = useCallback(
+    (closeMobileMenu = false) => {
+      if (closeMobileMenu) {
+        setMobileMenuOpen(false);
+      }
+
+      navigate("/shop");
+    },
+    [navigate]
+  );
 
   const handleSectionNavigation = useCallback(
     (sectionId: "products" | "offers", closeMobileMenu = false) => {
@@ -355,7 +368,7 @@ const StoreLayout = () => {
               to="/shop"
               className="shrink-0 rounded-full px-4 py-2 text-sm font-black transition-all duration-200"
               style={
-                isProductsRoute && !isCategoryRoute
+                isProductsRoute
                   ? {
                       color: "#fff",
                       backgroundColor: theme.accent_color,
@@ -432,7 +445,7 @@ const StoreLayout = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="mb-2 block rounded-2xl px-4 py-3.5 text-[15px] font-black transition-all"
               style={
-                location.pathname === "/"
+                isHomeRoute
                   ? {
                       color: "#fff",
                       backgroundColor: theme.accent_color,
@@ -448,10 +461,10 @@ const StoreLayout = () => {
             </Link>
             <Link
               to="/shop"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => navigateToProducts(true)}
               className="mb-3 block rounded-2xl px-4 py-3.5 text-[15px] font-black transition-all"
               style={
-                isProductsRoute && !isCategoryRoute
+                isProductsRoute
                   ? {
                       color: "#fff",
                       backgroundColor: theme.accent_color,
@@ -548,7 +561,7 @@ const StoreLayout = () => {
                     type="button"
                     className="flex items-center transition-colors"
                     style={{ color: theme.footer_text + 'aa' }}
-                    onClick={() => handleSectionNavigation("products")}
+                    onClick={() => navigateToProducts()}
                     onMouseEnter={(e) => e.currentTarget.style.color = theme.footer_accent}
                     onMouseLeave={(e) => e.currentTarget.style.color = theme.footer_text + 'aa'}
                   >
@@ -636,17 +649,17 @@ const StoreLayout = () => {
         <button 
           onClick={() => { scrollToTop(); navigate('/'); }} 
           className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
-          style={{ color: location.pathname === '/' ? theme.accent_color : theme.header_text + 'cc' }}
+          style={{ color: isHomeRoute ? theme.accent_color : theme.header_text + 'cc' }}
         >
-          <Home size={20} className={location.pathname === '/' ? 'fill-current' : ''} />
+          <Home size={20} className={isHomeRoute ? 'fill-current' : ''} />
           <span className="text-[10px] font-bold">الرئيسية</span>
         </button>
         <button 
-          onClick={() => handleSectionNavigation("products")} 
+          onClick={() => navigateToProducts()} 
           className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
-          style={{ color: theme.header_text + 'cc' }}
+          style={{ color: isCatalogRoute ? theme.accent_color : theme.header_text + 'cc' }}
         >
-          <LayoutGrid size={20} />
+          <LayoutGrid size={20} className={isCatalogRoute ? 'fill-current' : ''} />
           <span className="text-[10px] font-bold">المنتجات</span>
         </button>
         <button 
