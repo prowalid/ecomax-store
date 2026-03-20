@@ -1,61 +1,56 @@
 ALTER TABLE categories
   ADD COLUMN IF NOT EXISTS slug TEXT;
 
-WITH normalized_categories AS (
-  SELECT
-    c.id,
-    COALESCE(
-      NULLIF(
-        lower(
-          regexp_replace(
-            regexp_replace(
-              regexp_replace(trim(c.name), '[^[:alnum:][:space:]-]+', '', 'g'),
-              '[[:space:]]+',
-              '-',
-              'g'
-            ),
-            '-+',
-            '-',
-            'g'
-          )
+DO $$
+DECLARE
+  category_record RECORD;
+  base_slug TEXT;
+  candidate_slug TEXT;
+  suffix INTEGER;
+BEGIN
+  FOR category_record IN
+    SELECT id, name
+    FROM categories
+    WHERE slug IS NULL OR btrim(slug) = ''
+    ORDER BY id
+  LOOP
+    base_slug := lower(
+      regexp_replace(
+        regexp_replace(
+          regexp_replace(btrim(COALESCE(category_record.name, '')), '[^[:alnum:][:space:]-]+', '', 'g'),
+          '[[:space:]]+',
+          '-',
+          'g'
         ),
-        ''
-      ),
-      'category'
-    ) AS base_slug
-  FROM categories c
-  WHERE c.slug IS NULL OR btrim(c.slug) = ''
-),
-ranked_categories AS (
-  SELECT
-    id,
-    base_slug,
-    row_number() OVER (PARTITION BY base_slug ORDER BY id) AS slug_rank
-  FROM normalized_categories
-),
-existing_slug_counts AS (
-  SELECT
-    rc.id,
-    rc.base_slug,
-    rc.slug_rank,
-    (
-      SELECT COUNT(*)
-      FROM categories c2
-      WHERE c2.id <> rc.id
-        AND c2.slug IS NOT NULL
-        AND (
-          c2.slug = rc.base_slug
-          OR c2.slug ~ ('^' || regexp_replace(rc.base_slug, '([.^$|()\\[\\]{}*+?\\\\-])', '\\\1', 'g') || '-[0-9]+$')
-        )
-    ) AS existing_count
-  FROM ranked_categories rc
-)
-UPDATE categories c
-SET slug = CASE
-  WHEN esc.existing_count + esc.slug_rank = 1 THEN esc.base_slug
-  ELSE esc.base_slug || '-' || (esc.existing_count + esc.slug_rank)
-END
-FROM existing_slug_counts esc
-WHERE c.id = esc.id;
+        '-+',
+        '-',
+        'g'
+      )
+    );
+
+    base_slug := btrim(base_slug, '-');
+
+    IF base_slug IS NULL OR base_slug = '' THEN
+      base_slug := 'category';
+    END IF;
+
+    candidate_slug := base_slug;
+    suffix := 2;
+
+    WHILE EXISTS (
+      SELECT 1
+      FROM categories
+      WHERE slug = candidate_slug
+        AND id <> category_record.id
+    ) LOOP
+      candidate_slug := base_slug || '-' || suffix;
+      suffix := suffix + 1;
+    END LOOP;
+
+    UPDATE categories
+    SET slug = candidate_slug
+    WHERE id = category_record.id;
+  END LOOP;
+END $$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_slug_unique ON categories (slug);
