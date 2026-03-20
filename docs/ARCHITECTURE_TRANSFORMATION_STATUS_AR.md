@@ -641,6 +641,17 @@ infrastructure = technical implementations
 - الإعدادات
 - الصفحات
 - التصنيفات
+- `SEO / Discovery`
+- slugs للمنتجات
+- pagination في:
+  - المنتجات
+  - الطلبات
+  - الزبائن
+- metadata presentation للمتجر
+- هدوء UX داخل الإدارة:
+  - empty states
+  - inline feedback
+  - تقليل ضوضاء `toast`
 - الكاش
 - health
 - metrics
