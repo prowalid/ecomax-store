@@ -20,6 +20,8 @@ const hexToRgb = (hex: string) => {
   return result ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : '220 53 69';
 };
 
+const withAlpha = (hex: string, alphaHex: string) => `${hex}${alphaHex}`;
+
 const StoreLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -210,6 +212,9 @@ const StoreLayout = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const isProductsRoute = location.pathname === "/" || location.pathname === "/shop" || location.pathname.startsWith("/product/");
+  const isCategoryRoute = location.pathname.startsWith("/category/");
+
   const handleSectionNavigation = useCallback(
     (sectionId: "products" | "offers", closeMobileMenu = false) => {
       if (closeMobileMenu) {
@@ -338,11 +343,29 @@ const StoreLayout = () => {
             </Link>
           </div>
 
-          <nav className="hidden md:flex flex-1 justify-center space-x-6 space-x-reverse font-bold">
+          <nav className="hidden md:flex flex-1 justify-center px-4">
+            <div
+              className="flex max-w-full items-center gap-2 overflow-x-auto rounded-full px-3 py-2 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              style={{
+                backgroundColor: withAlpha(theme.header_text, "08"),
+                border: `1px solid ${withAlpha(theme.header_text, "12")}`,
+              }}
+            >
             <Link
               to="/shop"
-              className="hover:opacity-80 transition-opacity"
-              style={{ color: theme.header_text }}
+              className="shrink-0 rounded-full px-4 py-2 text-sm font-black transition-all duration-200"
+              style={
+                isProductsRoute && !isCategoryRoute
+                  ? {
+                      color: "#fff",
+                      backgroundColor: theme.accent_color,
+                      boxShadow: `0 10px 24px ${withAlpha(theme.accent_color, "26")}`,
+                    }
+                  : {
+                      color: theme.header_text,
+                      backgroundColor: "transparent",
+                    }
+              }
             >
               المنتجات
             </Link>
@@ -350,12 +373,24 @@ const StoreLayout = () => {
               <Link
                 key={category.id}
                 to={`/category/${category.slug}`}
-                className="hover:opacity-80 transition-opacity"
-                style={{ color: theme.header_text }}
+                className="shrink-0 rounded-full px-3.5 py-2 text-sm font-bold transition-all duration-200"
+                style={
+                  location.pathname === `/category/${category.slug}`
+                    ? {
+                        color: theme.accent_color,
+                        backgroundColor: withAlpha(theme.accent_color, "12"),
+                        border: `1px solid ${withAlpha(theme.accent_color, "2e")}`,
+                      }
+                    : {
+                        color: withAlpha(theme.header_text, "cc"),
+                        backgroundColor: "transparent",
+                      }
+                }
               >
                 {category.name}
               </Link>
             ))}
+            </div>
           </nav>
 
           <div className="flex-1 flex justify-end gap-3">
@@ -397,22 +432,52 @@ const StoreLayout = () => {
             <Link
               to="/shop"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-4 py-3 text-sm font-semibold transition-all"
-              style={{ color: theme.header_text }}
+              className="mb-2 block rounded-2xl px-4 py-3 text-sm font-black transition-all"
+              style={
+                isProductsRoute && !isCategoryRoute
+                  ? {
+                      color: "#fff",
+                      backgroundColor: theme.accent_color,
+                      boxShadow: `0 10px 24px ${withAlpha(theme.accent_color, "22")}`,
+                    }
+                  : {
+                      color: theme.header_text,
+                      backgroundColor: withAlpha(theme.header_text, "08"),
+                    }
+              }
             >
               المنتجات
             </Link>
-            {menuCategories.map((category) => (
-              <Link
-                key={category.id}
-                to={`/category/${category.slug}`}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-sm font-semibold transition-all"
-                style={{ color: theme.header_text }}
-              >
-                {category.name}
-              </Link>
-            ))}
+            {menuCategories.length > 0 && (
+              <div className="rounded-2xl border px-2 py-2" style={{ borderColor: withAlpha(theme.header_text, "12"), backgroundColor: withAlpha(theme.header_text, "05") }}>
+                <div className="px-2 pb-2 text-[11px] font-bold" style={{ color: withAlpha(theme.header_text, "88") }}>
+                  التصنيفات
+                </div>
+                <div className="grid grid-cols-1 gap-1">
+                  {menuCategories.map((category) => (
+                    <Link
+                      key={category.id}
+                      to={`/category/${category.slug}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block rounded-xl px-3 py-2.5 text-sm font-semibold transition-all"
+                      style={
+                        location.pathname === `/category/${category.slug}`
+                          ? {
+                              color: theme.accent_color,
+                              backgroundColor: withAlpha(theme.accent_color, "12"),
+                            }
+                          : {
+                              color: theme.header_text,
+                              backgroundColor: "transparent",
+                            }
+                      }
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
             {socialLinks.length > 0 && (
               <div className="flex items-center justify-center gap-4 px-4 pb-3 pt-1">
                 {socialLinks.map(s => (
