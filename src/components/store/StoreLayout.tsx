@@ -345,7 +345,7 @@ const StoreLayout = () => {
 
           <nav className="hidden md:flex flex-1 justify-center px-4">
             <div
-              className="flex max-w-full items-center gap-2 overflow-x-auto rounded-full px-3 py-2 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex max-w-full flex-wrap items-center justify-center gap-2 rounded-[28px] px-3 py-2 shadow-sm"
               style={{
                 backgroundColor: withAlpha(theme.header_text, "08"),
                 border: `1px solid ${withAlpha(theme.header_text, "12")}`,
@@ -428,6 +428,25 @@ const StoreLayout = () => {
         >
           <div className="pt-3 pb-3 px-4">
             <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mb-2 block rounded-2xl px-4 py-3.5 text-[15px] font-black transition-all"
+              style={
+                location.pathname === "/"
+                  ? {
+                      color: "#fff",
+                      backgroundColor: theme.accent_color,
+                      boxShadow: `0 10px 24px ${withAlpha(theme.accent_color, "22")}`,
+                    }
+                  : {
+                      color: theme.header_text,
+                      backgroundColor: withAlpha(theme.header_text, "08"),
+                    }
+              }
+            >
+              الرئيسية
+            </Link>
+            <Link
               to="/shop"
               onClick={() => setMobileMenuOpen(false)}
               className="mb-3 block rounded-2xl px-4 py-3.5 text-[15px] font-black transition-all"
@@ -477,14 +496,14 @@ const StoreLayout = () => {
               </div>
             )}
             {socialLinks.length > 0 && (
-              <div className="flex items-center justify-center gap-4 px-4 pb-3 pt-1">
+              <div className="flex items-center justify-center gap-4 px-4 py-4">
                 {socialLinks.map(s => (
                   <a
                     key={s.key}
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-lg transition-colors"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
                     style={{ color: theme.header_text + 'aa', backgroundColor: theme.header_text + '11' }}
                   >
                     {s.icon}
