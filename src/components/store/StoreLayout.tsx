@@ -5,6 +5,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useMarketingSettings } from "@/hooks/useMarketingSettings";
+import { useCategories } from "@/hooks/useCategories";
 import { usePublishedPages } from "@/hooks/usePages";
 import { initPixel, trackEvent } from "@/lib/facebook-pixel";
 import { getTrackingProfile } from "@/lib/trackingProfile";
@@ -30,16 +31,18 @@ const StoreLayout = () => {
   const { totalCount } = useCart();
   const { settings: theme, loading } = useAppearanceSettings();
   const { settings: marketing } = useMarketingSettings();
-  const { data: headerPages = [] } = usePublishedPages("header");
   const { data: footerPages = [] } = usePublishedPages("footer");
+  const { data: categories = [] } = useCategories();
   const { settings: generalSettings, loading: generalLoading } = useStoreSettings("general", { phone: "", whatsapp_phone: "", email: "", store_name: "ECOMAX", currency: "DZD", meta_title: "", meta_description: "", social_facebook: "", social_instagram: "", social_tiktok: "" });
   const effectiveStoreName = generalSettings.store_name || theme.store_name || "ECOMAX";
   const effectiveMetaTitle = generalSettings.meta_title?.trim() || `${effectiveStoreName} — متجر إلكتروني`;
   const effectiveMetaDescription =
     generalSettings.meta_description?.trim() ||
     "أفضل متجر للدفع عند الاستلام في الجزائر. نوفر لك جودة استثنائية، سرعة في التوصيل، وتجربة تسوق آمنة تماماً.";
-  const normalizedHeaderPages = headerPages.map((page) => ({ ...page, slug: normalizePageSlug(page.slug) }));
   const normalizedFooterPages = footerPages.map((page) => ({ ...page, slug: normalizePageSlug(page.slug) }));
+  const menuCategories = categories
+    .filter((category) => Boolean(category.slug))
+    .map((category) => ({ ...category, slug: category.slug || "" }));
   const footerLinks = normalizedFooterPages;
   const whatsappDigits = normalizeWhatsAppPhone(generalSettings.whatsapp_phone || "");
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
@@ -335,31 +338,22 @@ const StoreLayout = () => {
             </Link>
           </div>
 
-          <nav className="hidden md:flex flex-1 justify-center space-x-8 space-x-reverse font-bold">
-            <button
-              type="button"
-              onClick={() => handleSectionNavigation("products")}
+          <nav className="hidden md:flex flex-1 justify-center space-x-6 space-x-reverse font-bold">
+            <Link
+              to="/shop"
               className="hover:opacity-80 transition-opacity"
               style={{ color: theme.header_text }}
             >
               المنتجات
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSectionNavigation("offers")}
-              className="hover:opacity-80 transition-opacity"
-              style={{ color: theme.header_text }}
-            >
-              العروض
-            </button>
-            {normalizedHeaderPages.map((page) => (
+            </Link>
+            {menuCategories.map((category) => (
               <Link
-                key={page.id}
-                to={`/page/${page.slug}`}
+                key={category.id}
+                to={`/category/${category.slug}`}
                 className="hover:opacity-80 transition-opacity"
                 style={{ color: theme.header_text }}
               >
-                {page.title}
+                {category.name}
               </Link>
             ))}
           </nav>
@@ -400,31 +394,23 @@ const StoreLayout = () => {
           }}
         >
           <div className="pt-2 pb-1 px-4">
-            <button
-              type="button"
-              onClick={() => handleSectionNavigation("products", true)}
-              className="block w-full px-4 py-3 text-right text-sm font-semibold transition-all"
+            <Link
+              to="/shop"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-4 py-3 text-sm font-semibold transition-all"
               style={{ color: theme.header_text }}
             >
               المنتجات
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSectionNavigation("offers", true)}
-              className="block w-full px-4 py-3 text-right text-sm font-semibold transition-all"
-              style={{ color: theme.header_text }}
-            >
-              العروض
-            </button>
-            {normalizedHeaderPages.map((page) => (
+            </Link>
+            {menuCategories.map((category) => (
               <Link
-                key={page.id}
-                to={`/page/${page.slug}`}
+                key={category.id}
+                to={`/category/${category.slug}`}
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-4 py-3 text-sm font-semibold transition-all"
                 style={{ color: theme.header_text }}
               >
-                {page.title}
+                {category.name}
               </Link>
             ))}
             {socialLinks.length > 0 && (

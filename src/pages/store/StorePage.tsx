@@ -85,7 +85,6 @@ const StorePage = () => {
 
   const selectedCategory = categoryFromRoute;
   const activeProducts = loadedProducts.filter((p) => p.status === "active");
-  const featuredCategories = storefrontCategories.filter((category) => Boolean(category?.image_url));
   const filteredProducts = activeProducts;
   const saleProducts = activeProducts.filter((p) => p.compare_price && Number(p.compare_price) > Number(p.price));
   const maxDiscount = saleProducts.reduce((max, p) => {
@@ -363,49 +362,18 @@ const StorePage = () => {
       {/* Popular Products */}
       <section id="products" className="container mx-auto px-4 py-8 sm:py-10 scroll-mt-20 overflow-x-clip">
         <div className="text-center mb-10 flex flex-col items-center">
-          <div className="text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md mb-4 inline-flex items-center" style={{ backgroundColor: theme.accent_color, boxShadow: `0 4px 6px ${theme.accent_color}33` }}>
-            {isLandingMode ? <Flame size={16} className="ml-2" /> : <Search size={16} className="ml-2" />}
-            {isLandingMode ? "الأكثر مبيعاً" : "اكتشف المنتجات"}
-          </div>
           <div className="relative inline-block">
-                <h1 className="text-2xl sm:text-3xl font-bold z-10 relative" style={{ color: tokens.textPrimary }}>
-                  {isLandingMode ? "الأكثر طلبا" : resultsHeading}
-                </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold z-10 relative" style={{ color: tokens.textPrimary }}>
+              {isLandingMode ? "المنتجات" : resultsHeading}
+            </h1>
             <div className="absolute -bottom-2 left-0 right-0 h-1.5 opacity-60 rounded-full w-full" style={{ backgroundColor: theme.accent_color }}></div>
           </div>
-          <p className="mt-4" style={{ color: tokens.textMuted }}>
-            {isLandingMode ? "قائمة بالمنتجات التي تباع بكثرة حاليا" : resultsDescription}
-          </p>
+          {!isLandingMode && (
+            <p className="mt-4" style={{ color: tokens.textMuted }}>
+              {resultsDescription}
+            </p>
+          )}
         </div>
-
-
-
-        {/* Category Filter Tabs */}
-        {storefrontCategories.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <button
-              onClick={() => applyCategoryFilter(null)}
-              className="px-5 py-2 rounded-full text-sm font-bold transition-all duration-300"
-              style={selectedCategory === null
-                ? { backgroundColor: theme.accent_color, color: '#fff', boxShadow: `0 4px 6px ${theme.accent_color}33` }
-                : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, border: `1px solid ${tokens.border}` }}
-            >
-              الكل
-            </button>
-            {storefrontCategories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => applyCategoryFilter(cat.slug || null)}
-                className="px-5 py-2 rounded-full text-sm font-bold transition-all duration-300"
-                style={selectedCategory === cat.id
-                  ? { backgroundColor: theme.accent_color, color: '#fff', boxShadow: `0 4px 6px ${theme.accent_color}33` }
-                  : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, border: `1px solid ${tokens.border}` }}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
 
         {filteredProducts.length > 0 ? (
           <>
@@ -465,40 +433,6 @@ const StorePage = () => {
       {isLandingMode && (
       <section className="py-10 sm:py-12 border-t overflow-x-clip" style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}>
         <div className="container mx-auto px-4">
-          {featuredCategories.length > 0 && (
-            <>
-              <div className="text-center mb-10 flex flex-col items-center">
-                <div className="text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md mb-4 inline-flex items-center" style={{ backgroundColor: theme.accent_color, boxShadow: `0 4px 6px ${theme.accent_color}33` }}>
-                  <Grid size={16} className="ml-2" /> التصنيفات
-                </div>
-                <div className="relative inline-block">
-                  <h2 className="text-2xl sm:text-3xl font-bold z-10 relative" style={{ color: tokens.textPrimary }}>منتجات مختارة</h2>
-                  <div className="absolute -bottom-2 left-0 right-0 h-1.5 opacity-60 rounded-full w-full" style={{ backgroundColor: theme.accent_color }}></div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
-                {featuredCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => applyCategoryFilter(cat.slug || null, true)}
-                    className="group relative h-56 sm:h-64 w-full overflow-hidden rounded-2xl border text-right shadow-sm transition-transform duration-300 hover:-translate-y-1"
-                    style={{ backgroundColor: tokens.surface, borderColor: tokens.border }}
-                  >
-                    <img loading="lazy" src={cat.image_url || ""} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt={cat.name} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-colors duration-500"></div>
-                    <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-6 flex justify-between items-end gap-3">
-                      <h3 className="text-white text-xl sm:text-2xl font-bold leading-tight">{cat.name}</h3>
-                      <div className="bg-white/20 p-2 rounded-full text-white backdrop-blur-sm transition-all duration-300 shrink-0">
-                        <ArrowLeft size={20} />
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
           {theme.offers_banner_url?.trim() && (
             <div className="relative rounded-2xl overflow-hidden h-64 sm:h-80 group cursor-pointer shadow-md mt-6">
               <img loading="lazy" src={theme.offers_banner_url} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Special Offers" />

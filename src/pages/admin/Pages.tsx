@@ -1,25 +1,11 @@
 import { useState } from "react";
-import { Plus, FileText, Trash2, Loader2, Edit2, X, Save, Eye, EyeOff, Layout, LayoutTemplate } from "lucide-react";
+import { Plus, FileText, Trash2, Loader2, Edit2, X, Save, Eye, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { usePages, useCreatePage, useUpdatePage, useDeletePage, type Page, type PageShowIn } from "@/hooks/usePages";
+import { usePages, useCreatePage, useUpdatePage, useDeletePage, type Page } from "@/hooks/usePages";
 import { toast } from "sonner";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
 import RichTextEditor from "@/components/admin/RichTextEditor";
-
-const SHOW_IN_OPTIONS: { value: PageShowIn; label: string }[] = [
-  { value: "none", label: "لا يظهر في القوائم" },
-  { value: "header", label: "الهيدر فقط" },
-  { value: "footer", label: "الفوتر فقط" },
-  { value: "both", label: "الهيدر والفوتر" },
-];
-
-const SHOW_IN_LABELS: Record<PageShowIn, string> = {
-  none: "لا يظهر",
-  header: "الهيدر",
-  footer: "الفوتر",
-  both: "الهيدر + الفوتر",
-};
 
 const sanitizeSlug = (value: string) =>
   value
@@ -39,14 +25,11 @@ const Pages = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newSlug, setNewSlug] = useState("");
-  const [newShowIn, setNewShowIn] = useState<PageShowIn>("none");
-
   // Editor state
   const [editingPage, setEditingPage] = useState<Page | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [editContent, setEditContent] = useState("");
-  const [editShowIn, setEditShowIn] = useState<PageShowIn>("none");
   const [editPublished, setEditPublished] = useState(false);
   const [pageDraftDirty, setPageDraftDirty] = useState(false);
 
@@ -61,12 +44,11 @@ const Pages = () => {
     }
 
     createPage.mutate(
-      { title: newTitle.trim(), slug, show_in: newShowIn },
+      { title: newTitle.trim(), slug, show_in: "none", published: false },
       {
         onSuccess: () => {
           setNewTitle("");
           setNewSlug("");
-          setNewShowIn("none");
           setShowAdd(false);
         },
       }
@@ -78,7 +60,6 @@ const Pages = () => {
     setEditTitle(page.title);
     setEditSlug(page.slug);
     setEditContent(page.content || "");
-    setEditShowIn((page.show_in as PageShowIn) || "none");
     setEditPublished(page.published);
     setPageDraftDirty(false);
   };
@@ -110,7 +91,7 @@ const Pages = () => {
         title: editTitle.trim(),
         slug,
         content: editContent,
-        show_in: editShowIn,
+        show_in: editPublished ? "footer" : "none",
         published: editPublished,
         version: editingPage.version,
       },
@@ -125,7 +106,12 @@ const Pages = () => {
 
   const togglePublish = (id: string, current: boolean) => {
     const page = pages.find((entry) => entry.id === id);
-    updatePage.mutate({ id, published: !current, version: page?.version });
+    updatePage.mutate({
+      id,
+      published: !current,
+      show_in: !current ? "footer" : "none",
+      version: page?.version,
+    });
   };
 
   if (isLoading) {
@@ -151,7 +137,7 @@ const Pages = () => {
     <div className="space-y-5">
       <AdminPageHeader
         title="صفحات المتجر"
-        description="أنشئ صفحات محتوى واربطها مباشرة بالهيدر أو الفوتر دون سلوكيات منفصلة."
+        description="الصفحة المنشورة تظهر تلقائيًا في الفوتر فقط، وغير المنشورة لا تظهر في أي مكان."
         meta={`${pages.length} صفحة`}
         actions={(
           <button
@@ -168,7 +154,7 @@ const Pages = () => {
       {/* Add form */}
       {showAdd && (
         <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 p-6 space-y-4 animate-slide-in">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               value={newTitle}
@@ -188,15 +174,10 @@ const Pages = () => {
               className="h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               dir="ltr"
             />
-            <select
-              value={newShowIn}
-              onChange={(e) => setNewShowIn(e.target.value as PageShowIn)}
-              className="h-11 px-4 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] font-medium text-sidebar-heading focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            >
-              {SHOW_IN_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+          </div>
+          <div className="rounded-[16px] border border-slate-100 bg-slate-50 px-4 py-3 text-[13px] text-slate-600">
+            الصفحة الجديدة تُنشأ <span className="font-bold text-slate-900">غير منشورة</span> أولًا.
+            عند نشرها ستظهر تلقائيًا في <span className="font-bold text-slate-900">الفوتر فقط</span>.
           </div>
           <div className="flex justify-end gap-2">
             <button
@@ -225,7 +206,6 @@ const Pages = () => {
             <tr className="border-b border-slate-50 bg-slate-50/30">
               <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الصفحة</th>
               <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans hidden md:table-cell">المسار</th>
-              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">المكان</th>
               <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الحالة</th>
               <th className="w-28 px-4 py-4"></th>
             </tr>
@@ -245,28 +225,9 @@ const Pages = () => {
                   </code>
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center gap-1">
-                    {(page.show_in === "header" || page.show_in === "both") && (
-                      <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-none shadow-none">
-                        <Layout className="w-3 h-3 ml-1" />
-                        هيدر
-                      </Badge>
-                    )}
-                    {(page.show_in === "footer" || page.show_in === "both") && (
-                      <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-none shadow-none">
-                        <LayoutTemplate className="w-3 h-3 ml-1" />
-                        فوتر
-                      </Badge>
-                    )}
-                    {page.show_in === "none" && (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-4">
                   <button onClick={() => togglePublish(page.id, page.published)}>
                     <Badge variant={page.published ? "success" : "muted"} className="cursor-pointer rounded-full px-3 py-1 font-bold shadow-none border-none text-[11px]">
-                      {page.published ? "منشورة" : "مسودة"}
+                      {page.published ? "منشورة - تظهر في الفوتر" : "غير منشورة"}
                     </Badge>
                   </button>
                 </td>
@@ -374,28 +335,10 @@ const Pages = () => {
                 />
               </div>
 
-              {/* Show In */}
-              <div className="space-y-2">
-                <label className="text-[13px] font-semibold text-slate-500">مكان الظهور في القائمة</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {SHOW_IN_OPTIONS.map((o) => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => {
-                        setEditShowIn(o.value);
-                        setPageDraftDirty(true);
-                      }}
-                      className={`text-[12px] font-bold py-2.5 px-3 rounded-[12px] border-2 transition-all ${
-                        editShowIn === o.value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-slate-100 text-slate-400 hover:border-primary/40"
-                      }`}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="space-y-2 rounded-[16px] border border-slate-100 bg-slate-50 px-4 py-3">
+                <label className="text-[13px] font-semibold text-slate-500">مكان الظهور</label>
+                <p className="text-[14px] font-bold text-sidebar-heading">الفوتر فقط</p>
+                <p className="text-[12px] text-slate-500">هذه الصفحات تظهر في الفوتر عند النشر فقط، وتختفي من كل الأماكن عند إلغاء النشر.</p>
               </div>
 
               {/* Published toggle */}
@@ -413,7 +356,7 @@ const Pages = () => {
                   }`}
                 >
                   {editPublished ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                  {editPublished ? "منشورة" : "مسودة"}
+                  {editPublished ? "منشورة - تظهر في الفوتر" : "غير منشورة"}
                 </button>
               </div>
 
