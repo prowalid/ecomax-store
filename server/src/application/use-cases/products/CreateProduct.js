@@ -16,7 +16,7 @@ class CreateProductUseCase {
     productDraft.slug = await buildUniqueSlug(productDraft.slug, async (candidate) => {
       const existingProduct = await this.productRepository.findBySlug(candidate);
       return Boolean(existingProduct);
-    });
+    }, productDraft.name);
     const product = await this.productRepository.create(productDraft);
 
     await this.cacheService.invalidateByPrefix('products:');

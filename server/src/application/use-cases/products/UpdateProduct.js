@@ -35,7 +35,7 @@ class UpdateProductUseCase {
       preparedUpdates.slug = await buildUniqueSlug(preparedUpdates.name, async (candidate) => {
         const conflictingProduct = await this.productRepository.findBySlugExcludingId(candidate, productId);
         return Boolean(conflictingProduct);
-      });
+      }, preparedUpdates.name);
     }
 
     const updatedProduct = await this.productRepository.update(

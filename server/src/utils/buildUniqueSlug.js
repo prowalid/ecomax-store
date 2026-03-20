@@ -1,7 +1,20 @@
 const { Slug } = require('../domain/value-objects/Slug');
 
-async function buildUniqueSlug(value, exists) {
-  const baseSlug = new Slug(value || 'product').value || 'product';
+function buildSlugSeed(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+async function buildUniqueSlug(value, exists, fallbackSeed) {
+  const normalizedValue = buildSlugSeed(value);
+  const normalizedFallback = buildSlugSeed(fallbackSeed);
+  const seed = normalizedValue || normalizedFallback;
+  const baseSlug = new Slug(seed || 'product').value || 'product';
   let candidate = baseSlug;
   let suffix = 2;
 

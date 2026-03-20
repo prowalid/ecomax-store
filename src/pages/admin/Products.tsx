@@ -169,6 +169,14 @@ const Products = () => {
     });
   };
 
+  const resetModalState = () => {
+    cleanupDraftObjectUrls();
+    setDraftImages([]);
+    setDragIdx(null);
+    setProductDraftDirty(false);
+    setShowModal(false);
+  };
+
   const closeModal = () => {
     if (isSaving) {
       return;
@@ -177,11 +185,7 @@ const Products = () => {
     if (!isSaving && productDraftDirty && !window.confirm("لديك تعديلات غير محفوظة على المنتج. هل تريد إغلاق النافذة؟")) {
       return;
     }
-    cleanupDraftObjectUrls();
-    setDraftImages([]);
-    setDragIdx(null);
-    setProductDraftDirty(false);
-    setShowModal(false);
+    resetModalState();
   };
 
   const handleSave = async () => {
@@ -237,8 +241,7 @@ const Products = () => {
           await reorderImages.mutateAsync({ productId: editingId, images: finalizedImages });
         }
 
-        setProductDraftDirty(false);
-        closeModal();
+        resetModalState();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "فشل حفظ المنتج");
       } finally {
@@ -267,8 +270,7 @@ const Products = () => {
           }
         }
 
-        setProductDraftDirty(false);
-        closeModal();
+        resetModalState();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "فشل إنشاء المنتج");
       } finally {
