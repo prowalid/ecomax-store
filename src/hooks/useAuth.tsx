@@ -2,6 +2,19 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { api } from "@/lib/api";
 
 type AuthUser = { id: string; name?: string; phone?: string; role: string; created_at: string };
+type AuthMeResponse = AuthUser | { user?: AuthUser | null };
+
+function isWrappedAuthResponse(response: AuthMeResponse): response is { user?: AuthUser | null } {
+  return typeof response === "object" && response !== null && "user" in response;
+}
+
+function extractAuthUser(response: AuthMeResponse): AuthUser | null {
+  if (isWrappedAuthResponse(response)) {
+    return response.user ?? null;
+  }
+
+  return response as AuthUser;
+}
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -50,7 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const { user: userData } = await api.get("/auth/me");
+        const response = await api.get("/auth/me") as AuthMeResponse;
+        const userData = extractAuthUser(response);
         if (userData) {
           setSessionState({ access_token: "cookie-session" });
           setUser(userData);
