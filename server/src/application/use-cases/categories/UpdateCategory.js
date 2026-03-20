@@ -3,6 +3,7 @@ const { ValidationError } = require('../../../domain/errors/ValidationError');
 const { ConflictError } = require('../../../domain/errors/ConflictError');
 const { NotFoundError } = require('../../../domain/errors/NotFoundError');
 const { Category } = require('../../../domain/entities/Category');
+const { buildUniqueSlug } = require('../../../utils/buildUniqueSlug');
 
 class UpdateCategoryUseCase {
   constructor({ categoryRepository, cacheService }) {
@@ -36,6 +37,11 @@ class UpdateCategoryUseCase {
           throw new ConflictError('Category slug already exists');
         }
       }
+    } else if ((!existingCategory.slug || !String(existingCategory.slug).trim()) && nextUpdates.name) {
+      nextUpdates.slug = await buildUniqueSlug(nextUpdates.name, async (candidate) => {
+        const conflictingCategory = await this.categoryRepository.findBySlugExcludingId(candidate, id);
+        return Boolean(conflictingCategory);
+      }, 'category');
     }
 
     const updatedCategory = await this.categoryRepository.update(
