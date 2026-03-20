@@ -21,6 +21,7 @@ const Orders = () => {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
+  const [pendingBulkStatus, setPendingBulkStatus] = useState<OrderStatus | "">("");
   const [actionState, setActionState] = useState<"idle" | "pending" | "success" | "error">("idle");
   const [actionMessage, setActionMessage] = useState("");
   const { data: paginatedOrders, isLoading } = usePaginatedOrders(
@@ -59,6 +60,7 @@ const Orders = () => {
   useEffect(() => {
     setCurrentPage(1);
     setSelectedOrders([]);
+    setPendingBulkStatus("");
     setExpandedOrder(null);
   }, [search, activeFilter]);
 
@@ -100,32 +102,54 @@ const Orders = () => {
   };
 
   const handleBulkStatusChange = async (newStatus: OrderStatus) => {
-    if (!window.confirm(`هل أنت متأكد من تغيير حالة ${selectedOrders.length} طلبات إلى "${orderStatusConfig[newStatus].label}"؟`)) {
+    if (selectedOrders.length === 0) {
       return;
     }
-    
+
     setIsUpdatingBulk(true);
     setActionState("pending");
     setActionMessage(`جاري تحديث ${selectedOrders.length} طلبات...`);
+
+    let successCount = 0;
+    const failedIds: string[] = [];
+
     try {
       for (const id of selectedOrders) {
         const order = orders.find((o) => o.id === id);
-        if (order) {
+        if (!order) {
+          failedIds.push(id);
+          continue;
+        }
+
+        try {
           await updateStatus.mutateAsync({ id, status: newStatus, order, suppressToast: true });
-          // small delay to prevent overwhelming the server's event loop and db pool
+          successCount += 1;
           await new Promise((resolve) => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error("Bulk update item error:", error);
+          failedIds.push(id);
         }
       }
-      
-      toast.success(`تم تحديث ${selectedOrders.length} طلبات إلى "${orderStatusConfig[newStatus].label}"`);
-      setActionState("success");
-      setActionMessage(`تم تحديث ${selectedOrders.length} طلبات إلى "${orderStatusConfig[newStatus].label}"`);
-      setSelectedOrders([]);
-    } catch (error) {
-      console.error("Bulk update error:", error);
-      toast.error(error instanceof Error ? error.message : "فشل تحديث بعض الطلبات");
-      setActionState("error");
-      setActionMessage(error instanceof Error ? error.message : "فشل تحديث بعض الطلبات");
+
+      if (successCount > 0 && failedIds.length === 0) {
+        const message = `تم تحديث ${successCount} طلبات إلى "${orderStatusConfig[newStatus].label}"`;
+        toast.success(message);
+        setActionState("success");
+        setActionMessage(message);
+      } else if (successCount > 0) {
+        const message = `تم تحديث ${successCount} طلبات، وتعذر تحديث ${failedIds.length} طلبات`;
+        toast.error(message);
+        setActionState("error");
+        setActionMessage(message);
+      } else {
+        const message = "تعذر تحديث الطلبات المحددة";
+        toast.error(message);
+        setActionState("error");
+        setActionMessage(message);
+      }
+
+      setSelectedOrders(failedIds);
+      setPendingBulkStatus("");
     } finally {
       setIsUpdatingBulk(false);
     }
@@ -307,17 +331,16 @@ const Orders = () => {
         <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 animate-slide-in md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <span className="text-sm font-semibold text-foreground">{selectedOrders.length} طلبات محددة</span>
-            <p className="text-xs text-muted-foreground">اختر الحالة الجديدة مرة واحدة لتطبيقها على الطلبات المحددة فقط.</p>
+            <p className="text-xs text-muted-foreground">
+              اختر الحالة الجديدة ثم أكّد التنفيذ من داخل الصفحة بدل نافذة المتصفح.
+            </p>
           </div>
-          <div className="flex items-center gap-2" dir="ltr">
+          <div className="flex flex-wrap items-center gap-2" dir="ltr">
             {isUpdatingBulk && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground mr-2" />}
             <select
               disabled={isUpdatingBulk}
-              onChange={(e) => {
-                const val = e.target.value as OrderStatus;
-                if (val) handleBulkStatusChange(val);
-                e.target.value = "";
-              }}
+              value={pendingBulkStatus}
+              onChange={(e) => setPendingBulkStatus(e.target.value as OrderStatus | "")}
               className="h-9 min-w-[220px] px-3 text-xs rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
               dir="rtl"
             >
@@ -330,7 +353,18 @@ const Orders = () => {
             </select>
             <button
               type="button"
-              onClick={() => setSelectedOrders([])}
+              disabled={isUpdatingBulk || !pendingBulkStatus}
+              onClick={() => pendingBulkStatus && handleBulkStatusChange(pendingBulkStatus)}
+              className="h-9 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              تأكيد التغيير
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingBulkStatus("");
+                setSelectedOrders([]);
+              }}
               className="h-9 rounded-lg border border-input bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent"
             >
               إلغاء التحديد
