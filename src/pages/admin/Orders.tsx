@@ -1,18 +1,32 @@
-import { useMemo, useState } from "react";
-import { useCreateShippingShipment, useOrders, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
+import { useEffect, useMemo, useState } from "react";
+import { useCreateShippingShipment, usePaginatedOrders, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { api } from "@/lib/api";
 import { exportCsv } from "@/lib/exportCsv";
 import OrdersFilters from "@/components/admin/orders/OrdersFilters";
 import OrdersTable from "@/components/admin/orders/OrdersTable";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { orderStatusConfig } from "@/components/admin/orders/constants";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
-import { X, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { formatSelectedOptions } from "@/lib/productOptions";
 
 const Orders = () => {
-  const { data: orders = [], isLoading } = useOrders();
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState<OrderStatus | "all">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
+  const { data: paginatedOrders, isLoading } = usePaginatedOrders(
+    { search, status: activeFilter },
+    { page: currentPage, limit: 20 }
+  );
+  const orders = paginatedOrders?.items ?? [];
+  const totalOrders = paginatedOrders?.pagination.total ?? orders.length;
+  const totalPages = paginatedOrders?.pagination.totalPages ?? 1;
+  const filtered = orders;
   const updateStatus = useUpdateOrderStatus();
   const { settings: shippingSettings } = useStoreSettings<{ provider?: { active_provider?: string } }>("shipping", { provider: { active_provider: "manual" } });
   const activeShippingProvider = shippingSettings.provider?.active_provider || "manual";
@@ -23,31 +37,12 @@ const Orders = () => {
     return "";
   }, [activeShippingProvider]);
   const createShippingShipment = useCreateShippingShipment(activeProviderLabel);
-  const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<OrderStatus | "all">("all");
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
-  const normalizedSearch = search.trim().toLowerCase();
 
-  const filtered = orders.filter((o) => {
-    const searchableFields = [
-      o.customer_name,
-      String(o.order_number),
-      o.customer_phone,
-      o.ip_address || "",
-      o.tracking_number || "",
-      o.shipping_company || "",
-      o.wilaya || "",
-      o.commune || "",
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    const matchSearch = !normalizedSearch || searchableFields.includes(normalizedSearch);
-    const matchFilter = activeFilter === "all" || o.status === activeFilter;
-    return matchSearch && matchFilter;
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedOrders([]);
+    setExpandedOrder(null);
+  }, [search, activeFilter]);
 
   const handleStatusChange = (id: string, newStatus: OrderStatus) => {
     const order = orders.find((o) => o.id === id);
@@ -93,7 +88,7 @@ const Orders = () => {
     else setSelectedOrders(filtered.map((o) => o.id));
   };
 
-  const getFilterCount = (status: OrderStatus) => orders.filter((o) => o.status === status).length;
+  const getFilterCount = (status: OrderStatus) => (activeFilter === status ? totalOrders : undefined);
   const handleExportCSV = async () => {
     const dataToExport = selectedOrders.length > 0 
       ? filtered.filter(o => selectedOrders.includes(o.id)) 
@@ -200,7 +195,7 @@ const Orders = () => {
       <AdminPageHeader
         title="الطلبات"
         description="إدارة الطلبات اليومية، التصفية السريعة، والتصدير المناسب للتشغيل اللوجستي."
-        meta={`${filtered.length} / ${orders.length}`}
+        meta={`${filtered.length} / ${totalOrders}`}
         actions={(
           <button
             onClick={handleExportCSV}
@@ -214,7 +209,7 @@ const Orders = () => {
       <OrdersFilters
         activeFilter={activeFilter}
         search={search}
-        totalCount={orders.length}
+        totalCount={activeFilter === "all" ? totalOrders : undefined}
         getFilterCount={getFilterCount}
         onFilterChange={setActiveFilter}
         onSearchChange={setSearch}
@@ -249,7 +244,7 @@ const Orders = () => {
 
       <OrdersTable
         orders={filtered}
-        allOrdersCount={orders.length}
+        allOrdersCount={totalOrders}
         selectedOrders={selectedOrders}
         expandedOrder={expandedOrder}
         onToggleSelect={toggleSelect}
@@ -262,6 +257,55 @@ const Orders = () => {
         activeShippingProviderLabel={activeProviderLabel}
         hasDirectShippingProvider={hasDirectShippingProvider}
       />
+
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (currentPage > 1) {
+                    setCurrentPage((page) => page - 1);
+                  }
+                }}
+                className={currentPage <= 1 ? "pointer-events-none opacity-50" : undefined}
+              />
+            </PaginationItem>
+
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .slice(Math.max(currentPage - 3, 0), Math.max(currentPage - 3, 0) + 5)
+              .map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    isActive={page === currentPage}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setCurrentPage(page);
+                    }}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (currentPage < totalPages) {
+                    setCurrentPage((page) => page + 1);
+                  }
+                }}
+                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : undefined}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 };

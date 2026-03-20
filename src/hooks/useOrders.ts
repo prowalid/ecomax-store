@@ -40,12 +40,54 @@ export interface OrderItem {
   total: number;
 }
 
+export interface OrdersPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedOrdersResponse {
+  items: Order[];
+  pagination: OrdersPagination;
+}
+
 export function useOrders() {
   return useQuery({
     queryKey: ["orders"],
     queryFn: async () => {
       const data = await api.get('/orders');
       return data as Order[];
+    },
+  });
+}
+
+export function usePaginatedOrders(
+  filters: { search?: string; status?: OrderStatus | "all" } = {},
+  options: { page?: number; limit?: number } = {},
+) {
+  const params = new URLSearchParams();
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 20;
+
+  if (filters.search?.trim()) {
+    params.set("search", filters.search.trim());
+  }
+
+  if (filters.status && filters.status !== "all") {
+    params.set("status", filters.status);
+  }
+
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+
+  return useQuery({
+    queryKey: ["orders", "paginated", filters.search?.trim() || "", filters.status || "all", page, limit],
+    queryFn: async () => {
+      const data = await api.get(`/orders?${params.toString()}`);
+      return data as PaginatedOrdersResponse;
     },
   });
 }

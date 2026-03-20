@@ -94,7 +94,8 @@ const App = () => (
             <Route element={<StoreLayout />}>
               <Route path="/" element={withSuspense(<StorePage />)} />
               <Route path="/shop" element={withSuspense(<StorePage />)} />
-              <Route path="/product/:id" element={withSuspense(<ProductPage />)} />
+              <Route path="/category/:categorySlug" element={withSuspense(<StorePage />)} />
+              <Route path="/product/:slug" element={withSuspense(<ProductPage />)} />
               <Route path="/checkout" element={withSuspense(<CheckoutPage />)} />
               <Route path="/page/:slug" element={withSuspense(<DynamicPage />)} />
               <Route path="*" element={withSuspense(<StoreNotFound />)} />

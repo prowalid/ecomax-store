@@ -31,7 +31,7 @@ const DEFAULT_APPEARANCE_SETTINGS = {
 
 function normalizeSlides(value) {
   if (!Array.isArray(value)) {
-    return DEFAULT_APPEARANCE_SETTINGS.slides;
+    return [];
   }
 
   const slides = value
@@ -51,7 +51,7 @@ function normalizeSlides(value) {
     })
     .filter(Boolean);
 
-  return slides.length > 0 ? slides : DEFAULT_APPEARANCE_SETTINGS.slides;
+  return slides;
 }
 
 function isLegacyDefaultAppearance(value) {
@@ -74,9 +74,9 @@ function normalizeAppearanceSettings(value) {
       ...DEFAULT_APPEARANCE_SETTINGS,
       ...value,
       slides: normalizeSlides(value.slides),
-      offers_banner_url: typeof value.offers_banner_url === 'string' && value.offers_banner_url.trim()
+      offers_banner_url: typeof value.offers_banner_url === 'string'
         ? value.offers_banner_url.trim()
-        : DEFAULT_APPEARANCE_SETTINGS.offers_banner_url,
+        : '',
     };
   }
 
@@ -116,9 +116,9 @@ function normalizeAppearanceSettings(value) {
     heading_font: typeof value.heading_font === 'string' && value.heading_font.trim() ? value.heading_font.trim() : DEFAULT_APPEARANCE_SETTINGS.heading_font,
     body_font: typeof value.body_font === 'string' && value.body_font.trim() ? value.body_font.trim() : DEFAULT_APPEARANCE_SETTINGS.body_font,
     slides: normalizeSlides(value.slides),
-    offers_banner_url: typeof value.offers_banner_url === 'string' && value.offers_banner_url.trim()
+    offers_banner_url: typeof value.offers_banner_url === 'string'
       ? value.offers_banner_url.trim()
-      : DEFAULT_APPEARANCE_SETTINGS.offers_banner_url,
+      : '',
   };
 }
 

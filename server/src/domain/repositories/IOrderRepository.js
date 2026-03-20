@@ -2,6 +2,7 @@ const { BaseRepositoryContract } = require('./BaseRepositoryContract');
 
 class IOrderRepository extends BaseRepositoryContract {
   async listAll() { this.notImplemented('listAll'); }
+  async list() { this.notImplemented('list'); }
   async findById() { this.notImplemented('findById'); }
   async findItemsByOrderId() { this.notImplemented('findItemsByOrderId'); }
   async findAllItemsByOrderId() { this.notImplemented('findAllItemsByOrderId'); }

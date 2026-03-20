@@ -9,13 +9,59 @@ async function getProducts(req, res, next) {
       throw new Error('ListProductsUseCase is not available');
     }
 
-    const cacheKey = req.user?.role === 'admin' ? 'products:list:admin' : 'products:list:public';
+    const normalizedSearch = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const normalizedCategoryId = typeof req.query.category_id === 'string' ? req.query.category_id.trim() : '';
+    const normalizedSort = typeof req.query.sort === 'string' ? req.query.sort.trim() : 'newest';
+    const normalizedStatus = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+    const inStockOnly = req.query.in_stock === '1';
+    const onSaleOnly = req.query.on_sale === '1';
+    const requestedPage = Number.parseInt(req.query.page, 10);
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const paginate = Number.isInteger(requestedPage) || Number.isInteger(requestedLimit);
+    const page = Number.isInteger(requestedPage) ? Math.max(1, requestedPage) : 1;
+    const limit = Number.isInteger(requestedLimit) ? Math.min(100, Math.max(1, requestedLimit)) : 20;
+    const audience = req.user?.role === 'admin' ? 'admin' : 'public';
+    const cacheKey = [
+      `products:list:${audience}`,
+      `search=${normalizedSearch || 'all'}`,
+      `category=${normalizedCategoryId || 'all'}`,
+      `sort=${normalizedSort || 'newest'}`,
+      `status=${normalizedStatus || 'all'}`,
+      `in_stock=${inStockOnly ? '1' : '0'}`,
+      `on_sale=${onSaleOnly ? '1' : '0'}`,
+      `page=${paginate ? page : 'all'}`,
+      `limit=${paginate ? limit : 'all'}`,
+    ].join(':');
     const products = await cacheService.getOrSet(
       cacheKey,
       30 * 1000,
-      () => listProductsUseCase.execute({ user: req.user })
+      () => listProductsUseCase.execute({
+        user: req.user,
+        search: normalizedSearch || undefined,
+        categoryId: normalizedCategoryId || undefined,
+        sort: normalizedSort || 'newest',
+        inStockOnly,
+        onSaleOnly,
+        status: normalizedStatus || undefined,
+        page,
+        limit,
+        paginate,
+      })
     );
-    res.json(Array.isArray(products) ? products.map((product) => ProductDTO.from(product)) : products);
+    if (Array.isArray(products)) {
+      res.json(products.map((product) => ProductDTO.from(product)));
+      return;
+    }
+
+    if (products && Array.isArray(products.items)) {
+      res.json({
+        items: products.items.map((product) => ProductDTO.from(product)),
+        pagination: products.pagination,
+      });
+      return;
+    }
+
+    res.json(products);
   } catch (err) {
     next(err);
   }

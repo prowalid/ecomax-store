@@ -16,12 +16,50 @@ export interface Customer {
   last_order_at?: string;
 }
 
+export interface CustomersPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedCustomersResponse {
+  items: Customer[];
+  pagination: CustomersPagination;
+}
+
 export function useCustomers() {
   return useQuery({
     queryKey: ["customers"],
     queryFn: async () => {
       const data = await api.get('/customers');
       return data as Customer[];
+    },
+  });
+}
+
+export function usePaginatedCustomers(
+  filters: { search?: string } = {},
+  options: { page?: number; limit?: number } = {},
+) {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 20;
+  const params = new URLSearchParams();
+
+  if (filters.search?.trim()) {
+    params.set("search", filters.search.trim());
+  }
+
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+
+  return useQuery({
+    queryKey: ["customers", "paginated", filters.search?.trim() || "", page, limit],
+    queryFn: async () => {
+      const data = await api.get(`/customers?${params.toString()}`);
+      return data as PaginatedCustomersResponse;
     },
   });
 }

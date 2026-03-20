@@ -24,6 +24,70 @@ class PgOrderRepository extends IOrderRepository {
     return rows;
   }
 
+  async list({ search, status, page = 1, limit = 20, paginate = false } = {}) {
+    const clauses = [];
+    const values = [];
+
+    if (status && status !== 'all') {
+      values.push(status);
+      clauses.push(`status = $${values.length}`);
+    }
+
+    if (search && search.trim()) {
+      const needle = `%${search.trim()}%`;
+      values.push(needle);
+      const placeholder = `$${values.length}`;
+      clauses.push(`(
+        customer_name ILIKE ${placeholder}
+        OR customer_phone ILIKE ${placeholder}
+        OR CAST(order_number AS TEXT) ILIKE ${placeholder}
+        OR COALESCE(ip_address, '') ILIKE ${placeholder}
+        OR COALESCE(tracking_number, '') ILIKE ${placeholder}
+        OR COALESCE(shipping_company, '') ILIKE ${placeholder}
+        OR COALESCE(wilaya, '') ILIKE ${placeholder}
+        OR COALESCE(commune, '') ILIKE ${placeholder}
+      )`);
+    }
+
+    const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+
+    if (!paginate) {
+      const { rows } = await this.pool.query(
+        `SELECT * FROM orders ${whereClause} ORDER BY created_at DESC`,
+        values
+      );
+      return rows;
+    }
+
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+    const offset = (safePage - 1) * safeLimit;
+
+    const countResult = await this.pool.query(
+      `SELECT COUNT(*)::int AS total FROM orders ${whereClause}`,
+      values
+    );
+    const total = countResult.rows[0]?.total ?? 0;
+
+    const pagedValues = [...values, safeLimit, offset];
+    const { rows } = await this.pool.query(
+      `SELECT * FROM orders ${whereClause} ORDER BY created_at DESC LIMIT $${pagedValues.length - 1} OFFSET $${pagedValues.length}`,
+      pagedValues
+    );
+
+    return {
+      items: rows,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+        hasNextPage: offset + rows.length < total,
+        hasPreviousPage: safePage > 1,
+      },
+    };
+  }
+
   async findById(orderId) {
     const { rows } = await this.pool.query(
       'SELECT * FROM orders WHERE id = $1 LIMIT 1',

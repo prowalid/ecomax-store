@@ -1,26 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
-import { useCustomers } from "@/hooks/useCustomers";
+import { usePaginatedCustomers } from "@/hooks/useCustomers";
 import { exportCsv } from "@/lib/exportCsv";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const Customers = () => {
-  const { data: customers = [], isLoading, isError, error, refetch, isFetching } = useCustomers();
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data: paginatedCustomers, isLoading, isError, error, refetch, isFetching } = usePaginatedCustomers(
+    { search },
+    { page: currentPage, limit: 20 }
+  );
+  const customers = paginatedCustomers?.items ?? [];
+  const totalCustomers = paginatedCustomers?.pagination.total ?? customers.length;
+  const totalPages = paginatedCustomers?.pagination.totalPages ?? 1;
+  const filtered = customers;
 
-  const normalizedSearch = search.trim().toLowerCase();
-  const filtered = customers.filter((customer) => {
-    const name = customer.name ?? "";
-    const phone = customer.phone ?? "";
-    const wilaya = customer.wilaya ?? "";
-
-    if (!normalizedSearch) {
-      return true;
-    }
-
-    return [name, phone, wilaya].some((value) => value.toLowerCase().includes(normalizedSearch));
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const handleExportCSV = () => {
     if (filtered.length === 0) {
@@ -66,7 +66,7 @@ const Customers = () => {
       <AdminPageHeader
         title="الزبائن"
         description="ابحث بسرعة في قاعدة الزبائن وصدّر البيانات الأساسية عند الحاجة."
-        meta={`${customers.length} زبون`}
+        meta={`${filtered.length} / ${totalCustomers}`}
         actions={(
           <button
             onClick={handleExportCSV}
@@ -125,10 +125,59 @@ const Customers = () => {
         </div>
         {filtered.length === 0 && (
           <div className="text-center py-12 text-muted-foreground text-sm">
-            {customers.length === 0 ? "لا يوجد زبائن بعد" : "لا يوجد زبائن مطابقين"}
+            {totalCustomers === 0 ? "لا يوجد زبائن بعد" : "لا يوجد زبائن مطابقين"}
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (currentPage > 1) {
+                    setCurrentPage((page) => page - 1);
+                  }
+                }}
+                className={currentPage <= 1 ? "pointer-events-none opacity-50" : undefined}
+              />
+            </PaginationItem>
+
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .slice(Math.max(currentPage - 3, 0), Math.max(currentPage - 3, 0) + 5)
+              .map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    isActive={page === currentPage}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setCurrentPage(page);
+                    }}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (currentPage < totalPages) {
+                    setCurrentPage((page) => page + 1);
+                  }
+                }}
+                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : undefined}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 const { Product } = require('../../../domain/entities/Product');
 const { ValidationError } = require('../../../domain/errors/ValidationError');
 const { NotFoundError } = require('../../../domain/errors/NotFoundError');
+const { buildUniqueSlug } = require('../../../utils/buildUniqueSlug');
 
 class UpdateProductUseCase {
   constructor({ productRepository, normalizeCustomOptions, cacheService }) {
@@ -28,6 +29,13 @@ class UpdateProductUseCase {
     const preparedUpdates = { ...rawUpdates };
     if (Object.prototype.hasOwnProperty.call(preparedUpdates, 'custom_options')) {
       preparedUpdates.custom_options = this.normalizeCustomOptions(preparedUpdates.custom_options);
+    }
+
+    if (typeof preparedUpdates.name === 'string' && preparedUpdates.name.trim() && preparedUpdates.name.trim() !== existingProduct.name) {
+      preparedUpdates.slug = await buildUniqueSlug(preparedUpdates.name, async (candidate) => {
+        const conflictingProduct = await this.productRepository.findBySlugExcludingId(candidate, productId);
+        return Boolean(conflictingProduct);
+      });
     }
 
     const updatedProduct = await this.productRepository.update(

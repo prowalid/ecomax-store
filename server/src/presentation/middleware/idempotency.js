@@ -76,15 +76,19 @@ function createIdempotencyMiddleware({
     res.json = async (body) => {
       if (!finalized) {
         finalized = true;
-        if (res.statusCode < 500) {
-          await cacheService.set(cacheKey, {
-            state: 'completed',
-            fingerprint,
-            status: res.statusCode || 200,
-            body,
-          }, ttlMs);
-        } else {
-          await cacheService.delete(cacheKey);
+        try {
+          if (res.statusCode < 500) {
+            await cacheService.set(cacheKey, {
+              state: 'completed',
+              fingerprint,
+              status: res.statusCode || 200,
+              body,
+            }, ttlMs);
+          } else {
+            await cacheService.delete(cacheKey);
+          }
+        } catch (err) {
+          console.error('[Idempotency] Failed to finalize cache state:', err);
         }
       }
 
@@ -94,7 +98,11 @@ function createIdempotencyMiddleware({
     const cleanup = async () => {
       if (!finalized) {
         finalized = true;
-        await cacheService.delete(cacheKey);
+        try {
+          await cacheService.delete(cacheKey);
+        } catch (err) {
+          console.error('[Idempotency] Failed to cleanup cache lock:', err);
+        }
       }
     };
 

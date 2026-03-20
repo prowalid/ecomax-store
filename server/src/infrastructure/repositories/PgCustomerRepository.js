@@ -11,6 +11,61 @@ class PgCustomerRepository extends ICustomerRepository {
     return result.rows;
   }
 
+  async list({ search, page = 1, limit = 20, paginate = false } = {}) {
+    const clauses = [];
+    const values = [];
+
+    if (search && search.trim()) {
+      const needle = `%${search.trim()}%`;
+      values.push(needle);
+      const placeholder = `$${values.length}`;
+      clauses.push(`(
+        name ILIKE ${placeholder}
+        OR phone ILIKE ${placeholder}
+        OR COALESCE(wilaya, '') ILIKE ${placeholder}
+        OR COALESCE(commune, '') ILIKE ${placeholder}
+      )`);
+    }
+
+    const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+
+    if (!paginate) {
+      const result = await this.pool.query(
+        `SELECT * FROM customers ${whereClause} ORDER BY created_at DESC`,
+        values
+      );
+      return result.rows;
+    }
+
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+    const offset = (safePage - 1) * safeLimit;
+
+    const countResult = await this.pool.query(
+      `SELECT COUNT(*)::int AS total FROM customers ${whereClause}`,
+      values
+    );
+    const total = countResult.rows[0]?.total ?? 0;
+
+    const pagedValues = [...values, safeLimit, offset];
+    const result = await this.pool.query(
+      `SELECT * FROM customers ${whereClause} ORDER BY created_at DESC LIMIT $${pagedValues.length - 1} OFFSET $${pagedValues.length}`,
+      pagedValues
+    );
+
+    return {
+      items: result.rows,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+        hasNextPage: offset + result.rows.length < total,
+        hasPreviousPage: safePage > 1,
+      },
+    };
+  }
+
   async findByPhone(phone) {
     const result = await this.pool.query(
       'SELECT * FROM customers WHERE phone = $1 LIMIT 1',

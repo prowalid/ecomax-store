@@ -290,7 +290,132 @@ describe("Express app integration", () => {
     });
 
     expect(listProductsUseCase.execute).toHaveBeenCalledTimes(1);
-    expect(listProductsUseCase.execute).toHaveBeenCalledWith({ user: undefined });
+    expect(listProductsUseCase.execute).toHaveBeenCalledWith({
+      user: undefined,
+      search: undefined,
+      categoryId: undefined,
+      sort: "newest",
+      inStockOnly: false,
+      onSaleOnly: false,
+      status: undefined,
+      page: 1,
+      limit: 20,
+      paginate: false,
+    });
+  });
+
+  it("forwards discovery filters on GET /api/products", async () => {
+    const listProductsUseCase = {
+      execute: vi.fn().mockResolvedValue([{ id: 1, name: "Search Match", category_name: "Phones" }]),
+    };
+
+    const container = createTestContainer({ listProductsUseCase });
+
+    await withTestApp(container, async (client) => {
+      const { response, json } = await client.getJson("/api/products?search=phone&category_id=cat-1&sort=price_asc");
+
+      expect(response.status).toBe(200);
+      expect(json).toEqual([
+        expect.objectContaining({
+          id: 1,
+          name: "Search Match",
+          category_name: "Phones",
+        }),
+      ]);
+    });
+
+    expect(listProductsUseCase.execute).toHaveBeenCalledWith({
+      user: undefined,
+      search: "phone",
+      categoryId: "cat-1",
+      sort: "price_asc",
+      inStockOnly: false,
+      onSaleOnly: false,
+      status: undefined,
+      page: 1,
+      limit: 20,
+      paginate: false,
+    });
+  });
+
+  it("forwards boolean discovery filters on GET /api/products", async () => {
+    const listProductsUseCase = {
+      execute: vi.fn().mockResolvedValue([{ id: 2, name: "Offer Match" }]),
+    };
+
+    const container = createTestContainer({ listProductsUseCase });
+
+    await withTestApp(container, async (client) => {
+      const { response } = await client.getJson("/api/products?in_stock=1&on_sale=1");
+      expect(response.status).toBe(200);
+    });
+
+    expect(listProductsUseCase.execute).toHaveBeenCalledWith({
+      user: undefined,
+      search: undefined,
+      categoryId: undefined,
+      sort: "newest",
+      inStockOnly: true,
+      onSaleOnly: true,
+      status: undefined,
+      page: 1,
+      limit: 20,
+      paginate: false,
+    });
+  });
+
+  it("returns paginated products payload when page or limit is provided", async () => {
+    const listProductsUseCase = {
+      execute: vi.fn().mockResolvedValue({
+        items: [{ id: 3, name: "Paged Product", slug: "paged-product" }],
+        pagination: {
+          page: 2,
+          limit: 12,
+          total: 25,
+          totalPages: 3,
+          hasNextPage: true,
+          hasPreviousPage: true,
+        },
+      }),
+    };
+
+    const container = createTestContainer({ listProductsUseCase });
+
+    await withTestApp(container, async (client) => {
+      const { response, json } = await client.getJson("/api/products?page=2&limit=12");
+
+      expect(response.status).toBe(200);
+      expect(json).toEqual({
+        items: [
+          expect.objectContaining({
+            id: 3,
+            name: "Paged Product",
+            slug: "paged-product",
+          }),
+        ],
+        pagination: {
+          page: 2,
+          limit: 12,
+          total: 25,
+          totalPages: 3,
+          hasNextPage: true,
+          hasPreviousPage: true,
+        },
+      });
+    });
+
+    expect(listProductsUseCase.execute).toHaveBeenCalledWith({
+      user: undefined,
+      search: undefined,
+      categoryId: undefined,
+      sort: "newest",
+      inStockOnly: false,
+      onSaleOnly: false,
+      status: undefined,
+      page: 2,
+      limit: 12,
+      paginate: true,
+    });
   });
 
   it("handles POST /api/auth/login and sets auth cookies", async () => {

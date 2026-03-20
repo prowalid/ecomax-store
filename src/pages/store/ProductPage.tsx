@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   Loader2,
@@ -39,13 +40,15 @@ const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 type DeliveryType = "home" | "desk";
 
 const ProductPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { slug: slugOrId } = useParams<{ slug: string }>();
   const { data: products = [], isLoading } = useProducts();
-  const { data: galleryImages = [] } = useProductImages(id || null);
+  const product = products.find((p) => p.slug === slugOrId || p.id === slugOrId);
+  const { data: galleryImages = [] } = useProductImages(product?.id || null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [timeLeft, setTimeLeft] = useState(() => {
-    const key = `offer_timer_${id}`;
+    const key = `offer_timer_${slugOrId}`;
     const stored = sessionStorage.getItem(key);
     if (stored) {
       const remaining = Math.max(0, Math.floor((Number(stored) - Date.now()) / 1000));
@@ -110,11 +113,35 @@ const ProductPage = () => {
   const { track } = useTracking();
   const leadTrackedRef = useRef(false);
 
-  const product = products.find((p) => p.id === id);
   const productOptions = normalizeProductOptions(product?.custom_options);
   const relatedProducts = products
-    .filter((p) => p.id !== id && p.status === "active" && p.category_id === product?.category_id)
+    .filter((p) => p.id !== product?.id && p.status === "active" && p.category_id === product?.category_id)
     .slice(0, 4);
+
+  useEffect(() => {
+    if (!product?.slug || !slugOrId) {
+      return;
+    }
+
+    if (slugOrId !== product.slug) {
+      navigate(`/product/${product.slug}`, { replace: true });
+    }
+  }, [navigate, product?.slug, slugOrId]);
+
+  // Dynamic SEO meta tags for this product
+  useSEO({
+    title: product ? `${product.name} | ${theme.store_name || "المتجر"}` : undefined,
+    description: product
+      ? (product.description
+          ? product.description.replace(/<[^>]*>/g, "").slice(0, 160)
+          : `اطلب ${product.name} بأفضل سعر مع التوصيل لكل الولايات`)
+      : undefined,
+    ogImage: galleryImages.length > 0
+      ? galleryImages[0].image_url
+      : product?.image_url || undefined,
+    ogType: "product",
+    canonicalPath: product ? `/product/${product.slug || product.id}` : undefined,
+  });
 
   // Merge shipping settings prices with ALGERIA_WILAYAS defaults
   const wilayasWithPrices = useMemo(() => {
@@ -524,6 +551,7 @@ const ProductPage = () => {
               <ProductCard
                 key={p.id}
                 id={p.id}
+                slug={p.slug}
                 name={p.name}
                 price={Number(p.price)}
                 stock={Number(p.stock)}

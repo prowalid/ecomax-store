@@ -13,9 +13,10 @@ import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useTracking } from "@/hooks/useTracking";
 import { ALGERIA_WILAYAS, normalizeAlgeriaLocationName } from "@/data/algeriaWilayas";
 import { useProducts } from "@/hooks/useProducts";
-import { saveTrackingProfile } from "@/lib/trackingProfile";
 import OrderSuccessMessage from "@/components/store/OrderSuccessMessage";
 import { formatSelectedOptions } from "@/lib/productOptions";
+import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
+import { getStoreThemeTokens } from "@/lib/storeTheme";
 
 interface WilayaShipping {
   id: number;
@@ -58,6 +59,8 @@ export default function CheckoutPage() {
   const createOrder = useCreateOrder();
   const createCustomer = useCreateCustomer();
   const { settings: shippingSettings } = useStoreSettings<ShippingSettings>("shipping", { wilayas: [] });
+  const { settings: theme } = useAppearanceSettings();
+  const tokens = getStoreThemeTokens(theme);
   const [submittedOrderNumber, setSubmittedOrderNumber] = useState<number | null>(null);
   const { track } = useTracking();
   const leadTrackedRef = useRef(false);
@@ -324,7 +327,7 @@ export default function CheckoutPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-16 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-store-primary" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: theme.accent_color }} />
       </div>
     );
   }
@@ -344,11 +347,12 @@ export default function CheckoutPage() {
   if (!items.length) {
     return (
       <div className="container mx-auto px-4 py-16 text-center space-y-4" dir="rtl">
-        <ShoppingBag className="w-12 h-12 mx-auto text-gray-300" />
-        <p className="text-gray-500 text-sm">السلة فارغة حالياً، أضف منتجات للمتابعة</p>
+        <ShoppingBag className="w-12 h-12 mx-auto" style={{ color: tokens.textSoft }} />
+        <p className="text-sm" style={{ color: tokens.textMuted }}>السلة فارغة حالياً، أضف منتجات للمتابعة</p>
         <button
           onClick={() => navigate("/shop")}
-          className="inline-block bg-store-primary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all"
+          className="inline-block text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all"
+          style={{ backgroundColor: theme.button_color, color: theme.button_text }}
         >
           الذهاب إلى المتجر
         </button>
@@ -360,8 +364,8 @@ export default function CheckoutPage() {
     <div className="container mx-auto px-4 py-8 grid gap-8 lg:grid-cols-[2fr,1.2fr]" dir="rtl">
       {/* Form */}
       <div
-        className="bg-white border-2 border-store-primary/20 rounded-3xl p-5 md:p-7 relative overflow-hidden"
-        style={{ boxShadow: "0 8px 30px rgb(var(--store-primary) / 0.10)" }}
+        className="bg-white border-2 rounded-3xl p-5 md:p-7 relative overflow-hidden"
+        style={{ borderColor: `rgba(var(--store-primary-rgb), 0.2)`, boxShadow: `0 8px 30px rgba(var(--store-primary-rgb), 0.10)` }}
       >
         <div
           className="absolute top-0 left-0 right-0 h-1.5"
@@ -479,19 +483,19 @@ export default function CheckoutPage() {
 
           {/* Shipping Cost Display */}
           {selectedWilaya ? (
-            <div className="bg-store-primary/5 border border-store-primary/15 rounded-xl p-4">
+            <div className="rounded-xl p-4 border" style={{ backgroundColor: tokens.surfaceSoft, borderColor: tokens.border }}>
               <div className="flex items-center gap-2 mb-2">
-                <Truck className="w-5 h-5 text-store-primary" />
-                <h3 className="font-bold text-gray-900 text-sm">أسعار التوصيل - {selectedWilaya.name}</h3>
+                <Truck className="w-5 h-5" style={{ color: theme.accent_color }} />
+                <h3 className="font-bold text-sm" style={{ color: tokens.textPrimary }}>أسعار التوصيل - {selectedWilaya.name}</h3>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-700">🏠 للمنزل:</span>
-                  <span className="font-bold text-gray-900">{formatPrice(selectedWilaya.homePrice)}</span>
+                  <span style={{ color: tokens.textMuted }}>🏠 للمنزل:</span>
+                  <span className="font-bold" style={{ color: tokens.textPrimary }}>{formatPrice(selectedWilaya.homePrice)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-700">🏢 للمكتب:</span>
-                  <span className="font-bold text-gray-900">{formatPrice(selectedWilaya.deskPrice)}</span>
+                  <span style={{ color: tokens.textMuted }}>🏢 للمكتب:</span>
+                  <span className="font-bold" style={{ color: tokens.textPrimary }}>{formatPrice(selectedWilaya.deskPrice)}</span>
                 </div>
               </div>
             </div>
@@ -597,14 +601,14 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900 line-clamp-2 max-w-[140px]">{item.product_name}</p>
+                  <p className="font-bold line-clamp-2 max-w-[140px]" style={{ color: tokens.textPrimary }}>{item.product_name}</p>
                   {formatSelectedOptions(item.selected_options) && (
-                    <p className="text-[11px] text-gray-500 max-w-[160px]">{formatSelectedOptions(item.selected_options)}</p>
+                    <p className="text-[11px] max-w-[160px]" style={{ color: tokens.textMuted }}>{formatSelectedOptions(item.selected_options)}</p>
                   )}
-                  <p className="text-[11px] text-gray-400">الكمية: {item.quantity}</p>
+                  <p className="text-[11px]" style={{ color: tokens.textSoft }}>الكمية: {item.quantity}</p>
                 </div>
               </div>
-              <p className="font-black text-store-primary">{formatPrice(item.product_price * item.quantity)}</p>
+              <p className="font-black" style={{ color: theme.accent_color }}>{formatPrice(item.product_price * item.quantity)}</p>
             </div>
           ))}
         </div>

@@ -1,6 +1,7 @@
 const { ValidationError } = require('../errors/ValidationError');
 const { ConflictError } = require('../errors/ConflictError');
 const { Money } = require('../value-objects/Money');
+const { Slug } = require('../value-objects/Slug');
 const { OrderItem } = require('./OrderItem');
 
 function asNumber(value, fieldName) {
@@ -38,6 +39,7 @@ class Product {
 
     this.id = data.id || null;
     this.name = name;
+    this.slug = Slug.optional(data.slug || name) || 'product';
     this.description = normalizeText(data.description) || '';
     this.price = price;
     this.compare_price = comparePrice;
@@ -88,6 +90,7 @@ class Product {
     return {
       id: this.id,
       name: this.name,
+      slug: this.slug,
       description: this.description,
       price: this.price.toNumber(),
       compare_price: this.compare_price?.toNumber() ?? null,

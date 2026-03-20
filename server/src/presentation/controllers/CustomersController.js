@@ -3,8 +3,24 @@ const { CustomerDTO } = require('../../application/dto');
 async function getCustomers(req, res, next) {
   try {
     const getCustomersUseCase = req.app.locals.container?.resolve('getCustomersUseCase');
-    const customers = await getCustomersUseCase.execute();
-    res.json(Array.isArray(customers) ? customers.map((customer) => CustomerDTO.from(customer)) : customers);
+    const requestedPage = Number.parseInt(req.query.page, 10);
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const paginate = Number.isInteger(requestedPage) || Number.isInteger(requestedLimit);
+    const customers = await getCustomersUseCase.execute({
+      search: typeof req.query.search === 'string' ? req.query.search : undefined,
+      page: Number.isInteger(requestedPage) ? requestedPage : 1,
+      limit: Number.isInteger(requestedLimit) ? requestedLimit : 20,
+      paginate,
+    });
+
+    if (Array.isArray(customers)) {
+      return res.json(customers.map((customer) => CustomerDTO.from(customer)));
+    }
+
+    return res.json({
+      items: customers.items.map((customer) => CustomerDTO.from(customer)),
+      pagination: customers.pagination,
+    });
   } catch (err) {
     next(err);
   }

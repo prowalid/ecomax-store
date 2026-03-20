@@ -8,8 +8,26 @@ async function getOrders(req, res, next) {
       throw new Error('GetOrdersUseCase is not available');
     }
 
-    const orders = await useCase.execute();
-    res.json(Array.isArray(orders) ? orders.map((order) => OrderDTO.from(order)) : orders);
+    const requestedPage = Number.parseInt(req.query.page, 10);
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const paginate = Number.isInteger(requestedPage) || Number.isInteger(requestedLimit);
+
+    const orders = await useCase.execute({
+      search: typeof req.query.search === 'string' ? req.query.search : undefined,
+      status: typeof req.query.status === 'string' ? req.query.status : undefined,
+      page: Number.isInteger(requestedPage) ? requestedPage : 1,
+      limit: Number.isInteger(requestedLimit) ? requestedLimit : 20,
+      paginate,
+    });
+
+    if (Array.isArray(orders)) {
+      return res.json(orders.map((order) => OrderDTO.from(order)));
+    }
+
+    return res.json({
+      items: orders.items.map((order) => OrderDTO.from(order)),
+      pagination: orders.pagination,
+    });
   } catch (err) {
     next(err);
   }

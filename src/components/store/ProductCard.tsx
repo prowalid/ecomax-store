@@ -9,6 +9,7 @@ import type { ProductOptionGroup } from "@/lib/productOptions";
 
 interface ProductCardProps {
   id: string;
+  slug?: string | null;
   name: string;
   price: number;
   stock: number;
@@ -21,7 +22,7 @@ interface ProductCardProps {
 
 const formatPrice = (n: number) => n.toLocaleString("ar-DZ") + " دج";
 
-const ProductCard = ({ id, name, price, stock, compare_price, image_url, category_name, custom_options = [], theme }: ProductCardProps) => {
+const ProductCard = ({ id, slug, name, price, stock, compare_price, image_url, category_name, custom_options = [], theme }: ProductCardProps) => {
   const { addItem, isAdding, items } = useCart();
   const { track } = useTracking();
   const hasDiscount = compare_price && compare_price > price;
@@ -29,6 +30,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
   const inCart = !requiresOptions && items.some(item => item.product_id === id);
   const outOfStock = stock <= 0;
   const tokens = getStoreThemeTokens(theme);
+  const productHref = `/product/${slug || id}`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,7 +70,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
         color: tokens.textPrimary,
       }}
     >
-      <Link to={`/product/${id}`} className="flex flex-1 flex-col">
+      <Link to={productHref} className="flex flex-1 flex-col">
         {/* Image */}
         <div className="relative overflow-hidden aspect-[4/4.15] sm:aspect-[4/4.25]" style={{ backgroundColor: tokens.surfaceSoft }}>
           {hasDiscount && (
@@ -140,7 +142,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
           </button>
         ) : requiresOptions ? (
           <Link
-            to={`/product/${id}`}
+            to={productHref}
             className="flex w-full py-2 rounded-xl text-[13px] sm:text-sm font-bold justify-center items-center transition-all duration-300 active:translate-y-0 text-center shadow-sm hover:opacity-90"
             style={{
               backgroundColor: theme.button_color,
@@ -160,7 +162,7 @@ const ProductCard = ({ id, name, price, stock, compare_price, image_url, categor
         ) : (
           <div className="flex gap-2">
             <Link
-              to={`/product/${id}`}
+              to={productHref}
               className="flex-1 py-2 rounded-xl text-[13px] sm:text-sm font-bold flex justify-center items-center transition-all duration-300 active:translate-y-0 text-center shadow-sm hover:opacity-90"
               style={{
                 backgroundColor: theme.button_color,

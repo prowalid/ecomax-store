@@ -8,8 +8,8 @@ import { allOrderStatuses, orderStatusConfig } from "./constants";
 interface OrdersFiltersProps {
   activeFilter: OrderStatus | "all";
   search: string;
-  totalCount: number;
-  getFilterCount: (status: OrderStatus) => number;
+  totalCount?: number;
+  getFilterCount: (status: OrderStatus) => number | undefined;
   onFilterChange: (status: OrderStatus | "all") => void;
   onSearchChange: (value: string) => void;
 }
@@ -35,7 +35,7 @@ export default function OrdersFilters({
               : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >
-          الكل <span className="text-xs text-muted-foreground mr-1">({totalCount})</span>
+          الكل {totalCount !== undefined && <span className="text-xs text-muted-foreground mr-1">({totalCount})</span>}
         </button>
         {allOrderStatuses.map((status) => {
           const config = orderStatusConfig[status];
@@ -52,7 +52,7 @@ export default function OrdersFilters({
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              {config.label} <span className="text-xs text-muted-foreground mr-1">({count})</span>
+              {config.label} {count !== undefined && <span className="text-xs text-muted-foreground mr-1">({count})</span>}
             </button>
           );
         })}

@@ -2,11 +2,22 @@ import { useParams, Link } from "react-router-dom";
 import { Loader2, ArrowRight } from "lucide-react";
 import { usePageBySlug } from "@/hooks/usePages";
 import { normalizePageSlug } from "@/lib/storePages";
+import { useSEO } from "@/hooks/useSEO";
 
 export default function DynamicPage() {
   const { slug } = useParams<{ slug: string }>();
   const normalizedSlug = normalizePageSlug(slug || "");
   const { data: page, isLoading, isError } = usePageBySlug(normalizedSlug);
+
+  // Dynamic SEO for CMS pages
+  useSEO({
+    title: page?.title ? `${page.title}` : undefined,
+    description: page?.content
+      ? page.content.replace(/<[^>]*>/g, "").slice(0, 160)
+      : undefined,
+    ogType: "article",
+    canonicalPath: normalizedSlug ? `/page/${normalizedSlug}` : undefined,
+  });
 
   if (isLoading) {
     return (

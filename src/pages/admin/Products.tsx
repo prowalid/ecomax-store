@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type ProductStatus, type Product } from "@/hooks/useProducts";
+import { usePaginatedProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type ProductStatus, type Product } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useProductImages, useUploadProductImage, useDeleteProductImage, useReorderProductImages } from "@/hooks/useProductImages";
 import { exportCsv } from "@/lib/exportCsv";
@@ -11,6 +11,7 @@ import ProductsTable from "@/components/admin/products/ProductsTable";
 import { emptyProductForm, productStatusLabels, type ProductForm } from "@/components/admin/products/types";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminDataState from "@/components/admin/AdminDataState";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { toast } from "sonner";
 
 type DraftProductImage = {
@@ -22,14 +23,9 @@ type DraftProductImage = {
 };
 
 const Products = () => {
-  const { data: products = [], isLoading } = useProducts();
-  const { data: categories = [] } = useCategories();
-  const createProduct = useCreateProduct();
-  const updateProduct = useUpdateProduct();
-  const deleteProduct = useDeleteProduct();
-
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | ProductStatus>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyProductForm);
@@ -39,11 +35,34 @@ const Products = () => {
   const [isSyncingImages, setIsSyncingImages] = useState(false);
   const [productDraftDirty, setProductDraftDirty] = useState(false);
 
+  const { data: paginatedProducts, isLoading } = usePaginatedProducts(
+    {
+      search,
+      status: activeTab,
+    },
+    {
+      page: currentPage,
+      limit: 20,
+    }
+  );
+  const products = paginatedProducts?.items ?? [];
+  const totalProducts = paginatedProducts?.pagination.total ?? products.length;
+  const totalPages = paginatedProducts?.pagination.totalPages ?? 1;
+  const { data: categories = [] } = useCategories();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+
   const { data: editImages = [] } = useProductImages(editingId);
   const uploadImage = useUploadProductImage();
   const deleteImage = useDeleteProductImage();
   const reorderImages = useReorderProductImages();
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedProducts([]);
+  }, [search, activeTab]);
 
   useEffect(() => {
     if (!showModal || !editingId) return;
@@ -84,11 +103,7 @@ const Products = () => {
     setSelectedProducts([]);
   };
 
-  const filtered = products.filter((p) => {
-    const matchSearch = p.name.includes(search) || (p.category_name || "").includes(search);
-    const matchTab = activeTab === "all" || p.status === activeTab;
-    return matchSearch && matchTab;
-  });
+  const filtered = products;
 
   const handleExportCSV = () => {
     if (filtered.length === 0) {
@@ -315,7 +330,7 @@ const Products = () => {
       <AdminPageHeader
         title="المنتجات"
         description="إدارة الكتالوج، التصنيفات، والأسعار مع تصفح أسرع وحالات أوضح."
-        meta={`${filtered.length} / ${products.length}`}
+        meta={`${filtered.length} / ${totalProducts}`}
         actions={(
           <>
             <button
@@ -340,7 +355,9 @@ const Products = () => {
       <div className="flex items-center gap-1 border-b border-border">
         {(["all", "active", "draft", "archived"] as const).map((tab) => {
           const labels = { all: "الكل", active: "نشط", draft: "مسودة", archived: "مؤرشف" };
-          const count = tab === "all" ? products.length : products.filter((p) => p.status === tab).length;
+          const count = tab === activeTab || (tab === "all" && activeTab === "all")
+            ? totalProducts
+            : undefined;
           return (
             <button
               key={tab}
@@ -350,7 +367,7 @@ const Products = () => {
                 activeTab === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              {labels[tab]} <span className="text-xs text-muted-foreground mr-1">({count})</span>
+              {labels[tab]} {count !== undefined && <span className="text-xs text-muted-foreground mr-1">({count})</span>}
             </button>
           );
         })}
@@ -387,12 +404,61 @@ const Products = () => {
       <ProductsTable
         products={filtered}
         selectedProducts={selectedProducts}
-        allProductsCount={products.length}
+        allProductsCount={totalProducts}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
         onEdit={openEdit}
         onRequestDelete={setDeleteConfirm}
       />
+
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (currentPage > 1) {
+                    setCurrentPage((page) => page - 1);
+                  }
+                }}
+                className={cn(currentPage <= 1 && "pointer-events-none opacity-50")}
+              />
+            </PaginationItem>
+
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .slice(Math.max(currentPage - 3, 0), Math.max(currentPage - 3, 0) + 5)
+              .map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    isActive={page === currentPage}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setCurrentPage(page);
+                    }}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (currentPage < totalPages) {
+                    setCurrentPage((page) => page + 1);
+                  }
+                }}
+                className={cn(currentPage >= totalPages && "pointer-events-none opacity-50")}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
 
       <ProductDeleteDialog
         open={deleteConfirm !== null}

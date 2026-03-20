@@ -1,4 +1,5 @@
 const { Product } = require('../../../domain/entities/Product');
+const { buildUniqueSlug } = require('../../../utils/buildUniqueSlug');
 
 class CreateProductUseCase {
   constructor({ productRepository, normalizeCustomOptions, cacheService }) {
@@ -11,6 +12,10 @@ class CreateProductUseCase {
     const productDraft = new Product({
       ...data,
       custom_options: this.normalizeCustomOptions(data.custom_options),
+    });
+    productDraft.slug = await buildUniqueSlug(productDraft.slug, async (candidate) => {
+      const existingProduct = await this.productRepository.findBySlug(candidate);
+      return Boolean(existingProduct);
     });
     const product = await this.productRepository.create(productDraft);
 

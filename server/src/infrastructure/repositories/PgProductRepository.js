@@ -8,30 +8,135 @@ class PgProductRepository extends IProductRepository {
     this.pool = pool;
   }
 
-  async list({ isAdmin }) {
-    const query = isAdmin
-      ? `
-        SELECT p.*, c.name as category_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        ORDER BY p.created_at DESC
-      `
-      : `
-        SELECT p.*, c.name as category_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        WHERE p.status = 'active'
-        ORDER BY p.created_at DESC
-      `;
+  async list({ isAdmin, search, categoryId, sort, inStockOnly, onSaleOnly, status, page, limit, paginate }) {
+    const conditions = [];
+    const values = [];
+    let index = 1;
 
-    const { rows } = await this.pool.query(query);
+    if (!isAdmin) {
+      conditions.push(`p.status = 'active'`);
+    }
+
+    if (isAdmin && status) {
+      conditions.push(`p.status = $${index}`);
+      values.push(status);
+      index += 1;
+    }
+
+    if (categoryId) {
+      conditions.push(`p.category_id = $${index}`);
+      values.push(categoryId);
+      index += 1;
+    }
+
+    if (search) {
+      conditions.push(`(
+        p.name ILIKE $${index}
+        OR COALESCE(p.description, '') ILIKE $${index}
+        OR COALESCE(p.sku, '') ILIKE $${index}
+        OR COALESCE(c.name, '') ILIKE $${index}
+      )`);
+      values.push(`%${search}%`);
+      index += 1;
+    }
+
+    if (inStockOnly) {
+      conditions.push('p.stock > 0');
+    }
+
+    if (onSaleOnly) {
+      conditions.push('p.compare_price IS NOT NULL AND p.compare_price > p.price');
+    }
+
+    const orderBy = this.#resolveSort(sort);
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const baseQuery = `
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      ${whereClause}
+    `;
+    const query = `
+      SELECT p.*, c.name as category_name
+      ${baseQuery}
+      ORDER BY ${orderBy}
+    `;
+
+    if (paginate) {
+      const safePage = Math.max(1, Number(page) || 1);
+      const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+      const offset = (safePage - 1) * safeLimit;
+      const paginatedQuery = `${query} LIMIT $${index} OFFSET $${index + 1}`;
+      const paginatedValues = [...values, safeLimit, offset];
+      const countQuery = `SELECT COUNT(*)::int AS total ${baseQuery}`;
+
+      const [{ rows }, countResult] = await Promise.all([
+        this.pool.query(paginatedQuery, paginatedValues),
+        this.pool.query(countQuery, values),
+      ]);
+
+      const total = Number(countResult.rows[0]?.total ?? 0);
+      return {
+        items: rows,
+        pagination: {
+          page: safePage,
+          limit: safeLimit,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+          hasNextPage: safePage * safeLimit < total,
+          hasPreviousPage: safePage > 1,
+        },
+      };
+    }
+
+    const { rows } = await this.pool.query(query, values);
     return rows;
+  }
+
+  #resolveSort(sort) {
+    switch (sort) {
+      case 'price_asc':
+        return 'p.price ASC, p.created_at DESC';
+      case 'price_desc':
+        return 'p.price DESC, p.created_at DESC';
+      case 'name_asc':
+        return 'p.name ASC, p.created_at DESC';
+      case 'discount_desc':
+        return `
+          CASE
+            WHEN p.compare_price IS NOT NULL AND p.compare_price > p.price
+              THEN ((p.compare_price - p.price) / NULLIF(p.compare_price, 0))
+            ELSE 0
+          END DESC,
+          p.created_at DESC
+        `;
+      case 'newest':
+      default:
+        return 'p.created_at DESC';
+    }
   }
 
   async findById(productId) {
     const { rows } = await this.pool.query(
       'SELECT * FROM products WHERE id = $1 LIMIT 1',
       [productId]
+    );
+
+    return rows[0] || null;
+  }
+
+  async findBySlug(slug) {
+    const { rows } = await this.pool.query(
+      'SELECT * FROM products WHERE slug = $1 LIMIT 1',
+      [slug]
+    );
+
+    return rows[0] || null;
+  }
+
+  async findBySlugExcludingId(slug, productId) {
+    const { rows } = await this.pool.query(
+      'SELECT id FROM products WHERE slug = $1 AND id <> $2 LIMIT 1',
+      [slug, productId]
     );
 
     return rows[0] || null;
@@ -44,12 +149,13 @@ class PgProductRepository extends IProductRepository {
 
     const { rows } = await this.pool.query(`
       INSERT INTO products
-        (name, description, price, compare_price, cost_price, stock, sku, category_id, image_url, custom_options, status)
+        (name, slug, description, price, compare_price, cost_price, stock, sku, category_id, image_url, custom_options, status)
       VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `, [
       payload.name,
+      payload.slug,
       payload.description,
       payload.price,
       payload.compare_price,
@@ -80,6 +186,7 @@ class PgProductRepository extends IProductRepository {
       : updates;
     const allowedFields = [
       'name',
+      'slug',
       'description',
       'price',
       'compare_price',

@@ -3,7 +3,16 @@ class GetCustomersUseCase {
     this.customerRepository = customerRepository;
   }
 
-  async execute() {
+  async execute({ search, page = 1, limit = 20, paginate = false } = {}) {
+    if (paginate) {
+      return this.customerRepository.list({
+        search,
+        page,
+        limit,
+        paginate,
+      });
+    }
+
     return this.customerRepository.findAll();
   }
 }
@@ -11,4 +20,3 @@ class GetCustomersUseCase {
 module.exports = {
   GetCustomersUseCase,
 };
-

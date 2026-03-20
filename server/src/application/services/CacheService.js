@@ -1,6 +1,7 @@
 class CacheService {
   constructor(cacheStore) {
     this.cacheStore = cacheStore;
+    this.promises = new Map();
   }
 
   async get(key) {
@@ -31,9 +32,22 @@ class CacheService {
       return cached;
     }
 
-    const freshValue = await loader();
-    await this.cacheStore.set(key, freshValue, ttlMs);
-    return freshValue;
+    if (this.promises.has(key)) {
+      return this.promises.get(key);
+    }
+
+    const promise = (async () => {
+      try {
+        const freshValue = await loader();
+        await this.cacheStore.set(key, freshValue, ttlMs);
+        return freshValue;
+      } finally {
+        this.promises.delete(key);
+      }
+    })();
+
+    this.promises.set(key, promise);
+    return promise;
   }
 
   invalidate(key) {
