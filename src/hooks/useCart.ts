@@ -34,6 +34,9 @@ export interface CartItem {
   session_id: string;
 }
 
+const buildCartItemSignature = (item: Pick<CartItem, "product_id" | "selected_options">) =>
+  `${item.product_id}::${JSON.stringify(normalizeSelectedOptions(item.selected_options))}`;
+
 export function useCart() {
   const queryClient = useQueryClient();
   const sessionId = getSessionId();
@@ -65,7 +68,51 @@ export function useCart() {
         session_id: sessionId
       });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
+    onMutate: async (product) => {
+      await queryClient.cancelQueries({ queryKey: ["cart", sessionId] });
+
+      const previousItems = queryClient.getQueryData<CartItem[]>(["cart", sessionId]) || [];
+      const normalizedOptions = normalizeSelectedOptions(product.selected_options);
+      const optimisticSignature = buildCartItemSignature({
+        product_id: product.product_id,
+        selected_options: normalizedOptions,
+      });
+
+      const existingIndex = previousItems.findIndex(
+        (item) => buildCartItemSignature(item) === optimisticSignature
+      );
+
+      const nextItems = [...previousItems];
+
+      if (existingIndex >= 0) {
+        const existingItem = nextItems[existingIndex];
+        nextItems[existingIndex] = {
+          ...existingItem,
+          quantity: existingItem.quantity + (product.quantity ?? 1),
+        };
+      } else {
+        nextItems.unshift({
+          id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          product_id: product.product_id,
+          product_name: product.product_name,
+          selected_options: normalizedOptions,
+          product_price: Number(product.product_price),
+          product_image_url: product.product_image_url ?? null,
+          quantity: product.quantity ?? 1,
+          session_id: sessionId,
+        });
+      }
+
+      queryClient.setQueryData(["cart", sessionId], nextItems);
+
+      return { previousItems };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(["cart", sessionId], context.previousItems);
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["cart", sessionId] }),
   });
 
   const updateQuantityMutation = useMutation({
