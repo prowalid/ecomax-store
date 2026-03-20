@@ -17,6 +17,7 @@ import OrderSuccessMessage from "@/components/store/OrderSuccessMessage";
 import { formatSelectedOptions } from "@/lib/productOptions";
 import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 import { getStoreThemeTokens } from "@/lib/storeTheme";
+import { saveTrackingProfile } from "@/lib/trackingProfile";
 
 interface WilayaShipping {
   id: number;

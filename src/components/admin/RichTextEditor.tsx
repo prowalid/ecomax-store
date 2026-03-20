@@ -214,7 +214,7 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
       // Prevent cursor jumping by only updating if the content is completely different
       // e.g., when the modal opens with a new product/page
       if (document.activeElement !== editor.view.dom) {
-        editor.commands.setContent(value || "<p dir=\"rtl\"></p>", false);
+        editor.commands.setContent(value || "<p dir=\"rtl\"></p>", { emitUpdate: false });
       }
     }
   }, [value, editor]);
