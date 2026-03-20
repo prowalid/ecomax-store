@@ -55,7 +55,7 @@ const StorePage = () => {
   useEffect(() => {
     setCurrentPage(1);
     setLoadedProducts([]);
-  }, [searchParams, location.pathname]);
+  }, [categorySlug, searchParams]);
 
   useEffect(() => {
     if (!paginatedProducts) {
