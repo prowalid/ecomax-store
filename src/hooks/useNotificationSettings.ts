@@ -6,6 +6,8 @@ export interface NotificationSettings {
   enabled_notifications: Record<string, boolean>;
   admin_phone: string;
   api_configured: boolean;
+  instance_id?: string;
+  api_token?: string;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -17,6 +19,8 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   },
   admin_phone: "",
   api_configured: false,
+  instance_id: "",
+  api_token: "",
 };
 
 type NotificationSettingsPayload = Partial<NotificationSettings>;
@@ -36,6 +40,8 @@ export function useNotificationSettings() {
           enabled_notifications: val.enabled_notifications || DEFAULT_SETTINGS.enabled_notifications,
           admin_phone: val.admin_phone || "",
           api_configured: val.api_configured || false,
+          instance_id: val.instance_id || "",
+          api_token: val.api_token || "",
         });
       }
     } catch (err) {

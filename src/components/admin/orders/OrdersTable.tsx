@@ -43,8 +43,8 @@ export default function OrdersTable({
     <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden animate-slide-in">
       <div className="overflow-x-auto">
       <table className="w-full min-w-[980px] text-right" dir="rtl">
-        <thead>
-          <tr className="border-b border-slate-50 bg-slate-50/30">
+        <thead className="sticky top-0 z-10">
+          <tr className="border-b border-slate-50 bg-slate-50/95 backdrop-blur">
             <th className="w-10 px-4 py-4">
               <input
                 type="checkbox"
@@ -160,12 +160,17 @@ function OrderTableRow({
           </div>
         </td>
         <td className="px-4 py-4">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="text-[13px] text-sidebar-heading font-semibold">{order.customer_name}</div>
             <div className="flex items-center gap-2 text-[12px] text-slate-500 font-medium">
               <Phone className="w-3.5 h-3.5 text-slate-400" />
               <span dir="ltr">{order.customer_phone}</span>
             </div>
+            {order.tracking_number ? (
+              <div className="inline-flex rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                تتبع: <span className="mr-1" dir="ltr">{order.tracking_number}</span>
+              </div>
+            ) : null}
           </div>
         </td>
         <td className="px-4 py-4">

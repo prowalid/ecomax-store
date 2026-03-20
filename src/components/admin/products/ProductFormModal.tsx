@@ -113,8 +113,32 @@ export default function ProductFormModal({
         </div>
 
         <div className="p-6 space-y-6 bg-slate-50/30">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold text-slate-400">حالة التحرير</p>
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                {editingId ? "تعديل منتج موجود" : "إضافة منتج جديد"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold text-slate-400">عدد الصور</p>
+              <p className="mt-2 text-sm font-bold text-slate-900">{images.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold text-slate-400">حالة الحفظ</p>
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                {isSaving ? "جاري الحفظ" : hasUnsavedChanges ? "توجد تغييرات غير محفوظة" : "جاهز"}
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-3">
-            <label className="text-xs font-medium text-muted-foreground">صور المنتج</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">صور المنتج</label>
+              <p className="text-[11px] text-slate-500">
+                الصورة الأولى تعتبر الصورة الرئيسية داخل الكتالوج وصفحة المنتج.
+              </p>
+            </div>
 
             {images.length > 0 && (
               <div className="grid grid-cols-4 gap-3">
@@ -181,7 +205,14 @@ export default function ProductFormModal({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">اسم المنتج *</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">اسم المنتج *</label>
+              {form.name.trim() && (
+                <p className="text-[11px] text-slate-500">
+                  الرابط المتوقع سيُبنى تلقائيًا من الاسم بعد الحفظ.
+                </p>
+              )}
+            </div>
             <input
               type="text"
               value={form.name}
@@ -223,11 +254,19 @@ export default function ProductFormModal({
                 dir="ltr"
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               />
+              {Number(form.compare_price || 0) > Number(form.price || 0) && Number(form.price || 0) > 0 ? (
+                <p className="text-[11px] text-emerald-600">سيظهر المنتج كعرض مخفّض داخل المتجر.</p>
+              ) : null}
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">المخزون</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">المخزون</label>
+              <p className="text-[11px] text-slate-500">
+                إذا أصبح المخزون صفرًا سيظهر المنتج كغير متاح في التدفقات الحساسة.
+              </p>
+            </div>
               <input
                 type="number"
                 value={form.stock}

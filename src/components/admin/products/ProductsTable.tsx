@@ -29,8 +29,8 @@ export default function ProductsTable({
     <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden animate-slide-in">
       <div className="overflow-x-auto">
       <table className="w-full min-w-[920px] text-right" dir="rtl">
-        <thead>
-          <tr className="border-b border-slate-50 bg-slate-50/30">
+        <thead className="sticky top-0 z-10">
+          <tr className="border-b border-slate-50 bg-slate-50/95 backdrop-blur">
             <th className="w-10 px-4 py-4">
               <input
                 type="checkbox"
@@ -82,6 +82,18 @@ export default function ProductsTable({
                       <span className="text-[14px] font-bold text-sidebar-heading group-hover:text-primary transition-colors block">
                         {product.name}
                       </span>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                        {product.slug ? (
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5" dir="ltr">
+                            /product/{product.slug}
+                          </span>
+                        ) : null}
+                        {product.variants_count > 0 ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+                            {product.variants_count} خيارات
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </td>

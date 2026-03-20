@@ -41,6 +41,20 @@ const Orders = () => {
     return "";
   }, [activeShippingProvider]);
   const createShippingShipment = useCreateShippingShipment(activeProviderLabel);
+  const hasActiveFilters = search.trim().length > 0 || activeFilter !== "all";
+
+  const orderInsights = useMemo(() => {
+    const needsAttention = orders.filter((order) => order.status === "new" || order.status === "attempt" || order.status === "no_answer").length;
+    const readyToShip = orders.filter((order) => order.status === "confirmed" || order.status === "ready").length;
+    const shipped = orders.filter((order) => order.status === "shipped" || order.status === "delivered").length;
+
+    return {
+      visibleCount: filtered.length,
+      needsAttention,
+      readyToShip,
+      shipped,
+    };
+  }, [filtered.length, orders]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -124,6 +138,14 @@ const Orders = () => {
   const toggleSelectAll = () => {
     if (selectedOrders.length === filtered.length) setSelectedOrders([]);
     else setSelectedOrders(filtered.map((o) => o.id));
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setActiveFilter("all");
+    setCurrentPage(1);
+    setSelectedOrders([]);
+    setExpandedOrder(null);
   };
 
   const getFilterCount = (status: OrderStatus) => (activeFilter === status ? totalOrders : undefined);
@@ -248,18 +270,46 @@ const Orders = () => {
         activeFilter={activeFilter}
         search={search}
         totalCount={activeFilter === "all" ? totalOrders : undefined}
+        hasActiveFilters={hasActiveFilters}
         getFilterCount={getFilterCount}
         onFilterChange={setActiveFilter}
         onSearchChange={setSearch}
+        onResetFilters={resetFilters}
       />
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold text-slate-500">المعروض الآن</p>
+          <p className="mt-2 text-2xl font-black text-slate-900">{orderInsights.visibleCount}</p>
+          <p className="mt-1 text-xs text-slate-500">من أصل {totalOrders} طلبًا</p>
+        </div>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-amber-700">تحتاج متابعة</p>
+          <p className="mt-2 text-2xl font-black text-amber-900">{orderInsights.needsAttention}</p>
+          <p className="mt-1 text-xs text-amber-700">طلبات جديدة أو ما زالت قيد المحاولة</p>
+        </div>
+        <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-sky-700">جاهزة للشحن</p>
+          <p className="mt-2 text-2xl font-black text-sky-900">{orderInsights.readyToShip}</p>
+          <p className="mt-1 text-xs text-sky-700">طلبات مؤكدة أو جاهزة للرفع</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-emerald-700">قيد التوصيل / مكتملة</p>
+          <p className="mt-2 text-2xl font-black text-emerald-900">{orderInsights.shipped}</p>
+          <p className="mt-1 text-xs text-emerald-700">طلبات خرجت من مسار المعالجة الأولية</p>
+        </div>
+      </div>
 
       <AdminActionStatus state={actionState} message={actionMessage} />
 
       {/* Bulk actions inline banner */}
       {selectedOrders.length > 0 && (
-        <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-2.5 animate-slide-in border border-border">
-          <span className="text-sm text-foreground font-medium">{selectedOrders.length} طلبات محددة</span>
-          <div className="flex items-center gap-2 mr-auto" dir="ltr">
+        <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 animate-slide-in md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <span className="text-sm font-semibold text-foreground">{selectedOrders.length} طلبات محددة</span>
+            <p className="text-xs text-muted-foreground">اختر الحالة الجديدة مرة واحدة لتطبيقها على الطلبات المحددة فقط.</p>
+          </div>
+          <div className="flex items-center gap-2" dir="ltr">
             {isUpdatingBulk && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground mr-2" />}
             <select
               disabled={isUpdatingBulk}
@@ -268,7 +318,7 @@ const Orders = () => {
                 if (val) handleBulkStatusChange(val);
                 e.target.value = "";
               }}
-              className="flex-1 h-8 px-2 text-xs rounded-md border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+              className="h-9 min-w-[220px] px-3 text-xs rounded-lg border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
               dir="rtl"
             >
               <option value="">تغيير الحالة إلى...</option>
@@ -278,6 +328,13 @@ const Orders = () => {
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={() => setSelectedOrders([])}
+              className="h-9 rounded-lg border border-input bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              إلغاء التحديد
+            </button>
           </div>
         </div>
       )}

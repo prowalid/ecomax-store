@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Send, CheckCircle2, XCircle, MessageCircle, Phone, Settings2, FileText, Loader2, Save, Wifi, WifiOff } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -37,6 +37,11 @@ const Notifications = () => {
   const [apiStatus, setApiStatus] = useState<{ connected: boolean; state?: string } | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
 
+  useEffect(() => {
+    setInstanceId(settings.instance_id || "");
+    setApiToken(settings.api_token || "");
+  }, [settings.instance_id, settings.api_token]);
+
   // Test send state
   const [testPhone, setTestPhone] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("order_confirmed");
@@ -59,9 +64,6 @@ const Notifications = () => {
         setApiStatus({ connected: true, state: data.state });
         markApiConfigured(true);
         toast.success("تم التحقق وحفظ بيانات Green API بنجاح");
-        // Clear sensitive fields
-        setInstanceId("");
-        setApiToken("");
       } else {
         setApiStatus({ connected: false });
         // Make sure to display the error we sent from node backend
@@ -189,20 +191,18 @@ const Notifications = () => {
             type="text"
             value={instanceId}
             onChange={(e) => setInstanceId(e.target.value)}
-            placeholder={settings.api_configured ? "قيمة محفوظة — أدخل Instance ID جديداً للاستبدال" : "1101234567"}
+            placeholder="1101234567"
             dir="ltr"
-            helperText="إذا كان الاتصال مفعلًا بالفعل، يمكنك ترك هذا الحقل فارغًا حتى تقرر تحديث القيمة."
           />
           <AdminSecureField
             title="API Token"
             description="الرمز السري المستخدم لإرسال رسائل واتساب."
-            configured={settings.api_configured}
+            configured={settings.api_configured && !!settings.api_token}
             type="password"
             value={apiToken}
             onChange={(e) => setApiToken(e.target.value)}
-            placeholder={settings.api_configured ? "قيمة محفوظة — أدخل Token جديداً للاستبدال" : "abc123def456..."}
+            placeholder="abc123def456..."
             dir="ltr"
-            helperText="لن نعرض الرمز الحالي. أدخل قيمة جديدة فقط عند الحاجة إلى تحديث الاتصال."
           />
         </div>
 

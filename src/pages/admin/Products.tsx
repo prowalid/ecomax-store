@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePaginatedProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type ProductStatus, type Product } from "@/hooks/useProducts";
@@ -114,6 +114,20 @@ const Products = () => {
 
   const filtered = products;
   const hasActiveFilters = Boolean(search.trim() || activeTab !== "all");
+  const catalogInsights = useMemo(() => {
+    const activeCount = products.filter((product) => product.status === "active").length;
+    const lowStockCount = products.filter((product) => product.stock > 0 && product.stock < 15).length;
+    const outOfStockCount = products.filter((product) => product.stock === 0).length;
+    const onSaleCount = products.filter((product) => Number(product.compare_price || 0) > Number(product.price || 0)).length;
+
+    return {
+      visibleCount: filtered.length,
+      activeCount,
+      lowStockCount,
+      outOfStockCount,
+      onSaleCount,
+    };
+  }, [filtered.length, products]);
 
   const handleExportCSV = () => {
     if (filtered.length === 0) {
@@ -388,28 +402,94 @@ const Products = () => {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="بحث عن منتج..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          data-testid="products-search-input"
-          className="w-full h-9 pr-9 pl-3 rounded-lg border border-input bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
-        />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="بحث عن منتج..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            data-testid="products-search-input"
+            className="w-full h-9 pr-9 pl-3 rounded-lg border border-input bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {activeTab !== "all" && (
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+              التبويب الحالي: {productStatusLabels[activeTab].label}
+            </span>
+          )}
+          {search.trim() && (
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              بحث: {search.trim()}
+            </span>
+          )}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setActiveTab("all");
+                setCurrentPage(1);
+              }}
+              className="h-9 rounded-lg border border-input bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              تصفير الفلاتر
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold text-slate-500">المعروض الآن</p>
+          <p className="mt-2 text-2xl font-black text-slate-900">{catalogInsights.visibleCount}</p>
+          <p className="mt-1 text-xs text-slate-500">من أصل {totalProducts} منتجًا</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-emerald-700">منتجات نشطة</p>
+          <p className="mt-2 text-2xl font-black text-emerald-900">{catalogInsights.activeCount}</p>
+          <p className="mt-1 text-xs text-emerald-700">جاهزة للظهور داخل المتجر</p>
+        </div>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-amber-700">مخزون منخفض</p>
+          <p className="mt-2 text-2xl font-black text-amber-900">{catalogInsights.lowStockCount}</p>
+          <p className="mt-1 text-xs text-amber-700">أقل من 15 قطعة</p>
+        </div>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-rose-700">نفد المخزون</p>
+          <p className="mt-2 text-2xl font-black text-rose-900">{catalogInsights.outOfStockCount}</p>
+          <p className="mt-1 text-xs text-rose-700">تحتاج إعادة تعبئة أو إخفاء</p>
+        </div>
+        <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-sky-700">عروض حالية</p>
+          <p className="mt-2 text-2xl font-black text-sky-900">{catalogInsights.onSaleCount}</p>
+          <p className="mt-1 text-xs text-sky-700">منتجات بسعر قبل التخفيض</p>
+        </div>
       </div>
 
       {/* Bulk actions */}
       {selectedProducts.length > 0 && (
-        <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-2.5 animate-slide-in">
-          <span className="text-sm text-foreground font-medium">{selectedProducts.length} منتج محدد</span>
-          <div className="flex items-center gap-2 mr-auto" dir="ltr">
+        <div className="flex flex-col gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 animate-slide-in md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <span className="text-sm font-semibold text-foreground">{selectedProducts.length} منتج محدد</span>
+            <p className="text-xs text-muted-foreground">استخدم الحذف الجماعي فقط عندما تكون متأكدًا أن هذه المنتجات لم تعد مطلوبة.</p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               onClick={handleBulkDelete}
-              className="text-xs px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity"
+              className="h-9 rounded-lg bg-destructive px-3 text-xs font-medium text-destructive-foreground hover:opacity-90 transition-opacity"
             >
               حذف المحدد
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedProducts([])}
+              className="h-9 rounded-lg border border-input bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              إلغاء التحديد
             </button>
           </div>
         </div>
