@@ -1,8 +1,16 @@
 {
   "latest": {
-    "stable": "v1.0.29"
+    "stable": "v1.0.30"
   },
   "releases": [
+    {
+      "version": "v1.0.30",
+      "channel": "stable",
+      "released_at": "2026-03-20T00:00:00Z",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.30",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.30",
+      "notes": "Storefront mobile navigation and cart timing fixes, calmer overlay behavior, smarter bulk order updates, cleaner template defaults, and final admin theme consistency on mobile."
+    },
     {
       "version": "v1.0.29",
       "channel": "stable",
