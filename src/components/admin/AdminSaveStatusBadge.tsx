@@ -6,6 +6,13 @@ type AdminSaveStatusBadgeProps = {
   lastSavedAt?: Date | null;
 };
 
+function formatTime(date: Date): string {
+  return new Intl.DateTimeFormat("ar-DZ", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 export default function AdminSaveStatusBadge({
   saving = false,
   dirty = false,
@@ -15,7 +22,7 @@ export default function AdminSaveStatusBadge({
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        جاري الحفظ
+        جاري الحفظ...
       </span>
     );
   }
@@ -24,7 +31,7 @@ export default function AdminSaveStatusBadge({
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
         <Clock3 className="h-3.5 w-3.5" />
-        توجد تغييرات غير محفوظة
+        تغييرات غير محفوظة
       </span>
     );
   }
@@ -33,7 +40,7 @@ export default function AdminSaveStatusBadge({
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
         <CheckCircle2 className="h-3.5 w-3.5" />
-        تم الحفظ
+        تم الحفظ • {formatTime(lastSavedAt)}
       </span>
     );
   }

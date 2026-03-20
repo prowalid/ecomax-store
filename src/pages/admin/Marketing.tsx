@@ -40,9 +40,9 @@ const Marketing = () => {
   const [capiTokenDraft, setCapiTokenDraft] = useState("");
 
   useEffect(() => {
-    setPixelIdDraft("");
-    setCapiTokenDraft("");
-  }, [settings.pixel_id, settings.capi_token, settings.pixel_configured]);
+    setPixelIdDraft(settings.pixel_id || "");
+    setCapiTokenDraft(settings.capi_token || "");
+  }, [settings.pixel_id, settings.capi_token]);
 
   const handleTestEvent = async () => {
     setTestLoading(true);
@@ -107,13 +107,11 @@ const Marketing = () => {
   const handleSaveAll = async () => {
     const updated = {
       ...settings,
-      pixel_id: pixelIdDraft.trim() || settings.pixel_id,
-      capi_token: capiTokenDraft.trim() || settings.capi_token,
-      pixel_configured: !!(pixelIdDraft.trim() || settings.pixel_id),
+      pixel_id: pixelIdDraft.trim(),
+      capi_token: capiTokenDraft.trim(),
+      pixel_configured: !!pixelIdDraft.trim(),
     };
     await saveSettings(updated);
-    setPixelIdDraft("");
-    setCapiTokenDraft("");
   };
 
   const handleTestWebhook = async () => {
@@ -212,22 +210,20 @@ const Marketing = () => {
           configured={settings.pixel_configured}
           type="text"
           value={pixelIdDraft}
-          onChange={(e) => setPixelIdDraft(e.target.value.trim())}
-          placeholder={settings.pixel_configured ? "قيمة محفوظة — أدخل Pixel ID جديداً للاستبدال" : "123456789012345"}
+          onChange={(e) => setPixelIdDraft(e.target.value)}
+          placeholder="123456789012345"
           dir="ltr"
-          helperText="إذا تركت الحقل فارغًا، سيتم الاحتفاظ بالقيمة المحفوظة الحالية كما هي."
         />
 
         <AdminSecureField
           title="Access Token"
           description="رمز CAPI المستخدم للإرسال من الخادم."
-          configured={settings.pixel_configured}
+          configured={settings.pixel_configured && !!settings.capi_token}
           type="password"
           value={capiTokenDraft}
-          onChange={(e) => setCapiTokenDraft(e.target.value.trim())}
-          placeholder={settings.pixel_configured ? "قيمة محفوظة — أدخل Token جديداً للاستبدال" : "EAAxxxxxxx..."}
+          onChange={(e) => setCapiTokenDraft(e.target.value)}
+          placeholder="EAAxxxxxxx..."
           dir="ltr"
-          helperText="لن يتم عرض الرمز الحالي. أدخل قيمة جديدة فقط إذا كنت تريد تحديث الاتصال."
         />
       </div>
 

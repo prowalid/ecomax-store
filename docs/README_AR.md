@@ -8,6 +8,7 @@
 - [STORE_PRODUCT_ARCHITECTURE_AR.md](/root/express-trade-kit/docs/STORE_PRODUCT_ARCHITECTURE_AR.md)
 - [PARALLEL_STORE_HARDENING_PLAN_AR.md](/root/express-trade-kit/docs/PARALLEL_STORE_HARDENING_PLAN_AR.md)
 - [PARALLEL_SEO_DISCOVERY_PLAN_AR.md](/root/express-trade-kit/docs/PARALLEL_SEO_DISCOVERY_PLAN_AR.md)
+- [PARALLEL_ADMIN_UX_UPGRADE_PLAN_AR.md](/root/express-trade-kit/docs/PARALLEL_ADMIN_UX_UPGRADE_PLAN_AR.md)
 - [MERCHANT_DAILY_QA_CHECKLIST_AR.md](/root/express-trade-kit/docs/MERCHANT_DAILY_QA_CHECKLIST_AR.md)
 
 ## مراجع تاريخية

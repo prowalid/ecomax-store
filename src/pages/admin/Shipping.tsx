@@ -158,16 +158,20 @@ const Shipping = () => {
       ...(settings.provider || {}),
     });
 
-    setYalidineSettings({
-      ...defaultShippingSettings.yalidine,
-      ...(settings.yalidine || {}),
-    });
-    setGuepexSettings({
-      ...defaultShippingSettings.guepex,
-      ...(settings.guepex || {}),
-    });
-    setYalidineSecretsDraft({ api_id: "", api_token: "" });
-    setGuepexSecretsDraft({ api_id: "", api_token: "" });
+    if (settings.yalidine) {
+      setYalidineSettings(settings.yalidine);
+      setYalidineSecretsDraft({ api_id: settings.yalidine.api_id || "", api_token: settings.yalidine.api_token || "" });
+    } else {
+      setYalidineSettings(defaultShippingSettings.yalidine);
+      setYalidineSecretsDraft({ api_id: "", api_token: "" });
+    }
+    if (settings.guepex) {
+      setGuepexSettings(settings.guepex);
+      setGuepexSecretsDraft({ api_id: settings.guepex.api_id || "", api_token: settings.guepex.api_token || "" });
+    } else {
+      setGuepexSettings(defaultShippingSettings.guepex);
+      setGuepexSecretsDraft({ api_id: "", api_token: "" });
+    }
   }, [settings]);
 
   const filtered = wilayas.filter(
@@ -443,10 +447,9 @@ const Shipping = () => {
                 type="text"
                 value={activeCourierSecretsDraft.api_id}
                 onChange={(e) => setActiveCourierSecretsDraft((prev) => ({ ...prev, api_id: e.target.value }))}
-                placeholder={activeSavedCourierSettings.api_id ? "قيمة محفوظة — أدخل API ID جديدًا للاستبدال" : `Your ${activeCourierLabel} API ID`}
+                placeholder={`Your ${activeCourierLabel} API ID`}
                 dir="ltr"
                 configured={Boolean(activeSavedCourierSettings.api_id.trim())}
-                helperText="إذا كانت القيمة محفوظة بالفعل فاترك الحقل فارغًا، واكتب داخله فقط عند الرغبة في استبدالها."
               />
 
               <AdminSecureField
@@ -455,10 +458,9 @@ const Shipping = () => {
                 type="password"
                 value={activeCourierSecretsDraft.api_token}
                 onChange={(e) => setActiveCourierSecretsDraft((prev) => ({ ...prev, api_token: e.target.value }))}
-                placeholder={activeSavedCourierSettings.api_token ? "قيمة محفوظة — أدخل Token جديدًا للاستبدال" : `Your ${activeCourierLabel} API Token`}
+                placeholder={`Your ${activeCourierLabel} API Token`}
                 dir="ltr"
                 configured={Boolean(activeSavedCourierSettings.api_token.trim())}
-                helperText="لن نعرض التوكن الحالي. أدخل قيمة جديدة فقط إذا أردت استبداله ثم احفظ الإعدادات."
               />
 
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
