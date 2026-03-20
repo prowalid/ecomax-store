@@ -53,7 +53,7 @@ const Products = () => {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
 
-  const { data: editImages = [] } = useProductImages(editingId);
+  const { data: editImages = [], isLoading: isLoadingEditImages, isFetching: isFetchingEditImages } = useProductImages(editingId);
   const uploadImage = useUploadProductImage();
   const deleteImage = useDeleteProductImage();
   const reorderImages = useReorderProductImages();
@@ -66,6 +66,7 @@ const Products = () => {
 
   useEffect(() => {
     if (!showModal || !editingId) return;
+    if (productDraftDirty) return;
 
     setDraftImages(
       editImages.map((img) => ({
@@ -74,7 +75,7 @@ const Products = () => {
         image_url: img.image_url,
       }))
     );
-  }, [showModal, editingId, editImages]);
+  }, [showModal, editingId, editImages, productDraftDirty]);
 
   const handleDragStart = (idx: number) => setDragIdx(idx);
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
@@ -593,6 +594,7 @@ const Products = () => {
         form={form}
         categories={categories}
         images={draftImages}
+        isLoadingImages={Boolean(editingId) && (isLoadingEditImages || isFetchingEditImages) && draftImages.length === 0}
         dragIdx={dragIdx}
         isSaving={isSaving}
         isUploading={false}

@@ -18,6 +18,7 @@ interface ProductFormModalProps {
   form: ProductForm;
   categories: Category[];
   images: EditableProductImage[];
+  isLoadingImages: boolean;
   dragIdx: number | null;
   isSaving: boolean;
   isUploading: boolean;
@@ -38,6 +39,7 @@ export default function ProductFormModal({
   form,
   categories,
   images,
+  isLoadingImages,
   dragIdx,
   isSaving,
   isUploading,
@@ -113,34 +115,28 @@ export default function ProductFormModal({
         </div>
 
         <div className="p-6 space-y-6 bg-slate-50/30">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-[11px] font-semibold text-slate-400">حالة التحرير</p>
-              <p className="mt-2 text-sm font-bold text-slate-900">
-                {editingId ? "تعديل منتج موجود" : "إضافة منتج جديد"}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-[11px] font-semibold text-slate-400">عدد الصور</p>
-              <p className="mt-2 text-sm font-bold text-slate-900">{images.length}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-[11px] font-semibold text-slate-400">حالة الحفظ</p>
-              <p className="mt-2 text-sm font-bold text-slate-900">
-                {isSaving ? "جاري الحفظ" : hasUnsavedChanges ? "توجد تغييرات غير محفوظة" : "جاهز"}
-              </p>
-            </div>
-          </div>
-
           <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">صور المنتج</label>
-              <p className="text-[11px] text-slate-500">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">صور المنتج</label>
+                <p className="text-[11px] text-slate-500">
                 الصورة الأولى تعتبر الصورة الرئيسية داخل الكتالوج وصفحة المنتج.
-              </p>
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-slate-700 border border-slate-200">
+                {images.length} صورة
+              </span>
             </div>
 
-            {images.length > 0 && (
+            {isLoadingImages ? (
+              <div className="grid grid-cols-4 gap-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="aspect-square rounded-lg border border-slate-200 bg-white flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                  </div>
+                ))}
+              </div>
+            ) : images.length > 0 ? (
               <div className="grid grid-cols-4 gap-3">
                 {images.map((img, idx) => (
                   <div
@@ -174,6 +170,11 @@ export default function ProductFormModal({
                     <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
+                <p className="text-sm font-bold text-slate-700">لا توجد صور لهذا المنتج بعد</p>
+                <p className="mt-1 text-[11px] text-slate-500">ارفع صورًا الآن لتتمكن من ترتيبها أو تغيير الرئيسية منها.</p>
               </div>
             )}
 
