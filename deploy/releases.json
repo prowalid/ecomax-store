@@ -1,8 +1,16 @@
 {
   "latest": {
-    "stable": "v1.0.28"
+    "stable": "v1.0.29"
   },
   "releases": [
+    {
+      "version": "v1.0.29",
+      "channel": "stable",
+      "released_at": "2026-03-20T00:00:00Z",
+      "api_image": "ghcr.io/prowalid/ecomax-store-api:v1.0.29",
+      "web_image": "ghcr.io/prowalid/ecomax-store-web:v1.0.29",
+      "notes": "Storefront SEO and discovery improvements, readable product slugs, paginated admin listings, calmer admin UX feedback, and finalized product documentation."
+    },
     {
       "version": "v1.0.28",
       "channel": "stable",
