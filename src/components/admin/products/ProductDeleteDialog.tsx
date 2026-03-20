@@ -30,6 +30,9 @@ export default function ProductDeleteDialog({
         <p className="text-sm text-muted-foreground">
           هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع عن هذا الإجراء.
         </p>
+        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          سيتم حذف بيانات المنتج وصورته الرئيسية من الكتالوج، ولن يظهر بعدها داخل المتجر أو نتائج البحث.
+        </div>
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}

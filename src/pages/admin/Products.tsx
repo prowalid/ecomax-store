@@ -113,6 +113,7 @@ const Products = () => {
   };
 
   const filtered = products;
+  const hasActiveFilters = Boolean(search.trim() || activeTab !== "all");
 
   const handleExportCSV = () => {
     if (filtered.length === 0) {
@@ -414,17 +415,39 @@ const Products = () => {
         </div>
       )}
 
-      <ProductsTable
-        products={filtered}
-        selectedProducts={selectedProducts}
-        allProductsCount={totalProducts}
-        onToggleSelect={toggleSelect}
-        onToggleSelectAll={toggleSelectAll}
-        onEdit={openEdit}
-        onRequestDelete={setDeleteConfirm}
-      />
+      {filtered.length === 0 ? (
+        <AdminDataState
+          type="empty"
+          title={hasActiveFilters ? "لا توجد منتجات مطابقة" : "لا توجد منتجات بعد"}
+          description={
+            hasActiveFilters
+              ? "جرّب تغيير البحث أو التبويب الحالي، أو أعد تصفير الفلاتر للرجوع إلى كامل الكتالوج."
+              : "ابدأ بإضافة أول منتج حتى يظهر الكتالوج داخل المتجر وتتمكن من إدارة المخزون والأسعار."
+          }
+          actionLabel={hasActiveFilters ? "عرض كل المنتجات" : "إضافة منتج"}
+          onAction={() => {
+            if (hasActiveFilters) {
+              setSearch("");
+              setActiveTab("all");
+              setCurrentPage(1);
+              return;
+            }
+            openAdd();
+          }}
+        />
+      ) : (
+        <ProductsTable
+          products={filtered}
+          selectedProducts={selectedProducts}
+          allProductsCount={totalProducts}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+          onEdit={openEdit}
+          onRequestDelete={setDeleteConfirm}
+        />
+      )}
 
-      {totalPages > 1 && (
+      {filtered.length > 0 && totalPages > 1 && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>

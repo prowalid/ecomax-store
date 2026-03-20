@@ -88,49 +88,58 @@ const Customers = () => {
         />
       </div>
 
-      <div className="overflow-hidden rounded-[20px] border border-slate-100 bg-white shadow-sm animate-slide-in">
-        <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-right" dir="rtl">
-          <thead>
-            <tr className="border-b border-slate-50 bg-slate-50/30">
-              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">معرف الزبون</th>
-              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الاسم</th>
-              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الهاتف</th>
-              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الموقع</th>
-              <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">تاريخ الإضافة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((customer) => (
-              <tr key={customer.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                <td className="px-4 py-4 text-[13px] font-medium text-slate-400" dir="ltr">
-                  #{customer.id.split("-")[0]}
-                </td>
-                <td className="px-4 py-4 text-[14px] font-bold text-sidebar-heading">
-                  {customer.name || "بدون اسم"}
-                </td>
-                <td className="px-4 py-4 text-[14px] font-semibold text-slate-500" dir="ltr">
-                  {customer.phone || "—"}
-                </td>
-                <td className="px-4 py-4 text-[13px] text-slate-500 font-medium">
-                  {customer.wilaya ? `${customer.wilaya} - ${customer.commune || ""}` : "—"}
-                </td>
-                <td className="px-4 py-4 text-[13px] text-slate-500 font-medium">
-                  {new Date(customer.created_at).toLocaleDateString("en-GB")}
-                </td>
+      {filtered.length === 0 ? (
+        <AdminDataState
+          type="empty"
+          title={totalCustomers === 0 ? "لا يوجد زبائن بعد" : "لا يوجد زبائن مطابقون"}
+          description={
+            totalCustomers === 0
+              ? "سيظهر هنا كل زبون أنشأ طلبًا أو تم تسجيل بياناته داخل المتجر."
+              : "جرّب تعديل عبارة البحث أو مسحها لعرض كامل قاعدة الزبائن."
+          }
+          actionLabel={totalCustomers === 0 ? undefined : "مسح البحث"}
+          onAction={totalCustomers === 0 ? undefined : () => setSearch("")}
+        />
+      ) : (
+        <div className="overflow-hidden rounded-[20px] border border-slate-100 bg-white shadow-sm animate-slide-in">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-right" dir="rtl">
+            <thead>
+              <tr className="border-b border-slate-50 bg-slate-50/30">
+                <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">معرف الزبون</th>
+                <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الاسم</th>
+                <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الهاتف</th>
+                <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">الموقع</th>
+                <th className="text-[13px] font-semibold text-slate-400 px-4 py-4 font-sans">تاريخ الإضافة</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground text-sm">
-            {totalCustomers === 0 ? "لا يوجد زبائن بعد" : "لا يوجد زبائن مطابقين"}
+            </thead>
+            <tbody>
+              {filtered.map((customer) => (
+                <tr key={customer.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-4 text-[13px] font-medium text-slate-400" dir="ltr">
+                    #{customer.id.split("-")[0]}
+                  </td>
+                  <td className="px-4 py-4 text-[14px] font-bold text-sidebar-heading">
+                    {customer.name || "بدون اسم"}
+                  </td>
+                  <td className="px-4 py-4 text-[14px] font-semibold text-slate-500" dir="ltr">
+                    {customer.phone || "—"}
+                  </td>
+                  <td className="px-4 py-4 text-[13px] text-slate-500 font-medium">
+                    {customer.wilaya ? `${customer.wilaya} - ${customer.commune || ""}` : "—"}
+                  </td>
+                  <td className="px-4 py-4 text-[13px] text-slate-500 font-medium">
+                    {new Date(customer.created_at).toLocaleDateString("en-GB")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {totalPages > 1 && (
+      {filtered.length > 0 && totalPages > 1 && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>

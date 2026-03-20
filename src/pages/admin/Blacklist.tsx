@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { UserX, Plus, Trash2, Search, Loader2, ShieldAlert, Phone, Globe, Info } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import AdminDataState from "@/components/admin/AdminDataState";
+import AdminActionStatus from "@/components/admin/AdminActionStatus";
 
 interface BlacklistEntry {
   id: string;
@@ -16,6 +18,8 @@ const Blacklist = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [actionState, setActionState] = useState<"idle" | "pending" | "success" | "error">("idle");
+  const [actionMessage, setActionMessage] = useState("");
 
   const [newEntry, setNewEntry] = useState<{ type: "phone" | "ip"; value: string; reason: string }>({
     type: "phone",
@@ -43,13 +47,19 @@ const Blacklist = () => {
     if (!newEntry.value.trim()) return;
 
     setAdding(true);
+    setActionState("pending");
+    setActionMessage("جاري إضافة الإدخال إلى القائمة السوداء...");
     try {
       await api.post("/blacklist", newEntry);
       toast.success("تمت الإضافة للقائمة السوداء بنجاح");
+      setActionState("success");
+      setActionMessage("تمت إضافة الإدخال إلى القائمة السوداء");
       setNewEntry({ type: "phone", value: "", reason: "" });
       fetchBlacklist();
     } catch (error) {
       toast.error("فشل الإضافة للقائمة");
+      setActionState("error");
+      setActionMessage("فشل الإضافة إلى القائمة السوداء");
     } finally {
       setAdding(false);
     }
@@ -59,11 +69,17 @@ const Blacklist = () => {
     if (!confirm("هل أنت متأكد من حذف هذا الإدخال من القائمة السوداء؟")) return;
 
     try {
+      setActionState("pending");
+      setActionMessage("جاري حذف الإدخال من القائمة السوداء...");
       await api.delete(`/blacklist/${id}`);
       toast.success("تم الحذف بنجاح");
+      setActionState("success");
+      setActionMessage("تم حذف الإدخال من القائمة السوداء");
       setEntries(entries.filter((e) => e.id !== id));
     } catch (error) {
       toast.error("فشل الحذف");
+      setActionState("error");
+      setActionMessage("فشل حذف الإدخال من القائمة السوداء");
     }
   };
 
@@ -161,6 +177,7 @@ const Blacklist = () => {
 
         {/* List Table */}
         <div className="lg:col-span-2">
+          <AdminActionStatus state={actionState} message={actionMessage} className="mb-4" />
           <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 flex flex-col h-full overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -183,17 +200,20 @@ const Blacklist = () => {
 
             <div className="flex-1 overflow-x-auto">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="text-[13px] text-slate-500 font-medium">جاري تحميل القائمة...</p>
-                </div>
+                <AdminDataState type="loading" title="جاري تحميل القائمة السوداء" description="يتم تجهيز الإدخالات المحظورة الحالية وأسبابها." className="m-6 min-h-[220px]" />
               ) : filteredEntries.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                  <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
-                    <ShieldAlert className="w-8 h-8 text-slate-200" />
-                  </div>
-                  <p className="text-[14px] text-slate-400 font-medium">لا توجد سجلات محظورة حالياً</p>
-                </div>
+                <AdminDataState
+                  type="empty"
+                  title={entries.length === 0 ? "لا توجد سجلات محظورة حالياً" : "لا توجد نتائج مطابقة"}
+                  description={
+                    entries.length === 0
+                      ? "ستظهر هنا أرقام الهواتف أو عناوين IP التي تمنعها من إرسال طلبات جديدة."
+                      : "جرّب تغيير عبارة البحث أو مسحها لعرض كامل القائمة السوداء."
+                  }
+                  actionLabel={entries.length === 0 ? undefined : "مسح البحث"}
+                  onAction={entries.length === 0 ? undefined : () => setSearchTerm("")}
+                  className="m-6 min-h-[220px]"
+                />
               ) : (
                 <table className="w-full text-right">
                   <thead>
