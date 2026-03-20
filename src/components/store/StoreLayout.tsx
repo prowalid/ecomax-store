@@ -11,6 +11,8 @@ import { getTrackingProfile } from "@/lib/trackingProfile";
 import { normalizePageSlug } from "@/lib/storePages";
 import { normalizeWhatsAppPhone } from "@/lib/whatsapp";
 import CartDrawer from "./CartDrawer";
+import SearchDrawer from "./SearchDrawer";
+import { Search } from "lucide-react";
 
 const hexToRgb = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -20,6 +22,7 @@ const hexToRgb = (hex: string) => {
 const StoreLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const location = useLocation();
@@ -124,7 +127,52 @@ const StoreLayout = () => {
       document.head.appendChild(ogDescriptionTag);
     }
     ogDescriptionTag.setAttribute("content", effectiveMetaDescription);
-  }, [effectiveMetaDescription, effectiveMetaTitle]);
+
+    let twitterTitleTag = document.querySelector('meta[name="twitter:title"]');
+    if (!twitterTitleTag) {
+      twitterTitleTag = document.createElement("meta");
+      twitterTitleTag.setAttribute("name", "twitter:title");
+      document.head.appendChild(twitterTitleTag);
+    }
+    twitterTitleTag.setAttribute("content", effectiveMetaTitle);
+
+    let twitterDescriptionTag = document.querySelector('meta[name="twitter:description"]');
+    if (!twitterDescriptionTag) {
+      twitterDescriptionTag = document.createElement("meta");
+      twitterDescriptionTag.setAttribute("name", "twitter:description");
+      document.head.appendChild(twitterDescriptionTag);
+    }
+    twitterDescriptionTag.setAttribute("content", effectiveMetaDescription);
+
+    const socialImage = theme.logo_url?.trim() || theme.favicon_url?.trim() || "/images/logo-cart.svg";
+    const absoluteSocialImage = socialImage.startsWith("http")
+      ? socialImage
+      : `${window.location.origin}${socialImage}`;
+
+    let ogImageTag = document.querySelector('meta[property="og:image"]');
+    if (!ogImageTag) {
+      ogImageTag = document.createElement("meta");
+      ogImageTag.setAttribute("property", "og:image");
+      document.head.appendChild(ogImageTag);
+    }
+    ogImageTag.setAttribute("content", absoluteSocialImage);
+
+    let twitterImageTag = document.querySelector('meta[name="twitter:image"]');
+    if (!twitterImageTag) {
+      twitterImageTag = document.createElement("meta");
+      twitterImageTag.setAttribute("name", "twitter:image");
+      document.head.appendChild(twitterImageTag);
+    }
+    twitterImageTag.setAttribute("content", absoluteSocialImage);
+
+    let twitterCardTag = document.querySelector('meta[name="twitter:card"]');
+    if (!twitterCardTag) {
+      twitterCardTag = document.createElement("meta");
+      twitterCardTag.setAttribute("name", "twitter:card");
+      document.head.appendChild(twitterCardTag);
+    }
+    twitterCardTag.setAttribute("content", "summary_large_image");
+  }, [effectiveMetaDescription, effectiveMetaTitle, theme.favicon_url, theme.logo_url]);
 
   useEffect(() => {
     if (loading) {
@@ -316,7 +364,17 @@ const StoreLayout = () => {
             ))}
           </nav>
 
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end gap-3">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className={`relative border-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${isScrolled ? "p-2.5" : "p-2"}`}
+              style={{ borderColor: theme.accent_color, color: theme.accent_color }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.accent_color; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = theme.accent_color; }}
+            >
+              <Search size={22} className="stroke-[2.5]" />
+            </button>
+
             <button
               onClick={() => setCartOpen(true)}
               className={`relative border-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${isScrolled ? "p-2.5" : "p-2"}`}
@@ -389,8 +447,9 @@ const StoreLayout = () => {
         </nav>
       </header>
 
-      {/* Cart Drawer */}
+      {/* Cart & Search Drawers */}
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
+      <SearchDrawer open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* Main Content */}
       <main className="pt-[106px] md:pt-0 pb-16 md:pb-0 overflow-x-clip min-h-[80vh]">
@@ -521,6 +580,14 @@ const StoreLayout = () => {
         >
           <LayoutGrid size={20} />
           <span className="text-[10px] font-bold">المنتجات</span>
+        </button>
+        <button 
+          onClick={() => setSearchOpen(true)} 
+          className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors"
+          style={{ color: searchOpen ? theme.accent_color : theme.header_text + 'cc' }}
+        >
+          <Search size={20} className={searchOpen ? 'stroke-[2.5]' : ''} />
+          <span className="text-[10px] font-bold">البحث</span>
         </button>
         <button 
           onClick={() => setCartOpen(true)} 

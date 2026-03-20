@@ -129,16 +129,19 @@ const ProductPage = () => {
   }, [navigate, product?.slug, slugOrId]);
 
   // Dynamic SEO meta tags for this product
+  const seoDescription = product
+    ? (product.description
+        ? sanitizeProductDescription(product.description).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160)
+        : `اطلب ${product.name} بأفضل سعر مع التوصيل لكل الولايات والدفع عند الاستلام.`)
+    : undefined;
+  const seoImage = galleryImages.length > 0
+    ? galleryImages[0].image_url
+    : product?.image_url || theme.logo_url || undefined;
+
   useSEO({
     title: product ? `${product.name} | ${theme.store_name || "المتجر"}` : undefined,
-    description: product
-      ? (product.description
-          ? product.description.replace(/<[^>]*>/g, "").slice(0, 160)
-          : `اطلب ${product.name} بأفضل سعر مع التوصيل لكل الولايات`)
-      : undefined,
-    ogImage: galleryImages.length > 0
-      ? galleryImages[0].image_url
-      : product?.image_url || undefined,
+    description: seoDescription,
+    ogImage: seoImage,
     ogType: "product",
     canonicalPath: product ? `/product/${product.slug || product.id}` : undefined,
   });

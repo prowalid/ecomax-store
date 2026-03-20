@@ -3,18 +3,22 @@ import { Loader2, ArrowRight } from "lucide-react";
 import { usePageBySlug } from "@/hooks/usePages";
 import { normalizePageSlug } from "@/lib/storePages";
 import { useSEO } from "@/hooks/useSEO";
+import { useAppearanceSettings } from "@/hooks/useAppearanceSettings";
 
 export default function DynamicPage() {
   const { slug } = useParams<{ slug: string }>();
   const normalizedSlug = normalizePageSlug(slug || "");
   const { data: page, isLoading, isError } = usePageBySlug(normalizedSlug);
+  const { settings: appearance } = useAppearanceSettings();
+  const pageDescription = page?.content
+    ? page.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160)
+    : undefined;
 
   // Dynamic SEO for CMS pages
   useSEO({
-    title: page?.title ? `${page.title}` : undefined,
-    description: page?.content
-      ? page.content.replace(/<[^>]*>/g, "").slice(0, 160)
-      : undefined,
+    title: page?.title ? `${page.title} | ${appearance.store_name || "المتجر"}` : undefined,
+    description: pageDescription,
+    ogImage: appearance.logo_url || appearance.favicon_url || undefined,
     ogType: "article",
     canonicalPath: normalizedSlug ? `/page/${normalizedSlug}` : undefined,
   });
