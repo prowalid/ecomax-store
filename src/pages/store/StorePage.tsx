@@ -10,11 +10,10 @@ import { useCart } from "@/hooks/useCart";
 import { useAppearanceSettings, defaultAppearance, type AppearanceSlide } from "@/hooks/useAppearanceSettings";
 import { useTracking } from "@/hooks/useTracking";
 import ProductCard from "@/components/store/ProductCard";
-import { ProductCardSkeleton, CategorySkeleton, HeroSkeleton, FilterBarSkeleton } from "@/components/store/StoreSkeleton";
+import { ProductCardSkeleton, CategorySkeleton, HeroSkeleton } from "@/components/store/StoreSkeleton";
 import { getStoreThemeTokens } from "@/lib/storeTheme";
 import { useSEO } from "@/hooks/useSEO";
 
-const SEARCH_DEBOUNCE_MS = 350;
 const StorePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,33 +24,6 @@ const StorePage = () => {
   const inStockFromUrl = searchParams.get("in_stock") === "1";
   const onSaleFromUrl = searchParams.get("on_sale") === "1";
   const deferredSearch = useDeferredValue(searchFromUrl);
-
-  // Local search input state with debounce
-  const [localSearch, setLocalSearch] = useState(searchFromUrl);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  // Sync local state from URL (backward navigation, etc.)
-  useEffect(() => {
-    setLocalSearch(searchFromUrl);
-  }, [searchFromUrl]);
-
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setLocalSearch(value);
-      clearTimeout(searchTimerRef.current);
-      searchTimerRef.current = setTimeout(() => {
-        const nextParams = new URLSearchParams(searchParams);
-        const trimmed = value.trim();
-        if (!trimmed) nextParams.delete("q");
-        else nextParams.set("q", trimmed);
-        setSearchParams(nextParams, { replace: true });
-      }, SEARCH_DEBOUNCE_MS);
-    },
-    [searchParams, setSearchParams],
-  );
-
-  // Cleanup timer on unmount
-  useEffect(() => () => clearTimeout(searchTimerRef.current), []);
   const { data: categories = [] } = useCategories();
   const storefrontCategories = categories.filter((category) => Boolean(category?.id));
   const selectedCategoryEntry = useMemo(
@@ -287,7 +259,6 @@ const StorePage = () => {
         {/* Skeleton Products */}
         <section className="container mx-auto px-4 py-8">
           <div className="flex justify-center mb-8"><div className="bg-slate-200 animate-pulse rounded-full h-8 w-40" /></div>
-          <FilterBarSkeleton />
           <div className="mt-6">
             <ProductCardSkeleton count={8} />
           </div>
@@ -407,140 +378,7 @@ const StorePage = () => {
           </p>
         </div>
 
-        <div
-          className="mb-8 rounded-[2rem] p-4 sm:p-5"
-          style={{ backgroundColor: tokens.surface, border: `1px solid ${tokens.border}` }}
-        >
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(220px,0.7fr)]">
-            <label
-              className="flex items-center gap-3 rounded-2xl border px-4 py-3"
-              style={{ borderColor: tokens.border, backgroundColor: tokens.surfaceSoft }}
-            >
-              <Search className="h-5 w-5 shrink-0" style={{ color: theme.accent_color }} />
-              <input
-                value={localSearch}
-                onChange={(event) => handleSearchChange(event.target.value)}
-                placeholder="ابحث باسم المنتج أو الوصف أو التصنيف"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                style={{ color: tokens.textPrimary }}
-              />
-            </label>
 
-            <label
-              className="flex items-center gap-3 rounded-2xl border px-4 py-3"
-              style={{ borderColor: tokens.border, backgroundColor: tokens.surfaceSoft }}
-            >
-              <SlidersHorizontal className="h-5 w-5 shrink-0" style={{ color: theme.accent_color }} />
-              <select
-                value={sortFromUrl}
-                onChange={(event) => updateDiscoveryParams({ sort: event.target.value as ProductSort })}
-                className="w-full bg-transparent text-sm outline-none"
-                style={{ color: tokens.textPrimary }}
-              >
-                <option value="newest">الأحدث</option>
-                <option value="price_asc">السعر: من الأقل للأعلى</option>
-                <option value="price_desc">السعر: من الأعلى للأقل</option>
-                <option value="name_asc">الاسم: أبجديًا</option>
-                <option value="discount_desc">الأكثر تخفيضًا</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => updateDiscoveryParams({ inStock: !inStockFromUrl })}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-all"
-              style={inStockFromUrl
-                ? { backgroundColor: theme.accent_color, color: "#fff" }
-                : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, border: `1px solid ${tokens.border}` }}
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              المتاح فقط
-            </button>
-
-            <button
-              type="button"
-              onClick={() => updateDiscoveryParams({ onSale: !onSaleFromUrl })}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-all"
-              style={onSaleFromUrl
-                ? { backgroundColor: theme.accent_color, color: "#fff" }
-                : { backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary, border: `1px solid ${tokens.border}` }}
-            >
-              <BadgePercent className="h-4 w-4" />
-              العروض فقط
-            </button>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              {selectedCategoryName && (
-                <span
-                  className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-bold"
-                  style={{ backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary }}
-                >
-                  {selectedCategoryName}
-                  <button type="button" onClick={() => updateDiscoveryParams({ categorySlug: null })} aria-label="إزالة التصنيف">
-                    <X className="h-4 w-4" />
-                  </button>
-                </span>
-              )}
-              {searchFromUrl.trim() && (
-                <span
-                  className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-bold"
-                  style={{ backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary }}
-                >
-                  "{searchFromUrl.trim()}"
-                  <button type="button" onClick={() => updateDiscoveryParams({ q: null })} aria-label="إزالة البحث">
-                    <X className="h-4 w-4" />
-                  </button>
-                </span>
-              )}
-              {inStockFromUrl && (
-                <span
-                  className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-bold"
-                  style={{ backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary }}
-                >
-                  المتاح فقط
-                  <button type="button" onClick={() => updateDiscoveryParams({ inStock: false })} aria-label="إزالة فلتر المتاح">
-                    <X className="h-4 w-4" />
-                  </button>
-                </span>
-              )}
-              {onSaleFromUrl && (
-                <span
-                  className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-bold"
-                  style={{ backgroundColor: tokens.surfaceSoft, color: tokens.textPrimary }}
-                >
-                  العروض فقط
-                  <button type="button" onClick={() => updateDiscoveryParams({ onSale: false })} aria-label="إزالة فلتر العروض">
-                    <X className="h-4 w-4" />
-                  </button>
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              {(selectedCategoryName || searchFromUrl.trim() || sortFromUrl !== "newest" || inStockFromUrl || onSaleFromUrl) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate("/", { replace: true });
-                  }}
-                  className="text-sm font-bold transition-opacity hover:opacity-80"
-                  style={{ color: theme.accent_color }}
-                >
-                  تصفير الفلاتر
-                </button>
-              )}
-              <span style={{ color: tokens.textMuted }}>
-                {isFetching && currentPage > 1
-                  ? "جاري تحميل المزيد..."
-                  : `${paginatedProducts?.pagination.total ?? filteredProducts.length} منتج`}
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* Category Filter Tabs */}
         {storefrontCategories.length > 0 && (
