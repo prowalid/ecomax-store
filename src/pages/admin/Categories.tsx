@@ -3,6 +3,8 @@ import { Plus, FolderOpen, GripVertical, Loader2, Trash2, Image, Upload } from "
 import { useCategories, useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/hooks/useCategories";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import AdminDataState from "@/components/admin/AdminDataState";
+import AdminActionStatus from "@/components/admin/AdminActionStatus";
 
 const sanitizeCategorySlug = (value: string) =>
   value
@@ -22,18 +24,36 @@ const Categories = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingImage, setEditingImage] = useState<string | null>(null);
   const [uploadingImageId, setUploadingImageId] = useState<string | null>(null);
+  const [actionState, setActionState] = useState<"idle" | "pending" | "success" | "error">("idle");
+  const [actionMessage, setActionMessage] = useState("");
+
+  const setStatus = (state: "idle" | "pending" | "success" | "error", message = "") => {
+    setActionState(state);
+    setActionMessage(message);
+  };
 
   const handleAdd = () => {
     if (!newName.trim()) return;
     const slug = sanitizeCategorySlug(newName);
+    setStatus("pending", "جاري إنشاء التصنيف...");
     createCategory.mutate(
-      { name: newName.trim(), slug: slug || undefined, sort_order: categories.length + 1 },
-      { onSuccess: () => { setNewName(""); setShowAdd(false); } }
+      { name: newName.trim(), slug: slug || undefined, sort_order: categories.length + 1, suppressToast: true },
+      {
+        onSuccess: () => {
+          setNewName("");
+          setShowAdd(false);
+          setStatus("success", "تم إنشاء التصنيف بنجاح");
+        },
+        onError: (error) => {
+          setStatus("error", error instanceof Error ? error.message : "فشل إنشاء التصنيف");
+        },
+      }
     );
   };
 
   const handleImageUpload = async (catId: string, file: File) => {
     setUploadingImageId(catId);
+    setStatus("pending", "جاري رفع صورة التصنيف...");
     try {
       const data = (await api.upload('/upload', file)) as { url: string };
       const currentCategory = categories.find((category) => category.id === catId);
@@ -41,20 +61,25 @@ const Categories = () => {
         id: catId,
         image_url: data.url,
         version: currentCategory?.version,
+        suppressToast: true,
+      }, {
+        onSuccess: () => {
+          setStatus("success", "تم تحديث صورة التصنيف");
+        },
+        onError: (error) => {
+          setStatus("error", error instanceof Error ? error.message : "فشل تحديث صورة التصنيف");
+        },
       });
       setEditingImage(null);
     } catch {
+      setStatus("error", "فشل رفع الصورة");
       toast.error("فشل رفع الصورة");
     } finally {
       setUploadingImageId(null);
     }
   };
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AdminDataState type="loading" title="جاري تحميل التصنيفات" description="يتم تجهيز قائمة التصنيفات وصورها الحالية." />;
   }
 
   return (
@@ -99,11 +124,22 @@ const Categories = () => {
         </div>
       )}
 
+      <AdminActionStatus state={actionState} message={actionMessage} />
+
       <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
         المقاس المقترح للصور: <span className="font-black text-slate-900">1200 × 1200</span> بكسل.
         استخدم صورة مربعة واضحة وخفيفة لتظهر بشكل احترافي في المتجر.
       </div>
 
+      {categories.length === 0 ? (
+        <AdminDataState
+          type="empty"
+          title="لا توجد تصنيفات بعد"
+          description="ابدأ بإنشاء أول تصنيف حتى تنظّم عرض المنتجات داخل المتجر بشكل أوضح."
+          actionLabel="إضافة تصنيف"
+          onAction={() => setShowAdd(true)}
+        />
+      ) : (
       <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden animate-slide-in">
         <div className="divide-y divide-slate-50">
           {categories.map((cat) => (
@@ -145,7 +181,16 @@ const Categories = () => {
                   </button>
 
                   <button
-                    onClick={() => deleteCategory.mutate({ id: cat.id })}
+                    onClick={() => {
+                      setStatus("pending", `جاري حذف التصنيف "${cat.name}"...`);
+                      deleteCategory.mutate(
+                        { id: cat.id, suppressToast: true },
+                        {
+                          onSuccess: () => setStatus("success", `تم حذف التصنيف "${cat.name}"`),
+                          onError: (error) => setStatus("error", error instanceof Error ? error.message : "فشل حذف التصنيف"),
+                        }
+                      );
+                    }}
                     data-testid={`category-delete-${cat.id}`}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                   >
@@ -181,7 +226,14 @@ const Categories = () => {
                   {cat.image_url && (
                     <button
                       onClick={() => {
-                        updateCategory.mutate({ id: cat.id, image_url: null, version: cat.version });
+                        setStatus("pending", "جاري إزالة صورة التصنيف...");
+                        updateCategory.mutate(
+                          { id: cat.id, image_url: null, version: cat.version, suppressToast: true },
+                          {
+                            onSuccess: () => setStatus("success", "تمت إزالة صورة التصنيف"),
+                            onError: (error) => setStatus("error", error instanceof Error ? error.message : "فشل إزالة صورة التصنيف"),
+                          }
+                        );
                         setEditingImage(null);
                       }}
                       className="h-8 px-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20"
@@ -193,13 +245,9 @@ const Categories = () => {
               )}
             </div>
           ))}
-          {categories.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              لا توجد تصنيفات بعد
-            </div>
-          )}
         </div>
       </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { formatWhatsAppForStorage, normalizeWhatsAppPhone } from "@/lib/whatsapp";
 import AdminSaveStatusBadge from "@/components/admin/AdminSaveStatusBadge";
+import AdminDataState from "@/components/admin/AdminDataState";
 
 interface GeneralSettings {
   store_name: string;
@@ -61,11 +62,7 @@ const Settings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AdminDataState type="loading" title="جاري تحميل الإعدادات" description="يتم تجهيز بيانات المتجر العامة والهوية الوصفية الحالية." />;
   }
 
   return (

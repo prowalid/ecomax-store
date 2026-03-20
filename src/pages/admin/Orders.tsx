@@ -12,6 +12,7 @@ import AdminDataState from "@/components/admin/AdminDataState";
 import { Loader2 } from "lucide-react";
 import { formatSelectedOptions } from "@/lib/productOptions";
 import { toast } from "sonner";
+import AdminActionStatus from "@/components/admin/AdminActionStatus";
 
 const Orders = () => {
   const [search, setSearch] = useState("");
@@ -20,6 +21,8 @@ const Orders = () => {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
+  const [actionState, setActionState] = useState<"idle" | "pending" | "success" | "error">("idle");
+  const [actionMessage, setActionMessage] = useState("");
   const { data: paginatedOrders, isLoading } = usePaginatedOrders(
     { search, status: activeFilter },
     { page: currentPage, limit: 20 }
@@ -48,12 +51,38 @@ const Orders = () => {
   const handleStatusChange = (id: string, newStatus: OrderStatus) => {
     const order = orders.find((o) => o.id === id);
     if (order) {
-      updateStatus.mutate({ id, status: newStatus, order });
+      setActionState("pending");
+      setActionMessage(`جاري تحديث الطلب #${order.order_number}...`);
+      updateStatus.mutate(
+        { id, status: newStatus, order },
+        {
+          onSuccess: () => {
+            setActionState("success");
+            setActionMessage(`تم تحديث الطلب #${order.order_number} إلى "${orderStatusConfig[newStatus].label}"`);
+          },
+          onError: (error) => {
+            setActionState("error");
+            setActionMessage(error instanceof Error ? error.message : "فشل تحديث حالة الطلب");
+          },
+        }
+      );
     }
   };
 
   const handleCreateShipment = (id: string) => {
-    createShippingShipment.mutate(id);
+    const order = orders.find((entry) => entry.id === id);
+    setActionState("pending");
+    setActionMessage(order ? `جاري إنشاء شحنة للطلب #${order.order_number}...` : "جاري إنشاء الشحنة...");
+    createShippingShipment.mutate(id, {
+      onSuccess: () => {
+        setActionState("success");
+        setActionMessage(order ? `تم إنشاء شحنة للطلب #${order.order_number}` : "تم إنشاء الشحنة بنجاح");
+      },
+      onError: (error) => {
+        setActionState("error");
+        setActionMessage(error instanceof Error ? error.message : "فشل إنشاء الشحنة");
+      },
+    });
   };
 
   const handleBulkStatusChange = async (newStatus: OrderStatus) => {
@@ -62,6 +91,8 @@ const Orders = () => {
     }
     
     setIsUpdatingBulk(true);
+    setActionState("pending");
+    setActionMessage(`جاري تحديث ${selectedOrders.length} طلبات...`);
     try {
       for (const id of selectedOrders) {
         const order = orders.find((o) => o.id === id);
@@ -73,10 +104,14 @@ const Orders = () => {
       }
       
       toast.success(`تم تحديث ${selectedOrders.length} طلبات إلى "${orderStatusConfig[newStatus].label}"`);
+      setActionState("success");
+      setActionMessage(`تم تحديث ${selectedOrders.length} طلبات إلى "${orderStatusConfig[newStatus].label}"`);
       setSelectedOrders([]);
     } catch (error) {
       console.error("Bulk update error:", error);
       toast.error(error instanceof Error ? error.message : "فشل تحديث بعض الطلبات");
+      setActionState("error");
+      setActionMessage(error instanceof Error ? error.message : "فشل تحديث بعض الطلبات");
     } finally {
       setIsUpdatingBulk(false);
     }
@@ -217,6 +252,8 @@ const Orders = () => {
         onFilterChange={setActiveFilter}
         onSearchChange={setSearch}
       />
+
+      <AdminActionStatus state={actionState} message={actionMessage} />
 
       {/* Bulk actions inline banner */}
       {selectedOrders.length > 0 && (

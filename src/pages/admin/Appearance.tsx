@@ -8,6 +8,7 @@ import AppearanceUploadCard from "@/components/admin/appearance/AppearanceUpload
 import AppearanceSlidesSection from "@/components/admin/appearance/AppearanceSlidesSection";
 import AppearancePresetsCard from "@/components/admin/appearance/AppearancePresetsCard";
 import { appearancePresets } from "@/components/admin/appearance/types";
+import AdminDataState from "@/components/admin/AdminDataState";
 
 const Appearance = () => {
   const { settings, setSettings, loading, saving, saveSettings, dirty, lastSavedAt } = useEditableAppearanceSettings();
@@ -112,11 +113,7 @@ const Appearance = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AdminDataState type="loading" title="جاري تحميل المظهر" description="يتم تجهيز الألوان والشعارات والعناصر البصرية الحالية." />;
   }
 
   return (
