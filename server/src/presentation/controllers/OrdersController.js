@@ -8,13 +8,14 @@ async function getOrders(req, res, next) {
       throw new Error('GetOrdersUseCase is not available');
     }
 
-    const requestedPage = Number.parseInt(req.query.page, 10);
-    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const query = req.query || {};
+    const requestedPage = Number.parseInt(query.page, 10);
+    const requestedLimit = Number.parseInt(query.limit, 10);
     const paginate = Number.isInteger(requestedPage) || Number.isInteger(requestedLimit);
 
     const orders = await useCase.execute({
-      search: typeof req.query.search === 'string' ? req.query.search : undefined,
-      status: typeof req.query.status === 'string' ? req.query.status : undefined,
+      search: typeof query.search === 'string' ? query.search : undefined,
+      status: typeof query.status === 'string' ? query.status : undefined,
       page: Number.isInteger(requestedPage) ? requestedPage : 1,
       limit: Number.isInteger(requestedLimit) ? requestedLimit : 20,
       paginate,
